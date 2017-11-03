@@ -41,10 +41,9 @@ If the ball surpasses the player's defenses, it loses a life.
 - Silver: 50xLevel No. (they take 3 hits to destroy themselves)  
 - Golden: neither add score nor are destroyable  
       
-**Enemies:** they die if the ball/player hits them. They move downwards  
-    slowly, dissapearing under the player's ship
-    They add 100 pint to the score when destroyed, and there can only be 3 of them at a time.
-    y solo puede haber 3 a la vez. Se repiten cada 4 niveles, habiendo:	  
+**Enemies:** they die if the ball/player hits them. They move downwards slowly, dissapearing under the player's ship.
+    They add 100 points to the score when destroyed, and there can only be 3 of them at a time.  
+    They appear cyclically every four levels  
 - Ships 
 - Doritos  
 - Molecules  
@@ -57,10 +56,10 @@ If the ball surpasses the player's defenses, it loses a life.
 ## 4. POSSIBLE ADDITIONS  
 1. Two-player mode (Pong style) : https://www.youtube.com/watch?v=83uo9QWUW_M&t=307s  
 2. New power-ups:    
-- Thinner player   
-- Connected walls (toroidal)  
-- The ball passes throuh bricks instead of bouncing 
-- Etc. (sugestions allowed)
+  - Thinner player   
+  - Connected walls (toroidal)  
+  - The ball passes throuh bricks instead of bouncing 
+  - Etc. (sugestions allowed)
 
     
    
