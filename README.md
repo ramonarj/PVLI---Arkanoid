@@ -1,63 +1,66 @@
 # PVLI---Arkanoid
-Repositorio para el remake del Arkanoid 
+This repository holds an Arkanoid (Taito, 1986) remake. This project is being made at the  
+Commputer Science Faculty of the Complutense Unversity of Madrid.  
+Authors:
 
-Raúl Fernández Guardia 
-Ramón Arjona Quiñones
+- Raúl Fernández Guardia  
+- Ramón Arjona Quiñones
 
-# DOCUMENTO DE DISEÑO:
-## 1. Descripción
-El objetivo el juego es destruir todos los ladrillos que se encuentran por encima de la nave que controla el jugador. Algunos de estos tienen power-ups que ayudan a destruirlos, y cada cierto tiempo salen enemigos.
+# DESIGN DOCUMENT:
+## 1. Description:
+  The purpose of the game is to destroy all the bricks wich are above our ship by shooting them with a bouncing ball.  
+  Some of them contain power-ups which help us destroy the bricks, and there also enemies wich appear every ceratin time.
 
-Si la bola pasa por debajo del jugador, este pierde.
+If the ball surpasses the player's defenses, it loses a life.
 
-## 2. Cantidades:
-**Jugador**  
+## 2. Amounts:
+**Player**  
   
-**Niveles:** 36 (haremos los que nos dé tiempo).  
+**Levels:** 36 (we''ll do as many as we can).  
   
-**Vidas:** 3 iniciales (la actual +2), infinitas posibles.  
+**Lives:** there are 3 in the beginning of the game, but there's no limt in how many we can get. 
   
-**Power ups:** 7 [A=acumulable].  
-- Azul marino: se hace grande (A, 2).  
-- Roja: disparar hacia arriba.  
-- Verde: parar la bola.  
-- Azul claro: triplicar la bola (A).  
-- Gris: vida extra (A).  
-- Rosa: abre una puerta al siguiente nivel.  
-- Naranja: bola más lenta (A).  
+**Power ups:** There are 7, each one provides the player the ability to: [C=cumulative].  
+- Navy blue: get wider (C, 2).  
+- Red: shoot the bricks.  
+- Green: stop the ball for a while.  
+- Light blue: triple the ball (C).  
+- Gray: gain an extra life (C).  
+- Pink: access the next level.  
+- Naranja: decelerate the ball (C).  
       
-**Tipos de ladrillos:** dan diferente nº de puntos   
-- Blanco: 50  
-- Naranja: 60  
-- Azul claro: 70  
-- Verde: 80  
-- Rojo: 90  
-- Azul: 100  
-- Rosa: 110  
-- Amarillo: 120  
-- Plateados: 50xnº nivel (se destruyen de 3 golpes)  
-- Dorados: ni dan puntos ni se destruyen  
+**Tiypes of bricks:** they add a different amount of score
+- White: 50  
+- Orange: 60  
+- Light blue: 70  
+- Green: 80  
+- Red: 90  
+- Navy blue: 100  
+- Pink: 110  
+- Yellow: 120  
+- Silver: 50xLevel No. (they take 3 hits to destroy themselves)  
+- Golden: neither add score nor are destroyable  
       
-**Enemigos:** se destruyen de un golpe de bola/bala o si les da la nave. 
-    Se mueven hacia abajo lento,  
-    desapareciendo por debajo de la nave. Dan 100 puntos al destruirlos,  
+**Enemies:** they die if the ball/player hits them. They move downwards  
+    slowly, dissapearing under the player's ship
+    They add 100 pint to the score when destroyed, and there can only be 3 of them at a time.
     y solo puede haber 3 a la vez. Se repiten cada 4 niveles, habiendo:	  
-- Barquitos  
+- Ships 
 - Doritos  
-- Moléculas  
-- Cubos/esferas  
+- Molecules  
+- Cubes/spheres  
     
-## 3. Controles  
-- Moverse a los lados (A/D, flechas laterales)  
-- Disparar (espacio)[con el power-up rojo]  
+## 3. Controls  
+- Move left and right (A/D, arrow keys)  
+- Shoot (spacebar)[red power-up required]  
    
-## 4. Posibles añadidos  
-1. Modo dos jugadores (estilo Pong) : https://www.youtube.com/watch?v=83uo9QWUW_M&t=307s  
-2. Power-ups nuevos:    
-- Hacer pequeño  
-- Paredes conectadas entre sí  
-- Bola que atraviesa en vez de rebotar  
-- Etc. (se admiten sugerencias)
+## 4. POSSIBLE ADDITIONS  
+1. Two-player mode (Pong style) : https://www.youtube.com/watch?v=83uo9QWUW_M&t=307s  
+2. New power-ups:    
+- Thinner player   
+- Connected walls (toroidal)  
+- The ball passes throuh bricks instead of bouncing 
+- Etc. (sugestions allowed)
 
     
    
