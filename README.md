@@ -27,7 +27,7 @@ If the ball surpasses the player's defenses, we lose a life.
 - Light blue: triple the ball (C).  
 - Gray: gain an extra life (C).  
 - Pink: access the next level.  
-- Naranja: decelerate the ball (C).  
+- Orange: decelerate the ball (C).  
       
 **Brick variations:** they add a different amount of score
 - White: 50  
