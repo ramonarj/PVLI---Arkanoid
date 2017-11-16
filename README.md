@@ -9,18 +9,18 @@ Authors:
 # DESIGN DOCUMENT:
 ## 1. Description:
   The purpose of the game is to destroy all the bricks wich are above our ship by shooting them with a bouncing ball.  
-  Some of them contain power-ups which help us destroy the bricks, and there also enemies wich appear every ceratin time.
+  Some of them contain power-ups which help us destroy the bricks, and there are also enemies wich appear every ceratin time.
 
-If the ball surpasses the player's defenses, it loses a life.
+If the ball surpasses the player's defenses, we lose a life.
 
 ## 2. Amounts:
 **Player**  
   
-**Levels:** 36 (we''ll do as many as we can).  
+**Levels:** 36 (we will do as many as we can).  
   
-**Lives:** there are 3 in the beginning of the game, but there's no limt in how many we can get. 
+**Lives:** there are 3 at the start of the game, but there is no limt in how many we can get. 
   
-**Power ups:** There are 7, each one provides the player the ability to: [C=cumulative].  
+**Power ups:** There are 7, and each one provides the player the ability to: [C=cumulative].  
 - Navy blue: get wider (C, 2).  
 - Red: shoot the bricks.  
 - Green: stop the ball for a while.  
@@ -29,7 +29,7 @@ If the ball surpasses the player's defenses, it loses a life.
 - Pink: access the next level.  
 - Naranja: decelerate the ball (C).  
       
-**Tiypes of bricks:** they add a different amount of score
+**Brick variations:** they add a different amount of score
 - White: 50  
 - Orange: 60  
 - Light blue: 70  
@@ -38,12 +38,12 @@ If the ball surpasses the player's defenses, it loses a life.
 - Navy blue: 100  
 - Pink: 110  
 - Yellow: 120  
-- Silver: 50xLevel No. (they take 3 hits to destroy themselves)  
+- Silver: 50xLevel No. (they need 3 hits to be destroyed)  
 - Golden: neither add score nor are destroyable  
       
 **Enemies:** they die if the ball/player hits them. They move downwards slowly, dissapearing under the player's ship.
     They add 100 points to the score when destroyed, and there can only be 3 of them at a time.  
-    They appear cyclically every four levels  
+    They appear cyclically every four levels.  
 - Ships 
 - Doritos  
 - Molecules  
@@ -58,7 +58,7 @@ If the ball surpasses the player's defenses, it loses a life.
 2. New power-ups:    
   - Thinner player   
   - Connected walls (toroidal)  
-  - The ball passes throuh bricks instead of bouncing 
+  - The ball passes through bricks instead of bouncing 
   - Etc. (sugestions allowed)
 
     
