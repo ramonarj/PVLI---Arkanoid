@@ -7,7 +7,8 @@ var cursors;
 var ball;
 var techo;
 var pared1, pared2;
-
+var ladrillo;
+var x =false;
 var PlayScene =
  {
    //Función Create
@@ -24,7 +25,7 @@ var PlayScene =
     player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel);
     this.game.world.addChild(player);
     //Pelota
-    var ballVel = new Par(-150,-150);
+    var ballVel = new Par(-200,-200);
     ball=new Ball(this.game, playerPos, 'ball', '333', 1, ballVel);
     this.game.world.addChild(ball);
     //Paredes
@@ -34,6 +35,11 @@ var PlayScene =
     this.game.world.addChild(techo);
     this.game.world.addChild(pared1);
     this.game.world.addChild(pared2);
+
+    //Ladrillos
+    var brickPos= new Par(350,100);
+    ladrillo=new Destroyable(this.game, brickPos, 'techo', 'ee', 1);
+    this.game.world.addChild(ladrillo);
 
     //Cursores
     cursors = this.game.input.keyboard.createCursorKeys();
@@ -45,19 +51,23 @@ var PlayScene =
     techo.scale.setTo(0.8,0.2);
     pared1.scale.setTo(0.2,0.8);
     pared2.scale.setTo(0.2,0.8);
+    ladrillo.scale.setTo(0.1,0.25);
    
 
+    //Motor físico de Phaser
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     //Colisiones
     this.game.physics.enable([techo,ball], Phaser.Physics.ARCADE);
     this.game.physics.enable([pared1,ball], Phaser.Physics.ARCADE);
     this.game.physics.enable([pared2,ball], Phaser.Physics.ARCADE);
     this.game.physics.enable([player,ball], Phaser.Physics.ARCADE);
-
+    this.game.physics.enable([ladrillo,ball], Phaser.Physics.ARCADE);
+    //Objetos que no se mueven
     techo.body.immovable = true;
     pared1.body.immovable = true;
     pared2.body.immovable = true;
     player.body.immovable = true;
+    ladrillo.body.immovable = true;
     
     ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y);
     ball.body.bounce.setTo(1, 1);
@@ -67,10 +77,12 @@ var PlayScene =
   //Función Update
   update: function()
   {
-    this.game.physics.arcade.collide(techo, ball);
-    this.game.physics.arcade.collide(pared1, ball);
-    this.game.physics.arcade.collide(pared2, ball);
-    this.game.physics.arcade.collide(player, ball);
+      //Comprobamos todas las colisiones
+    this.game.physics.arcade.overlap(ball, pared1, collisionHandler, null, this);
+    this.game.physics.arcade.overlap(ball, pared2, collisionHandler, null, this);
+    this.game.physics.arcade.overlap(ball, techo, collisionHandler, null, this);
+    this.game.physics.arcade.overlap(ball, player, collisionHandler, null, this);
+    this.game.physics.arcade.overlap(ball, ladrillo, collisionHandler, null, this);
 
     takeInput();
   },
@@ -92,6 +104,20 @@ var takeInput = function()
   {
       player.x+=10;
   }
+}
+
+var collisionHandler = function(obj1, obj2)
+{
+    if(obj1==ball || obj2==ball)
+    {
+        this.game.physics.arcade.collide(techo, ball);
+        this.game.physics.arcade.collide(pared1, ball);
+        this.game.physics.arcade.collide(pared2, ball);
+        this.game.physics.arcade.collide(player, ball);
+        this.game.physics.arcade.collide(ladrillo, ball);
+        if(obj1==ladrillo || obj2==ladrillo)
+             ladrillo.takeDamage();
+    }
 }
 
 
