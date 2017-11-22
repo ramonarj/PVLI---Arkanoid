@@ -35,6 +35,7 @@ var PreloaderScene =
     this.game.load.image('background', 'images/Fondo.png');
     this.game.load.image('ball', 'images/Pelota.png');
     this.game.load.image('pared', 'images/pared.png');
+    this.game.load.image('techo', 'images/techo.png');
     this.game.load.image('bullet', 'images/Bala.png');
   },
 
