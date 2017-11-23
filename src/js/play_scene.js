@@ -1,20 +1,18 @@
 'use strict';
 
-//Variables
 var player;
 var fondo;
 var cursors;
 var ball;
-var techo;
-var pared1, pared2;
+var pared1, pared2, techo;
 var ladrillo;
-var x =false;
 var PlayScene =
  {
    //Función Create
   create: function () 
   {
-    
+    //Variables
+
     //Añadimos las variables
     //Fondo
     fondo = new Phaser.Image(this.game, 150, 20, 'background');
@@ -29,16 +27,16 @@ var PlayScene =
     ball=new Ball(this.game, playerPos, 'ball', '333', 1, ballVel);
     this.game.world.addChild(ball);
     //Paredes
-    techo = new Phaser.Sprite(this.game, 100, 20, 'techo');
-    pared1 = new Phaser.Sprite(this.game, 150, 60, 'pared');
-    pared2 = new Phaser.Sprite(this.game, 610, 60, 'pared');
+    techo = new Phaser.Sprite(this.game, 80, 0, 'techo');
+    pared1 = new Phaser.Sprite(this.game, 131, 55, 'pared');
+    pared2 = new Phaser.Sprite(this.game, 612, 55, 'pared');
     this.game.world.addChild(techo);
     this.game.world.addChild(pared1);
     this.game.world.addChild(pared2);
 
     //Ladrillos
     var brickPos= new Par(350,100);
-    ladrillo=new Destroyable(this.game, brickPos, 'techo', 'ee', 1);
+    ladrillo=new Destroyable(this.game, brickPos, 'ladrillo', 'ee', 1);
     this.game.world.addChild(ladrillo);
 
     //Cursores
@@ -51,8 +49,8 @@ var PlayScene =
     techo.scale.setTo(0.8,0.2);
     pared1.scale.setTo(0.2,0.8);
     pared2.scale.setTo(0.2,0.8);
-    ladrillo.scale.setTo(0.1,0.25);
-   
+    ladrillo.scale.setTo(0.15,0.2);
+    pared1.visible=pared2.visible=techo.visible=false;
 
     //Motor físico de Phaser
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -69,9 +67,9 @@ var PlayScene =
     player.body.immovable = true;
     ladrillo.body.immovable = true;
     
+    //Físicas de la pelota
     ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y);
-    ball.body.bounce.setTo(1, 1);
-    ball.body.collideWorldBounds = true;
+    ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
   },
   
   //Función Update
@@ -84,7 +82,7 @@ var PlayScene =
     this.game.physics.arcade.overlap(ball, player, collisionHandler, null, this);
     this.game.physics.arcade.overlap(ball, ladrillo, collisionHandler, null, this);
 
-    takeInput();
+    player.takeInput();
   },
 };
 
@@ -92,32 +90,15 @@ module.exports = PlayScene;
 
 
 //FUNCIONES AUXILIARES
-//Reocoge el input de usuario
-var takeInput = function()
-{
-  if (cursors.left.isDown && player.x > 170)
-  {
-      player.x-=10;
-  }
-  
-  else if (cursors.right.isDown && player.x < 525)
-  {
-      player.x+=10;
-  }
-}
-
+//Se encarga de las colisiones
 var collisionHandler = function(obj1, obj2)
 {
-    if(obj1==ball || obj2==ball)
-    {
-        this.game.physics.arcade.collide(techo, ball);
-        this.game.physics.arcade.collide(pared1, ball);
-        this.game.physics.arcade.collide(pared2, ball);
-        this.game.physics.arcade.collide(player, ball);
-        this.game.physics.arcade.collide(ladrillo, ball);
-        if(obj1==ladrillo || obj2==ladrillo)
-             ladrillo.takeDamage();
-    }
+     this.game.physics.arcade.collide(obj1, obj2);
+     //La pelota rebota en algo
+     if(Object.getPrototypeOf(obj1).hasOwnProperty('bounce'))
+        obj1.bounce(obj2);
+     else if (Object.getPrototypeOf(obj2).hasOwnProperty('bounce'))
+        obj2.bounce(obj1);
 }
 
 
@@ -185,10 +166,12 @@ function Movable(game, position, sprite, sound, lives, velocity)
 {
     Destroyable.apply(this, [game, position, sprite, sound, lives]);
     this._velocity = velocity;
+
 }
 
 Movable.prototype = Object.create(Destroyable.prototype);
 Movable.prototype.constructor = Movable;
+
 
 //Funciones de moviles
 Movable.prototype.setVelocity = function(velocity) //Cambia la velocidad
@@ -200,7 +183,7 @@ Movable.prototype.setVelocity = function(velocity) //Cambia la velocidad
 Movable.prototype.update = function() //Para la DeadZone
 {
     if(this.y>this.game.height - 20)
-        this.destroy();
+        this.takeDamage();
 }
 
 
@@ -231,9 +214,17 @@ Player.prototype = Object.create(Movable.prototype);
 Player.prototype.constructor = Player;
 
 //Funciones de jugador
-Player.prototype.readInput = function() //Mueve el jugador a la izquierda
+Player.prototype.takeInput = function() //Mueve el jugador a la izquierda
 {
-    //Comprobación de cursores de Phaser
+    if (cursors.left.isDown && this.x > 170)
+    {
+        this.x-=10;
+    }
+    
+    else if (cursors.right.isDown && this.x < 525)
+    {
+        this.x+=10;
+    }
 }
 
 Player.prototype.shoot = function() //Dispara una bala
@@ -252,9 +243,28 @@ Ball.prototype = Object.create(Movable.prototype);
 Ball.prototype.constructor = Ball;
 
 //Funciones de pelota
-Ball.prototype.bounce = function() //Rebota 
+Ball.prototype.bounce = function(obj) //Rebota en un objeto "obj2"
 {
-  
+    //Ladrillos
+    if(obj.constructor === Destroyable)
+       obj.takeDamage();
+    //Jugador
+    else if(Object.getPrototypeOf(obj).hasOwnProperty('shoot'))
+    {
+        //Cambio ligero de dirección
+        var angulo = this.game.rnd.integerInRange(-20, 20);
+        if(this.body.velocity.y + angulo > 0)
+        this.body.velocity.y += angulo;
+        if(this.body.velocity.x < 0)
+           this.body.velocity.x -= angulo;
+        else
+          this.body.velocity.x += angulo;
+
+        //Rebote en lado contrario al que se mueve la pelota
+        if(this.x > (obj.x + obj.width/2) && this.body.velocity.x < 0 || this.x < (obj.x +obj.width/2) && this.body.velocity.x > 0)
+            this.body.velocity.x = -this.body.velocity.x;
+        
+    }
 }
 
 /////////////////////////////////////////
