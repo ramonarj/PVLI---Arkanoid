@@ -2,8 +2,7 @@
 
 //Variables
 var player;
-var leftWeapon;
-var rightWeapon;
+var playerWeapon;
 var fondo;
 var cursors;
 var ball;
@@ -18,7 +17,6 @@ var PlayScene =
    //Función Create
   create: function () 
   {
-    
     //Añadimos las variables
 
      //Cursores
@@ -27,49 +25,27 @@ var PlayScene =
     fondo = new Phaser.Image(this.game, 150, 20, 'background');
     this.game.world.addChild(fondo);
    
-    //Armas del jugador
+    //Arma del jugador
      
-    leftWeapon = this.game.add.weapon(30, 'bullet');
+    playerWeapon = this.game.add.weapon(30, 'bullet');
      //  The bullet will be automatically killed when it leaves the world bounds
-     leftWeapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+     playerWeapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+     
+     playerWeapon.bullets.forEach((b) => {
+        b.scale.setTo(3, 3);
+        b.body.updateBounds();
+    }, this);
      
          //  Because our bullet is drawn facing up, we need to offset its rotation:
-         leftWeapon.bulletAngleOffset = 90;
+         playerWeapon.bulletAngleOffset = 90;
      
          //  The speed at which the bullet is fired
-         leftWeapon.bulletSpeed = 400;
+         playerWeapon.bulletSpeed = 600;
      
          //  Speed-up the rate of fire, allowing them to shoot 1 bullet every 60ms
-         leftWeapon.fireRate = 500;
-
-           
+         playerWeapon.fireRate = 500;
 
 
-   
-    rightWeapon = this.game.add.weapon(30, 'bullet');
-     //  The bullet will be automatically killed when it leaves the world bounds
-     rightWeapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
-     
-         //  Because our bullet is drawn facing up, we need to offset its rotation:
-         rightWeapon.bulletAngleOffset = 90;
-     
-         //  The speed at which the bullet is fired
-         rightWeapon.bulletSpeed = 400;
-     
-         //  Speed-up the rate of fire, allowing them to shoot 1 bullet every 60ms
-         rightWeapon.fireRate = 500;
-
-      
-
-    //Jugador
-    var playerPos = new Par(350, 520);
-    var playerVel = new Par(0,0);
-    player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, cursors, leftWeapon, rightWeapon);
-    this.game.world.addChild(player);
-    //Pelota
-    var ballVel = new Par(-200,-200);
-    ball=new Ball(this.game, playerPos, 'ball', '333', 1, ballVel);
-    this.game.world.addChild(ball);
     //Paredes
     techo = new Phaser.Sprite(this.game, 100, 20, 'techo');
     pared1 = new Phaser.Sprite(this.game, 150, 60, 'pared');
@@ -77,6 +53,27 @@ var PlayScene =
     this.game.world.addChild(techo);
     this.game.world.addChild(pared1);
     this.game.world.addChild(pared2);
+
+    techo.scale.setTo(0.8,0.2);
+    pared1.scale.setTo(0.2,0.8);
+    pared2.scale.setTo(0.2,0.8);
+
+
+
+    var leftLimit = 150 + pared1.width; // Position plus width from anchor (default: the texture top left corner)
+    var rightLimit = 610;
+
+    //Jugador
+    var playerPos = new Par(350, 520);
+    var playerVel = new Par(0,0);
+    player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, cursors, playerWeapon, leftLimit, rightLimit);
+    this.game.world.addChild(player);
+
+    //Pelota
+    var ballVel = new Par(-200,-200);
+    ball = new Ball(this.game, playerPos, 'ball', '333', 1, ballVel);
+    this.game.world.addChild(ball);
+    
 
     //Ladrillos
     var brickPos = new Par(350,100);
@@ -86,8 +83,8 @@ var PlayScene =
 
    bricks.createMultiple(1);
  
-    ladrillo = new Destroyable(this.game, brickPos, 'techo', 'ee', 1);
-    ladrillo2 = new Destroyable(this.game, new Par(390,100), 'techo', 'ee', 1);
+    ladrillo = new Destroyable(this.game, brickPos, 'techo', 'ee', 2);
+    ladrillo2 = new Destroyable(this.game, new Par(400,150), 'techo', 'ee', 1);
 
     bricks.enableBody = true;
     bricks.physicsBodyType = Phaser.Physics.ARCADE;
@@ -106,9 +103,7 @@ var PlayScene =
     player.scale.setTo(2.5, 2.5);
     ball.scale.setTo(2,2);
     fondo.scale.setTo(2.5,2.5);
-    techo.scale.setTo(0.8,0.2);
-    pared1.scale.setTo(0.2,0.8);
-    pared2.scale.setTo(0.2,0.8);
+  
     ladrillo.scale.setTo(0.1,0.25);
     ladrillo2.scale.setTo(0.1,0.25);
    
@@ -143,8 +138,8 @@ var PlayScene =
     this.game.physics.arcade.overlap(ball, player, collisionHandler, null, this);
     this.game.physics.arcade.overlap(ball, ladrillo, collisionHandler, null, this);
 
-    this.game.physics.arcade.overlap(rightWeapon.bullets, bricks, bulletCollision, null, this);
-    this.game.physics.arcade.overlap(leftWeapon.bullets, bricks, bulletCollision, null, this);
+    //Bullet collision with blocks
+    this.game.physics.arcade.overlap(playerWeapon.bullets, bricks, bulletCollision, null, this);
 
     
 
@@ -279,7 +274,7 @@ Enemy.prototype.pathfinding = function() //Se mueve con "pathfinding"
 
 /////////////////////////////////////////
 //2.2.1.2.CLASE JUGADOR 
-function Player(game, position, sprite, sound, lives, velocity, cursors, leftWeapon, rightWeapon)
+function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     this._powerUpActual=0;
@@ -290,9 +285,11 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, leftWea
    this.fireButton = game.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
 
     //  Tell the Weapon to track the 'player'  offset by 14px horizontally, 0 vertically
-    leftWeapon.trackSprite(this, -this.width, 0);
-         //  Tell the Weapon to track the 'player' offset by 14px horizontally, 0 vertically
-     rightWeapon.trackSprite(this, this.width, 0);
+    playerWeapon.trackSprite(this, 0, 0);
+
+
+    this.leftLimit = leftLimit;
+    this.rightLimit = rightLimit;
 }
 
 Player.prototype = Object.create(Movable.prototype);
@@ -302,20 +299,19 @@ Player.prototype.constructor = Player;
 Player.prototype.readInput = function() //Mueve el jugador a la izquierda
 {
     //Comprobación de cursores de Phaser
-    if (cursors.left.isDown && this.x > 170)
+    if (cursors.left.isDown && this.x >  this.leftLimit + this.offsetX)
     {
-        this.x-=5;
+        this.x -= 5;
     }
     
-    else if (cursors.right.isDown && this.x < 525)
+    else if (cursors.right.isDown && this.x < this.rightLimit - this.offsetX)
     {
-        this.x+=5;
+        this.x += 5;
     }
 
     if(this.fireButton.isDown)
     {
-        leftWeapon.fire();
-        rightWeapon.fire();
+        playerWeapon.fire();
     }
 }
 
