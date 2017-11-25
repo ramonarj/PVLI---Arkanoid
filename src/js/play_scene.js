@@ -4,78 +4,73 @@ var player;
 var fondo;
 var cursors;
 var ball;
-var pared1, pared2, techo;
 var bricks;
 var playerWeapon;
 var leftLimit, rightLimit;
+var walls;
 var PlayScene =
  {
    //Función Create
   create: function () 
   {
+    //Sistema de físicas
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    //Variables
-    var playerPos = new Par(350, 520);
+
     //Añadimos las variables
-    //Fondo
+    //1.Fondo
     fondo = new Phaser.Image(this.game, 150, 20, 'background');
     fondo.scale.setTo(2.5,2.5);
     this.game.world.addChild(fondo);
 
-    //Pelota
+    //2.Pelota
+    var playerPos = new Par(350, 520);
     var ballVel = new Par(-200,-200);
-    ball=new Ball(this.game, playerPos, 'ball', '333', 1, ballVel);
+    ball=new Ball(this.game, playerPos, 'ball', 'sound', 1, ballVel);
     ball.scale.setTo(2,2);
     this.game.world.addChild(ball);
 
-    //Paredes
-    techo = new Phaser.Sprite(this.game, 80, 0, 'techo');
-    pared1 = new Phaser.Sprite(this.game, 131, 35, 'pared');
-    pared2 = new Phaser.Sprite(this.game, 612, 35, 'pared');
-    techo.scale.setTo(0.8,0.2);
+    //3.Paredes y techo (grupo walls)
+    walls = this.game.add.physicsGroup();
+
+    var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
+    var pared1 = new Phaser.Sprite(this.game, 131, 35, 'pared');
+    var pared2 = new Phaser.Sprite(this.game, 612, 35, 'pared');
+    techo.scale.setTo(0.8,0.2); //Escalamos
     pared1.scale.setTo(0.2,0.8);
     pared2.scale.setTo(0.2,0.8);
-    this.game.world.addChild(techo);
-    this.game.world.addChild(pared1);
-    this.game.world.addChild(pared2);
+    walls.add(techo);
+    walls.add(pared1);
+    walls.add(pared2);
+    walls.setAll('body.immovable', true);
+    walls.setAll('visible', false);
 
-    //Límites de la pantalla
+    //4.Límites de la pantalla
     leftLimit = pared1.x + pared1.width; 
     rightLimit = pared2.x;
 
-    //Ladrillos
-    bricks = this.game.add.group();
+    //5.Ladrillos (grupo bricks)
+    bricks = this.game.add.physicsGroup();
     bricks.classType = Destroyable;
-
-
-    //bricks.createMultiple(20);
     
     for(var i = leftLimit + 15; i < rightLimit - 30; i+=60)
     {
-       
         for(var j = 100; j < 250; j+=30)
         {
             var pos= new Par(i, j);
             
-            var lad = new Destroyable(this.game, pos, 'ladrillo', 'ee', 1); 
+            var lad = new Destroyable(this.game, pos, 'ladrillo', 'sound', 1); 
             lad.scale.setTo(0.15,0.2);
-            this.game.physics.enable([lad,ball], Phaser.Physics.ARCADE);
-            lad.body.immovable = true;
-
-            this.game.world.addChild(lad);
+           
             bricks.add(lad);
         }
     }
+    bricks.setAll('body.immovable', true);
 
-
-    //Cursores
+    //6.Cursores
     cursors = this.game.input.keyboard.createCursorKeys();
 
-    pared1.visible=pared2.visible=techo.visible=false;
-
-    
-    //Balas
-    playerWeapon = new Movable(this.game, playerPos, 'bullet', 'eee',3, playerVel);
+    //7.Balas
+    playerWeapon = new Movable(this.game, playerPos, 'bullet', 'sound',3, playerVel);
     playerWeapon = this.game.add.weapon(30, 'bullet');
     playerWeapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
     playerWeapon.bullets.forEach((b) => {
@@ -91,44 +86,33 @@ var PlayScene =
     player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, cursors, playerWeapon, leftLimit, rightLimit);
     player.scale.setTo(2.5, 2.5);
     this.game.world.addChild(player);
-
-    
-    //Motor físico de Phaser
-   
-    //Colisiones
-    this.game.physics.enable([techo,ball], Phaser.Physics.ARCADE);
-    this.game.physics.enable([pared1,ball], Phaser.Physics.ARCADE);
-    this.game.physics.enable([pared2,ball], Phaser.Physics.ARCADE);
     this.game.physics.enable([player,ball], Phaser.Physics.ARCADE);
-
-    //Objetos que no se mueven
-    techo.body.immovable = true;
-    pared1.body.immovable = true;
-    pared2.body.immovable = true;
     player.body.immovable = true;
-    
-    //Físicas de la pelota
-    ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y);
+
+    //Cosas de la pelota
+    ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y); //Físicas de la pelota
     ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
   },
   
   //Función Update
   update: function()
   {
-      //Comprobamos todas las colisiones
-    this.game.physics.arcade.overlap(ball, pared1, collisionHandler, null, this);
-    this.game.physics.arcade.overlap(ball, pared2, collisionHandler, null, this);
-    this.game.physics.arcade.overlap(ball, techo, collisionHandler, null, this);
-    this.game.physics.arcade.overlap(ball, player, collisionHandler, null, this);
-    this.game.physics.arcade.overlap(playerWeapon.bullets, bricks, bulletCollision, null, this);
-    this.game.physics.arcade.overlap(ball, bricks, collisionHandler, null, this);
+    //Colisiones de la pelota
+    this.game.physics.arcade.overlap(ball, walls, ballCollisions, null, this);
+    this.game.physics.arcade.overlap(ball, bricks, ballCollisions, null, this);
+    this.game.physics.arcade.overlap(ball, player, ballCollisions, null, this);
 
+    //Colisiones de la bala
+    this.game.physics.arcade.overlap(playerWeapon.bullets, walls, bulletCollisions, null, this);
+    this.game.physics.arcade.overlap(playerWeapon.bullets, bricks, bulletCollisions, null, this);
   },
 };
 
-var bulletCollision = function(bullet, brick)
+var bulletCollisions = function(bullet, obj)
 {
-    brick.takeDamage();
+    if(Object.getPrototypeOf(obj).hasOwnProperty('takeDamage'))
+         obj.takeDamage();
+
     bullet.kill();
 }
 
@@ -137,15 +121,11 @@ module.exports = PlayScene;
 
 //FUNCIONES AUXILIARES
 //Se encarga de las colisiones
-var collisionHandler = function(obj1, obj2)
+var ballCollisions = function(ball, obj)
 {
-     this.game.physics.arcade.collide(obj1, obj2);
+     this.game.physics.arcade.collide(ball, obj);
      //La pelota rebota en algo
-     if(Object.getPrototypeOf(obj1).hasOwnProperty('bounce'))
-        obj1.bounce(obj2);
-     else if (Object.getPrototypeOf(obj2).hasOwnProperty('bounce'))
-        obj2.bounce(obj1);
-        
+     ball.bounce(obj);
 }
 
 
@@ -319,7 +299,7 @@ Ball.prototype.bounce = function(obj) //Rebota en un objeto "obj2"
     if(obj.constructor === Destroyable)
        obj.takeDamage();
     //Jugador
-    else if(Object.getPrototypeOf(obj).hasOwnProperty('shoot'))
+    else if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
     {
         //Cambio ligero de dirección
         var angulo = this.game.rnd.integerInRange(-20, 20);
@@ -331,9 +311,8 @@ Ball.prototype.bounce = function(obj) //Rebota en un objeto "obj2"
           this.body.velocity.x += angulo;
 
         //Rebote en lado contrario al que se mueve la pelota
-        if(this.x > (obj.getAnchor(0)) && this.body.velocity.x < 0 || this.x < (obj.getAnchor(0)) && this.body.velocity.x > 0)
+        if((this.x > obj.x && this.body.velocity.x < 0) || (this.x < obj.x && this.body.velocity.x > 0))
             this.body.velocity.x = -this.body.velocity.x;
-        
     }
 }
 
