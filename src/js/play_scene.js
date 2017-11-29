@@ -8,9 +8,12 @@ var bricks;
 var playerWeapon;
 var leftLimit, rightLimit;
 var walls;
+var powerUps;
+var powerUp;
+var NUM_POWERUPS = 7;
 var PlayScene =
  {
-   //Función Create
+   //FUNCIÓN CREATE
   create: function () 
   {
     //Sistema de físicas
@@ -89,43 +92,106 @@ var PlayScene =
     this.game.physics.enable([player,ball], Phaser.Physics.ARCADE);
     player.body.immovable = true;
 
+    //PowerUps
+    powerUps = this.game.add.physicsGroup();
+    powerUps.classType = PowerUp;
+    
     //Cosas de la pelota
     ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y); //Físicas de la pelota
     ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
   },
   
-  //Función Update
+  //FUNCIÓN UPDATE
   update: function()
   {
     //Colisiones de la pelota
-    this.game.physics.arcade.overlap(ball, walls, ballCollisions, null, this);
-    this.game.physics.arcade.overlap(ball, bricks, ballCollisions, null, this);
-    this.game.physics.arcade.overlap(ball, player, ballCollisions, null, this);
+    this.game.physics.arcade.overlap(ball, walls, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(ball, bricks, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(ball, player, this.ballCollisions, null, this);
 
     //Colisiones de la bala
-    this.game.physics.arcade.overlap(playerWeapon.bullets, walls, bulletCollisions, null, this);
-    this.game.physics.arcade.overlap(playerWeapon.bullets, bricks, bulletCollisions, null, this);
+    this.game.physics.arcade.overlap(playerWeapon.bullets, walls, this.bulletCollisions, null, this);
+    this.game.physics.arcade.overlap(playerWeapon.bullets, bricks, this.bulletCollisions, null, this);
+
+    //Colisiones del jugador
+    this.game.physics.arcade.overlap(player, powerUps, takePowerUp, null, this);
+
   },
-};
 
-var bulletCollisions = function(bullet, obj)
-{
+  //FUNCIONES AUXILIARES
+  //Crea un powerUp
+  createPowerUp: function(brick, nPowerUp)
+  {
+    var brickPosition = new Par(brick.x, brick.y)
+    var powerUp = new PowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSund', 1,new Par(0,2), nPowerUp);
+    
+     //game.world.addChild(powerUp);
+     powerUps.add(powerUp);
+     powerUp.scale.setTo(2.5, 2.5);
+     this.game.physics.enable([powerUp, player], Phaser.Physics.ARCADE);
+     powerUp.body.immovable = true;
+     powerUp.body.velocity.y = 2;
+  },
+
+  //Dropea un powerUp
+  dropPowerUp: function(brick)
+  {
+    var num = Math.random();
+    var drop = false;
+
+    var dropChance = 1/3;
+    if(num<dropChance)
+    drop = true;
+
+    if(drop)
+    {
+    // this. num = Math.floor(Math.random() * (max - min)) + min;
+    drop = false;
+    // Seleccionamos así una powerUp random de entre los que hay
+   //this.num = Math.floor(Math.random() * (NUM_POWERUPS + 1 - 1)) + 1;
+  
+   //this.createPowerUp(this.player.x, this.player.y, this.num);
+   this.createPowerUp(brick, 1);
+    }
+  },
+
+  //Detecta las colisones con las balas
+  bulletCollisions: function(bullet,obj)
+  {
     if(Object.getPrototypeOf(obj).hasOwnProperty('takeDamage'))
-         obj.takeDamage();
+    obj.takeDamage();
 
-    bullet.kill();
-}
+   if(obj.constructor === Destroyable && obj.getLives() <= 0)
+   this.dropPowerUp(obj);
+
+   bullet.kill();
+  },
+
+  //Detecta las colisones con la pelota
+  ballCollisions: function(ball, obj)
+  {
+    this.game.physics.arcade.collide(ball, obj);
+    
+        if(obj.constructor === Destroyable)
+        {
+           obj.takeDamage();
+    
+           if(obj.getLives() <= 0)
+            this.dropPowerUp(obj); 
+        }
+    
+         //La pelota rebota en algo
+         ball.bounce(obj);
+  }
+};
 
 module.exports = PlayScene;
 
 
-//FUNCIONES AUXILIARES
-//Se encarga de las colisiones
-var ballCollisions = function(ball, obj)
+
+var takePowerUp = function(player, powerUps)
 {
-     this.game.physics.arcade.collide(ball, obj);
-     //La pelota rebota en algo
-     ball.bounce(obj);
+powerUps.destroy();
 }
 
 
@@ -185,6 +251,11 @@ Destroyable.prototype.takeDamage = function () //Quita una vida
     {
         this.destroy();
     }
+}
+
+Destroyable.prototype.getLives = function()
+{
+    return this._lives;
 }
 
 /////////////////////////////////////////
@@ -295,11 +366,8 @@ Ball.prototype.constructor = Ball;
 //Funciones de pelota
 Ball.prototype.bounce = function(obj) //Rebota en un objeto "obj2"
 {
-    //Ladrillos
-    if(obj.constructor === Destroyable)
-       obj.takeDamage();
     //Jugador
-    else if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
+     if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
     {
         //Cambio ligero de dirección
         var angulo = this.game.rnd.integerInRange(-20, 20);
@@ -326,3 +394,10 @@ function PowerUp(game, position, sprite, sound, lives, velocity, powerUpNo)
 
 PowerUp.prototype = Object.create(Movable.prototype);
 PowerUp.prototype.constructor = PowerUp;
+
+PowerUp.prototype.update = function()
+{
+    //this.x+=this.body.velocity.x;
+    this.y+=this.body.velocity.y;
+
+}

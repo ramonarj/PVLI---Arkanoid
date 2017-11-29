@@ -38,6 +38,7 @@ var PreloaderScene =
     this.game.load.image('techo', 'images/techo.png');
     this.game.load.image('ladrillo', 'images/ladrillo.png');
     this.game.load.image('bullet', 'images/bullet pair.png');
+    this.game.load.image('powerUp1', 'images/powerUp1.png');
   },
 
   create: function () 
