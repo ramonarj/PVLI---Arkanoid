@@ -14,6 +14,10 @@ var NUM_POWERUPS = 7;
 var PlayScene =
  {
    //FUNCIÓN CREATE
+
+var PlayScene =
+ {
+   //Función Create
   create: function () 
   {
     //Sistema de físicas
@@ -92,15 +96,18 @@ var PlayScene =
     this.game.physics.enable([player,ball], Phaser.Physics.ARCADE);
     player.body.immovable = true;
 
+
     //PowerUps
     powerUps = this.game.add.physicsGroup();
     powerUps.classType = PowerUp;
     
+
     //Cosas de la pelota
     ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y); //Físicas de la pelota
     ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
   },
   
+
   //FUNCIÓN UPDATE
   update: function()
   {
@@ -185,13 +192,16 @@ var PlayScene =
   }
 };
 
+
 module.exports = PlayScene;
+
 
 
 
 var takePowerUp = function(player, powerUps)
 {
 powerUps.destroy();
+
 }
 
 
@@ -366,8 +376,10 @@ Ball.prototype.constructor = Ball;
 //Funciones de pelota
 Ball.prototype.bounce = function(obj) //Rebota en un objeto "obj2"
 {
+
     //Jugador
      if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
+
     {
         //Cambio ligero de dirección
         var angulo = this.game.rnd.integerInRange(-20, 20);
@@ -393,6 +405,7 @@ function PowerUp(game, position, sprite, sound, lives, velocity, powerUpNo)
 }
 
 PowerUp.prototype = Object.create(Movable.prototype);
+
 PowerUp.prototype.constructor = PowerUp;
 
 PowerUp.prototype.update = function()
@@ -401,3 +414,4 @@ PowerUp.prototype.update = function()
     this.y+=this.body.velocity.y;
 
 }
+
