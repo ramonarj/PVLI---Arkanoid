@@ -16,7 +16,7 @@ var PlayScene =
  {
      preload: function ()
      {
-         this.game.load.baseURL = "https://ramonarj.github.io/PVLI---Arkanoid/src/";
+         this.game.load.baseURL = "https://ramonarj.github.io/PVLI---Arkanoid/src/images";
 
          this.game.load.crossOrigin = 'anonymous';
      },
