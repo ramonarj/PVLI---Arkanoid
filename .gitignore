@@ -4,10 +4,8 @@ node_modules
 dist
 .publish
 gulp.config.json
-<<<<<<< HEAD
-=======
 package.json
 gulpfile.js
 .jshintrc
->>>>>>> master
+
 
