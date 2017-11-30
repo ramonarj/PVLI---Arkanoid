@@ -199,8 +199,6 @@ var PlayScene =
 };
 
 
-module.exports = PlayScene;
-
 
 
 //////////////////////////////////////
