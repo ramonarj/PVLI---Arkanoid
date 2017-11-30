@@ -131,7 +131,7 @@ var PlayScene =
     this.game.physics.arcade.overlap(playerWeapon.bullets, bricks, this.bulletCollisions, null, this);
 
     //Colisiones del jugador
-    this.game.physics.arcade.overlap(player, powerUps, takePowerUp, null, this);
+    this.game.physics.arcade.overlap(player, powerUps, this.takePowerUp, null, this);
 
   },
 
@@ -172,6 +172,11 @@ var PlayScene =
     }
   },
 
+  takePowerUp: function(player, powerUp)
+  {
+    powerUp.destroy();
+  },
+
   //Detecta las colisones con las balas
   bulletCollisions: function(bullet,obj)
   {
@@ -196,12 +201,6 @@ var PlayScene =
 
 module.exports = PlayScene;
 
-
-var takePowerUp = function(player, powerUps)
-{
-  powerUps.destroy();
-
-}
 
 
 //////////////////////////////////////
