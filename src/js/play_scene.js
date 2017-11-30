@@ -11,6 +11,10 @@ var walls;
 var powerUps;
 var powerUp;
 var NUM_POWERUPS = 7;
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 var PlayScene =
  {
    //Función Create
@@ -59,11 +63,24 @@ var PlayScene =
     {
         for(var j = 100; j < 250; j+=30)
         {
+            //Posición
             var pos= new Par(i, j);
-            
-            var lad = new Destroyable(this.game, pos, 'ladrillo', 'sound', 1); 
-            lad.scale.setTo(0.15,0.2);
-           
+
+            //Tipo de ladrillo
+            var lad;
+            var rnd = Math.random();
+            var silverChance= 1/4;
+            var goldChance = 1/8;
+
+            if(rnd<goldChance)
+              lad = new SoundSource(this.game, pos, 'ladrilloOro', 'sound'); 
+            else if (rnd<(goldChance +silverChance))
+              lad = new Destroyable(this.game, pos, 'ladrilloPlata', 'sound', 3); 
+            else
+              lad = new Destroyable(this.game, pos, 'ladrilloBueno', 'sound', 1); 
+
+            //Lo escalamos y añadimos al grupo
+            lad.scale.setTo(3.5,3.5);
             bricks.add(lad);
         }
     }
@@ -92,16 +109,25 @@ var PlayScene =
     this.game.physics.enable([player,ball], Phaser.Physics.ARCADE);
     player.body.immovable = true;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     //PowerUps
     powerUps = this.game.add.physicsGroup();
     powerUps.classType = PowerUp;
     
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     //Cosas de la pelota
     ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y); //Físicas de la pelota
     ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
   },
   
-  //Función Update
+
+  //FUNCIÓN UPDATE
   update: function()
   {
     //Colisiones de la pelota
@@ -116,6 +142,7 @@ var PlayScene =
     //Colisiones del jugador
     this.game.physics.arcade.overlap(player, powerUps, takePowerUp, null, this);
 
+<<<<<<< HEAD
   },
 
   createPowerUp: function(brick, nPowerUp)
@@ -184,23 +211,84 @@ module.exports = PlayScene;
 /*
 var bulletCollisions = function(bullet, obj)
 {
-    if(Object.getPrototypeOf(obj).hasOwnProperty('takeDamage'))
-         obj.takeDamage();
+=======
+  },
 
+  //FUNCIONES AUXILIARES
+  //Crea un powerUp
+  createPowerUp: function(brick, nPowerUp)
+  {
+    var brickPosition = new Par(brick.x, brick.y)
+    var powerUp = new PowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSund', 1,new Par(0,2), nPowerUp);
+    
+     //game.world.addChild(powerUp);
+     powerUps.add(powerUp);
+     powerUp.scale.setTo(2.5, 2.5);
+     this.game.physics.enable([powerUp, player], Phaser.Physics.ARCADE);
+     powerUp.body.immovable = true;
+     powerUp.body.velocity.y = 2;
+  },
+
+  //Dropea un powerUp
+  dropPowerUp: function(brick)
+  {
+    var num = Math.random();
+    var drop = false;
+
+    var dropChance = 1/3;
+    if(num<dropChance)
+    drop = true;
+
+    if(drop)
+    {
+    // this. num = Math.floor(Math.random() * (max - min)) + min;
+    drop = false;
+    // Seleccionamos así una powerUp random de entre los que hay
+   //this.num = Math.floor(Math.random() * (NUM_POWERUPS + 1 - 1)) + 1;
+  
+   //this.createPowerUp(this.player.x, this.player.y, this.num);
+   this.createPowerUp(brick, 1);
+    }
+  },
+
+  //Detecta las colisones con las balas
+  bulletCollisions: function(bullet,obj)
+  {
+    //Si es un destruible, le quita vida
+>>>>>>> master
+    if(Object.getPrototypeOf(obj).hasOwnProperty('takeDamage'))
+       obj.takeDamage(this);
+
+
+   bullet.kill();
+  },
+
+  //Detecta las colisones con la pelota
+  ballCollisions: function(ball, obj)
+  {
+    this.game.physics.arcade.collide(ball, obj);
+      
+    //La pelota rebota en algo
+     ball.bounce(obj, this);
+  }
+};
+
+<<<<<<< HEAD
     if(obj.constructor === Destroyable && obj.getLives() <= 0)
     this.dropPowerUp(obj);
 
         
     bullet.kill();
 }
+=======
+>>>>>>> master
 
 
 
 
-//FUNCIONES AUXILIARES
-//Se encarga de las colisiones
-var ballCollisions = function(ball, obj)
+var takePowerUp = function(player, powerUps)
 {
+<<<<<<< HEAD
      this.game.physics.arcade.collide(ball, obj);
 
     if(obj.constructor === Destroyable)
@@ -256,6 +344,10 @@ function createPowerUp(game, brick, nPowerUp)
 var takePowerUp = function(player, powerUps)
 {
 powerUps.destroy();
+=======
+  powerUps.destroy();
+
+>>>>>>> master
 }
 
 
@@ -308,11 +400,15 @@ Destroyable.prototype = Object.create(SoundSource.prototype);
 Destroyable.prototype.constructor = Destroyable;
 
 //Funciones de destruible
-Destroyable.prototype.takeDamage = function () //Quita una vida
+Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
 {
     this._lives--;
     if(this._lives <=0)
     {
+        //Si es un ladrillo, puede dropear power-ups
+        if(this.constructor === Destroyable)
+            playscene.dropPowerUp(this);
+        //Se destruye
         this.destroy();
     }
 }
@@ -428,10 +524,16 @@ Ball.prototype = Object.create(Movable.prototype);
 Ball.prototype.constructor = Ball;
 
 //Funciones de pelota
-Ball.prototype.bounce = function(obj) //Rebota en un objeto "obj2"
+Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 {
+<<<<<<< HEAD
     //Jugador
      if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
+=======
+
+    //Jugador (rebota)
+    if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
+>>>>>>> master
     {
         //Cambio ligero de dirección
         var angulo = this.game.rnd.integerInRange(-20, 20);
@@ -446,6 +548,10 @@ Ball.prototype.bounce = function(obj) //Rebota en un objeto "obj2"
         if((this.x > obj.x && this.body.velocity.x < 0) || (this.x < obj.x && this.body.velocity.x > 0))
             this.body.velocity.x = -this.body.velocity.x;
     }
+
+    //Ladrillos (les quita vida)
+    else if(obj.constructor === Destroyable)
+        obj.takeDamage(playscene);
 }
 
 /////////////////////////////////////////
@@ -457,6 +563,10 @@ function PowerUp(game, position, sprite, sound, lives, velocity, powerUpNo)
 }
 
 PowerUp.prototype = Object.create(Movable.prototype);
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 PowerUp.prototype.constructor = PowerUp;
 
 PowerUp.prototype.update = function()
@@ -464,4 +574,9 @@ PowerUp.prototype.update = function()
     //this.x+=this.body.velocity.x;
     this.y+=this.body.velocity.y;
 
+<<<<<<< HEAD
 }
+=======
+}
+
+>>>>>>> master
