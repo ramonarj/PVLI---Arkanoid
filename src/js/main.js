@@ -22,6 +22,9 @@ var PreloaderScene =
 {
   preload: function () 
   {
+    this.game.load.baseURL = "https://ramonarj.github.io/PVLI---Arkanoid/src/";
+    
+     this.game.load.crossOrigin = 'anonymous';
     //Fondo
     this.game.stage.backgroundColor = '#000000';
     this.loadingBar = this.game.add.sprite(0, 240, 'preloader_bar');

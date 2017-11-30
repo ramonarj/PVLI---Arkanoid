@@ -14,12 +14,6 @@ var NUM_POWERUPS = 7;
 
 var PlayScene =
  {
-     preload: function ()
-     {
-         this.game.load.baseURL = "https://ramonarj.github.io/PVLI---Arkanoid/src/";
-
-         this.game.load.crossOrigin = 'anonymous';
-     },
    //Función Create
   create: function () 
   {
