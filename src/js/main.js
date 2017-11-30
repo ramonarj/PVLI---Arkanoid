@@ -1,6 +1,6 @@
 'use strict';
 
-
+var PlayScene = require('./play_scene.js');
 
 var BootScene = 
 {

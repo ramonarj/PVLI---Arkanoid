@@ -199,7 +199,7 @@ var PlayScene =
 };
 
 
-
+module.exports = PlayScene;
 
 //////////////////////////////////////
 //////ARQUITECTURA DE HERENCIA////////
