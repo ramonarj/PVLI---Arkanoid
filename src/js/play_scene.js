@@ -28,8 +28,9 @@ var PlayScene =
 
     //2.Pelota
     var playerPos = new Par(350, 520);
-    var ballVel = new Par(-200,-200);
-    ball=new Ball(this.game, playerPos, 'ball', 'sound', 1, ballVel);
+    var ballPos = new Par(350, 507);
+    var ballVel = new Par(200,-200);
+    ball=new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
     ball.scale.setTo(2,2);
     this.game.world.addChild(ball);
 
@@ -98,9 +99,11 @@ var PlayScene =
     playerWeapon.bulletSpeed = 600; //Velocidad
     playerWeapon.fireRate = 500; //FireRate
 
+
+
     //Jugador
     var playerVel = new Par(0,0);
-    player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, cursors, playerWeapon, leftLimit, rightLimit);
+    player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, cursors, playerWeapon, leftLimit, rightLimit, ball);
     player.scale.setTo(2.5, 2.5);
     this.game.world.addChild(player);
     this.game.physics.enable([player,ball], Phaser.Physics.ARCADE);
@@ -110,11 +113,11 @@ var PlayScene =
     //PowerUps
     powerUps = this.game.add.physicsGroup();
     powerUps.classType = PowerUp;
-    
 
     //Cosas de la pelota
     ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y); //Físicas de la pelota
     ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
+    ball.attach();
   },
   
 
@@ -132,7 +135,7 @@ var PlayScene =
 
     //Colisiones del jugador
     this.game.physics.arcade.overlap(player, powerUps, takePowerUp, null, this);
-
+    //console.log("{" + ball._velocity._x + ", " + ball._velocity._y+"}" );
   },
 
   //FUNCIONES AUXILIARES
@@ -186,10 +189,13 @@ var PlayScene =
   //Detecta las colisones con la pelota
   ballCollisions: function(ball, obj)
   {
-    this.game.physics.arcade.collide(ball, obj);
-      
-    //La pelota rebota en algo
-     ball.bounce(obj, this);
+      if(!ball.isAttached())
+      {
+        this.game.physics.arcade.collide(ball, obj);
+        
+       //La pelota rebota en algo
+       ball.bounce(obj, this);
+      }
   }
 };
 
@@ -261,6 +267,7 @@ Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
         //Si es un ladrillo, puede dropear power-ups
         if(this.constructor === Destroyable)
             playscene.dropPowerUp(this);
+            
         //Se destruye
         this.destroy();
     }
@@ -315,7 +322,7 @@ Enemy.prototype.pathfinding = function() //Se mueve con "pathfinding"
 
 /////////////////////////////////////////
 //2.2.1.2.CLASE JUGADOR 
-function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit)
+function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit, ball)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     
@@ -328,6 +335,7 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
     this._playerWeapon.trackSprite(this, 0, 0);
     this._leftLimit = leftLimit;
     this._rightLimit = rightLimit;
+    this._ball = ball;
 }
 
 Player.prototype = Object.create(Movable.prototype);
@@ -336,6 +344,7 @@ Player.prototype.constructor = Player;
 //Funciones de jugador
 Player.prototype.readInput = function() //Mueve el jugador a la izquierda
 {
+    var delta = this.x;
     //Comprobación de cursores de Phaser
     if (this._cursors.left.isDown && this.x >  this._leftLimit + this.offsetX)
     {
@@ -350,7 +359,14 @@ Player.prototype.readInput = function() //Mueve el jugador a la izquierda
     if(this._fireButton.isDown)
     {
         this._playerWeapon.fire();
+        if(this._ball.isAttached())
+           this._ball.throw();
     }
+
+    //La pelota es hija por programación
+    delta-=this.x;
+    if(this._ball.isAttached())
+        this._ball.x-=delta;
 }
 
 Player.prototype.update = function() //Update
@@ -371,6 +387,7 @@ Player.prototype.getAnchor = function (i)
 function Ball(game, position, sprite, sound, lives, velocity)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
+    this._attached = true; 
 }
 
 Ball.prototype = Object.create(Movable.prototype);
@@ -383,6 +400,7 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
     //Jugador (rebota)
     if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
     {
+      
         //Cambio ligero de dirección
         var angulo = this.game.rnd.integerInRange(-20, 20);
         if(this.body.velocity.y + angulo > 0)
@@ -395,11 +413,35 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
         //Rebote en lado contrario al que se mueve la pelota
         if((this.x > obj.x && this.body.velocity.x < 0) || (this.x < obj.x && this.body.velocity.x > 0))
             this.body.velocity.x = -this.body.velocity.x;
+
     }
 
     //Ladrillos (les quita vida)
     else if(obj.constructor === Destroyable)
         obj.takeDamage(playscene);
+
+    //Actualizamos la velocidad
+    this._velocity._x = this.body.velocity.x;
+    this._velocity._y = this.body.velocity.y;
+}
+
+Ball.prototype.isAttached = function()
+{
+    return this._attached;
+}
+
+Ball.prototype.throw = function()
+{
+    this._attached=false;
+    this.body.velocity.x = this._velocity._x;
+    this.body.velocity.y = this._velocity._y;
+}
+
+Ball.prototype.attach= function()
+{
+    this._attached = true;
+    this.body.velocity.x = 0;
+    this.body.velocity.y = 0;
 }
 
 /////////////////////////////////////////
