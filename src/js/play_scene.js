@@ -11,6 +11,7 @@ var walls;
 var powerUps;
 var powerUp;
 var NUM_POWERUPS = 7;
+var AllPowerUps;
 var PlayScene =
  {
    //Función Create
@@ -87,7 +88,7 @@ var PlayScene =
 
     //7.Balas
     playerWeapon = new Movable(this.game, playerPos, 'bullet', 'sound',3, playerVel);
-    playerWeapon = this.game.add.weapon(30, 'bullet');
+    playerWeapon = this.game.add.weapon(8, 'bullet');
     playerWeapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
     playerWeapon.bullets.forEach((b) => {
         b.scale.setTo(3, 3);
@@ -108,6 +109,9 @@ var PlayScene =
     //PowerUps
     powerUps = this.game.add.physicsGroup();
     powerUps.classType = PowerUp;
+
+
+    AllPowerUps = [this.enableShot];
     
     //Cosas de la pelota
     ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y); //Físicas de la pelota
@@ -128,49 +132,14 @@ var PlayScene =
     this.game.physics.arcade.overlap(playerWeapon.bullets, bricks, this.bulletCollisions, null, this);
 
     //Colisiones del jugador
-    this.game.physics.arcade.overlap(player, powerUps, takePowerUp, null, this);
+    this.game.physics.arcade.overlap(player, powerUps, this.takePowerUp, null, this);
 
   },
 
-  //FUNCIONES AUXILIARES
-  //Crea un powerUp
-  createPowerUp: function(brick, nPowerUp)
-  {
-    var brickPosition = new Par(brick.x, brick.y)
-    var powerUp = new PowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSund', 1,new Par(0,2), nPowerUp);
-    
-     //game.world.addChild(powerUp);
-     powerUps.add(powerUp);
-     powerUp.scale.setTo(2.5, 2.5);
-     this.game.physics.enable([powerUp, player], Phaser.Physics.ARCADE);
-     powerUp.body.immovable = true;
-     powerUp.body.velocity.y = 2;
-  },
+  // COLISIONES
 
-  //Dropea un powerUp
-  dropPowerUp: function(brick)
-  {
-    var num = Math.random();
-    var drop = false;
-
-    var dropChance = 1/3;
-    if(num<dropChance)
-    drop = true;
-
-    if(drop)
-    {
-    // this. num = Math.floor(Math.random() * (max - min)) + min;
-    drop = false;
-    // Seleccionamos así una powerUp random de entre los que hay
-   //this.num = Math.floor(Math.random() * (NUM_POWERUPS + 1 - 1)) + 1;
-  
-   //this.createPowerUp(this.player.x, this.player.y, this.num);
-   this.createPowerUp(brick, 1);
-    }
-  },
-
-  //Detecta las colisones con las balas
-  bulletCollisions: function(bullet,obj)
+  // A) Detecta las colisones con las balas
+  bulletCollisions: function(bullet, obj)
   {
     //Si es un destruible, le quita vida
     if(Object.getPrototypeOf(obj).hasOwnProperty('takeDamage'))
@@ -180,25 +149,82 @@ var PlayScene =
    bullet.kill();
   },
 
-  //Detecta las colisones con la pelota
+  // B) Detecta las colisones con la pelota
   ballCollisions: function(ball, obj)
   {
     this.game.physics.arcade.collide(ball, obj);
       
     //La pelota rebota en algo
      ball.bounce(obj, this);
-  }
+  },
+
+  // POWER-UPS
+
+   // A) Crea un Power-Up
+   createPowerUp: function(brick, nPowerUp)
+   {
+     var brickPosition = new Par(brick.x, brick.y)
+     var powerUp = new PowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), nPowerUp);
+ 
+    // powerUp.frame = 0;
+     // this.animations.add('rotate');
+     // this.animations.play('rotate', 30, true);
+ 
+      powerUps.add(powerUp);
+      powerUp.scale.setTo(2.5, 2.5);
+      this.game.physics.enable([powerUp, player], Phaser.Physics.ARCADE);
+      powerUp.body.immovable = true;
+      powerUp.body.velocity.y = 2;
+     
+   },
+ 
+   // B) Dropea un Power-Up según una probabilidad
+   dropPowerUp: function(brick)
+   {
+     var num = Math.random();
+     var drop = false;
+ 
+     var dropChance = 1;
+     if(num<dropChance)
+     drop = true;
+ 
+     if(drop)
+     {
+     // this. num = Math.floor(Math.random() * (max - min)) + min;
+     // Seleccionamos así una powerUp random de entre los que hay
+    //this.num = Math.floor(Math.random() * (NUM_POWERUPS));
+   
+    this.createPowerUp(brick, 0);
+     }
+   },
+ 
+      // C) Recoge un Power-Up y determina su función
+   takePowerUp: function(player, powerUps)
+   {
+      AllPowerUps[powerUps.getPowerUpNum()]();
+     
+       powerUps.destroy();
+   },
+
+    // Power-Ups:
+    // 1) Red:  grants the player the ability to shoot
+   enableShot: function()
+   {
+      return player.enableShot();
+   },
+
+   // Usado para hacer debug
+  render: function() 
+  {
+        // Player debug info
+        this.game.debug.text(player._shotEnabled, 32, 32);
+
+    }
 };
 
 
 module.exports = PlayScene;
 
-
-var takePowerUp = function(player, powerUps)
-{
-  powerUps.destroy();
-
-}
 
 
 //////////////////////////////////////
@@ -325,6 +351,8 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
     this._playerWeapon.trackSprite(this, 0, 0);
     this._leftLimit = leftLimit;
     this._rightLimit = rightLimit;
+
+    this._shotEnabled = false;
 }
 
 Player.prototype = Object.create(Movable.prototype);
@@ -344,7 +372,7 @@ Player.prototype.readInput = function() //Mueve el jugador a la izquierda
         this.x += 5;
     }
 
-    if(this._fireButton.isDown)
+    if(this._fireButton.isDown && this._shotEnabled)
     {
         this._playerWeapon.fire();
     }
@@ -362,6 +390,13 @@ Player.prototype.getAnchor = function (i)
     else
        return this.anchor.y;   
 }
+
+Player.prototype.enableShot = function ()
+{   
+this._shotEnabled = true;
+}
+
+
 
 //////////////////////////////////////
 //2.2.1.2.CLASE PELOTA
@@ -401,10 +436,16 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 
 /////////////////////////////////////////
 //2.2.1.2.CLASE POWER-UP
-function PowerUp(game, position, sprite, sound, lives, velocity, powerUpNo)
+function PowerUp(game, position, sprite, sound, lives, velocity, powerUpNum)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
-    this._powerUpNo = powerUpNo;
+    this._powerUpNum = powerUpNum;
+
+   // Para elegir un frame en concreto -> this.frame = x;
+    this.animations.add('rotate');
+    // Comienza la animación: a 5 frames, y 'true' para repetirla en bucle
+    this.animations.play('rotate', 6, true);
+
 }
 
 PowerUp.prototype = Object.create(Movable.prototype);
@@ -412,8 +453,11 @@ PowerUp.prototype.constructor = PowerUp;
 
 PowerUp.prototype.update = function()
 {
-    //this.x+=this.body.velocity.x;
-    this.y+=this.body.velocity.y;
+    this.y += this.body.velocity.y;
+}
 
+PowerUp.prototype.getPowerUpNum = function()
+{
+    return this._powerUpNum;
 }
 
