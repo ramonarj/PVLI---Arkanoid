@@ -130,7 +130,6 @@ var PlayScene =
     //Colisiones del jugador
     this.game.physics.arcade.overlap(player, powerUps, takePowerUp, null, this);
 
-module.exports = PlayScene;
   },
 
   //FUNCIONES AUXILIARES
@@ -192,7 +191,7 @@ module.exports = PlayScene;
 };
 
 
-
+module.exports = PlayScene;
 
 
 var takePowerUp = function(player, powerUps)
