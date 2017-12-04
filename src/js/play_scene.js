@@ -11,6 +11,9 @@ var walls;
 var powerUps;
 var powerUp;
 var NUM_POWERUPS = 7;
+var MAX_VELOCITY = 600;
+var NUM_ROWS = 6;
+var NUM_COLS = 11;
 
 var PlayScene =
  {
@@ -22,24 +25,24 @@ var PlayScene =
 
     //Añadimos las variables
     //1.Fondo
-    fondo = new Phaser.Image(this.game, 150, 20, 'background');
-    fondo.scale.setTo(2.5,2.5);
+    fondo = new Phaser.Image(this.game, 125, 20, 'background');
+    fondo.scale.setTo(2.75,2.5);
     this.game.world.addChild(fondo);
 
     //2.Pelota
-    var playerPos = new Par(350, 520);
-    var ballPos = new Par(350, 507);
-    var ballVel = new Par(200,-200);
+    var playerPos = new Par(350, 525);
+    var ballPos = new Par(playerPos._x, playerPos._y - 12);
+    var ballVel = new Par(166,-250);
     ball=new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
-    ball.scale.setTo(2,2);
+    ball.scale.setTo(1.7,1.7);
     this.game.world.addChild(ball);
 
     //3.Paredes y techo (grupo walls)
     walls = this.game.add.physicsGroup();
 
     var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
-    var pared1 = new Phaser.Sprite(this.game, 131, 35, 'pared');
-    var pared2 = new Phaser.Sprite(this.game, 612, 35, 'pared');
+    var pared1 = new Phaser.Sprite(this.game, 108, 35, 'pared');
+    var pared2 = new Phaser.Sprite(this.game, 633, 35, 'pared');
     techo.scale.setTo(0.8,0.2); //Escalamos
     pared1.scale.setTo(0.2,0.8);
     pared2.scale.setTo(0.2,0.8);
@@ -57,18 +60,19 @@ var PlayScene =
     bricks = this.game.add.physicsGroup();
     bricks.classType = Destroyable;
     
-    for(var i = leftLimit + 15; i < rightLimit - 30; i+=60)
+    var width = (rightLimit-leftLimit) / NUM_COLS;
+    for(var i = 0; i < NUM_ROWS; i++)
     {
-        for(var j = 100; j < 250; j+=30)
+        for(var j = 0; j < NUM_COLS; j++)
         {
             //Posición
-            var pos= new Par(i, j);
+            var pos= new Par(leftLimit + (j*width), 100 + (i*21));
 
             //Tipo de ladrillo
             var lad;
             var rnd = Math.random();
-            var silverChance= 1/4;
-            var goldChance = 1/8;
+            var silverChance= 1/5;
+            var goldChance = 1/10;
 
             if(rnd<goldChance)
               lad = new SoundSource(this.game, pos, 'ladrilloOro', 'sound'); 
@@ -78,7 +82,7 @@ var PlayScene =
               lad = new Destroyable(this.game, pos, 'ladrilloBueno', 'sound', 1); 
 
             //Lo escalamos y añadimos al grupo
-            lad.scale.setTo(3.5,3.5);
+            lad.scale.setTo(2.77,2.7);
             bricks.add(lad);
         }
     }
@@ -117,7 +121,7 @@ var PlayScene =
     //Cosas de la pelota
     ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y); //Físicas de la pelota
     ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
-    ball.attach();
+    ball.attach(); //La pegamos al jugador
   },
   
 
@@ -182,8 +186,7 @@ var PlayScene =
     if(Object.getPrototypeOf(obj).hasOwnProperty('takeDamage'))
        obj.takeDamage(this);
 
-
-   bullet.kill();
+   bullet.kill(); //Destruimos la bala
   },
 
   //Detecta las colisones con la pelota
@@ -348,12 +351,12 @@ Player.prototype.readInput = function() //Mueve el jugador a la izquierda
     //Comprobación de cursores de Phaser
     if (this._cursors.left.isDown && this.x >  this._leftLimit + this.offsetX)
     {
-        this.x -= 5;
+        this.x -= 6.5;
     }
     
     else if (this._cursors.right.isDown && this.x < this._rightLimit - this.offsetX)
     {
-        this.x += 5;
+        this.x += 6.5;
     }
 
     if(this._fireButton.isDown)
@@ -396,31 +399,37 @@ Ball.prototype.constructor = Ball;
 //Funciones de pelota
 Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 {
+    var angle = Math.atan(this.body.velocity.y / this.body.velocity.x); //Ángulo después de rebotar
+    var v = this.body.velocity.x / Math.cos(angle); //Velocidad absoluta
 
     //Jugador (rebota)
     if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
     {
-      
-        //Cambio ligero de dirección
-        var angulo = this.game.rnd.integerInRange(-20, 20);
-        if(this.body.velocity.y + angulo > 0)
-        this.body.velocity.y += angulo;
-        if(this.body.velocity.x < 0)
-           this.body.velocity.x -= angulo;
-        else
-          this.body.velocity.x += angulo;
-
         //Rebote en lado contrario al que se mueve la pelota
         if((this.x > obj.x && this.body.velocity.x < 0) || (this.x < obj.x && this.body.velocity.x > 0))
             this.body.velocity.x = -this.body.velocity.x;
-
     }
 
-    //Ladrillos (les quita vida)
-    else if(obj.constructor === Destroyable)
-        obj.takeDamage(playscene);
+    //Ladrillos o paredes
+    else if (obj.hasOwnProperty('_sound'))
+    {
+        //Aceleramos la pelota
+        if(Math.max(v, -v) < MAX_VELOCITY)
+        {
+          if(v<0)
+             v-=10;
+          else
+             v+=10;
+          this.body.velocity.x = v * Math.cos(angle);
+          this.body.velocity.y = v * Math.sin(angle);
+        }
 
-    //Actualizamos la velocidad
+        //Para los ladrillos destruibles
+        if(Object.getPrototypeOf(obj).hasOwnProperty('takeDamage'))
+            obj.takeDamage(playscene);
+    }
+
+    //Actualizamos la velocidad de nuestra jerarquía
     this._velocity._x = this.body.velocity.x;
     this._velocity._y = this.body.velocity.y;
 }
