@@ -2,13 +2,11 @@
 
 var PlayScene = require('./play_scene.js');
 
-
 var BootScene = 
 {
   preload: function ()
    {
-    // load here assets required for the loading screen
-    this.game.load.image('preloader_bar', 'images/preloader_bar.png');
+    
   },
 
   create: function () 
@@ -22,11 +20,11 @@ var PreloaderScene =
 {
   preload: function () 
   {
+    this.game.load.baseURL = "https://ramonarj.github.io/PVLI---Arkanoid/src/";
+    
+     this.game.load.crossOrigin = 'anonymous';
     //Fondo
     this.game.stage.backgroundColor = '#000000';
-    this.loadingBar = this.game.add.sprite(0, 240, 'preloader_bar');
-    this.loadingBar.anchor.setTo(0, 0.5);
-    this.load.setPreloadSprite(this.loadingBar);
 
     // TODO: load here the assets for the game
     //Cargamos los assets del juego
