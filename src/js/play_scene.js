@@ -170,12 +170,8 @@ var PlayScene =
        //La pelota rebota en algo
        ball.bounce(obj, this);
       }
-  }
-};
-
-
-module.exports = PlayScene;
-
+  },
+  
   // POWER-UPS
 
    // A) Crea un Power-Up
@@ -238,8 +234,9 @@ module.exports = PlayScene;
         this.game.debug.text(player._shotEnabled, 32, 32);
 
     }
-};
 
+
+};
 
 module.exports = PlayScene;
 
@@ -390,10 +387,11 @@ Player.prototype.readInput = function() //Mueve el jugador a la izquierda
         this.x += 6.5;
     }
 
-    if(this._fireButton.isDown && this._shotEnabled)
+    if(this._fireButton.isDown)
     {
-        this._playerWeapon.fire();
-        if(this._ball.isAttached())
+        if(this._shotEnabled)
+           this._playerWeapon.fire();
+        else if(this._ball.isAttached())
            this._ball.throw();
     }
 
@@ -420,7 +418,6 @@ Player.prototype.enableShot = function ()
 {   
 this._shotEnabled = true;
 }
-
 
 
 //////////////////////////////////////
