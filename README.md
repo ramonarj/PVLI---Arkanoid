@@ -1,68 +1,62 @@
-# Awesome game
+# PVLI---Arkanoid
+This repository holds an Arkanoid (Taito, 1986) remake. This project is being made at the  
+Commputer Science Faculty of the Complutense Unversity of Madrid.  
+Authors:
 
-Awesome game by
-[gituser](https://github.com/gituser).
+- Raúl Fernández Guardia  
+- Ramón Arjona Quiñones
 
-Initial scaffolding generated with [generator-gamejam](https://github.com/belen-albeza/generator-gamejam/).
+# DESIGN DOCUMENT:
+## 1. Description:
+  The purpose of the game is to destroy all the bricks wich are above our ship by shooting them with a bouncing ball.  
+  Some of them contain power-ups which help us destroy the bricks, and there are also enemies wich appear every ceratin time.
 
-## Installation
+If the ball surpasses the player's defenses, we lose a life.
 
-### Requirements
-
-This games uses [gulp](http://gulpjs.com/) for building and tasks automation.
-
-You can install gulp with npm:
-
-```
-npm install -g gulp
-```
-
-### Build
-
-Clone this repository and install dependencies:
-
-```
-git clone gituser/awesome-game
-cd awesome-game
-npm install
-```
-
-To **build** the game, run the `dist` task from the project root:
-
-```
-gulp dist
-```
-
-The `dist` folder will contain a build of the game. You can then start a local server that serves this directory statically to play the game in local:
-
-```
-npm install -g http-server
-http-server dist
-```
-
-You can **clean up** the temporary files and the `dist` folder by running:
-
-```
-gulp clean
-```
-
-## Development
-
-This project uses [Browserify](http://browserify.org) to handle JavaScript modules.
-
-There is a task that will automatically run Browserify when a JavaScript file changes, and it will also reload the browser.
-
-```
-gulp run
-```
-
-
-
-
-
-You can deploy to **Github Pages** with the `deploy:ghpages` task, which will build the project and then push the `dist` folder in the `gh-pages` branch.
-
-```
-gulp deploy:ghpages
-```
-
+## 2. Amounts:
+**Player**  
+  
+**Levels:** 36 (we will do as many as we can).  
+  
+**Lives:** there are 3 at the start of the game, but there is no limt in how many we can get. 
+  
+**Power ups:** There are 7, and each one provides the player the ability to: [C=cumulative].  
+- Navy blue: get wider (C, 2).  
+- Red: shoot the bricks.  
+- Green: stop the ball for a while.  
+- Light blue: triple the ball (C).  
+- Gray: gain an extra life (C).  
+- Pink: access the next level.  
+- Orange: decelerate the ball (C).  
+      
+**Brick variations:** they add a different amount of score
+- White: 50  
+- Orange: 60  
+- Light blue: 70  
+- Green: 80  
+- Red: 90  
+- Navy blue: 100  
+- Pink: 110  
+- Yellow: 120  
+- Silver: 50xLevel No. (they need 3 hits to be destroyed)  
+- Golden: neither add score nor are destroyable  
+      
+**Enemies:** they die if the ball/player hits them. They move downwards slowly, dissapearing under the player's ship.
+    They add 100 points to the score when destroyed, and there can only be 3 of them at a time.  
+    They appear cyclically every four levels.  
+- Ships 
+- Doritos  
+- Molecules  
+- Cubes/spheres  
+    
+## 3. Controls  
+- Move left and right (A/D, arrow keys)  
+- Shoot (spacebar)[red power-up required]  
+   
+## 4. POSSIBLE ADDITIONS  
+1. Two-player mode (Pong style) : https://www.youtube.com/watch?v=83uo9QWUW_M&t=307s  
+2. New power-ups:    
+  - Thinner player   
+  - Connected walls (toroidal)  
+  - The ball passes through bricks instead of bouncing 
+  - Etc. (sugestions allowed)
