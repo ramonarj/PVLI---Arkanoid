@@ -60,9 +60,3 @@ If the ball surpasses the player's defenses, we lose a life.
   - Connected walls (toroidal)  
   - The ball passes through bricks instead of bouncing 
   - Etc. (sugestions allowed)
-
-    
-   
-
-
-
