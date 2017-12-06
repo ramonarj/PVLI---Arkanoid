@@ -1,25 +1,28 @@
 'use strict';
 
-var player;
-var fondo;
-var cursors;
-var ball;
-var bricks;
-var playerWeapon;
-var leftLimit, rightLimit;
-var walls;
-var powerUps;
-var powerUp;
+var player; //No puedo ponerla local
+
+//Variables globales (constantes)
 var NUM_POWERUPS = 7;
-var AllPowerUps;
 var MAX_VELOCITY = 600;
+var MAX_ENEMIES = 3;
 var NUM_ROWS = 6;
 var NUM_COLS = 11;
-var enemigos;
-
 
 var PlayScene =
  {
+     //Variables locales (de la escena)
+     fondo:null,
+     leftlimit:null, rightLimit:null,
+     cursors:null,
+     playerWeapon:null,
+     enemigos: null,
+     ball:null,
+     bricks:null,
+     walls:null,
+     powerUps:null,
+     AllPowerUps:null,
+
    //Función Create
   create: function () 
   {
@@ -28,48 +31,43 @@ var PlayScene =
 
     //Añadimos las variables
     //1.Fondo
-    fondo = new Phaser.Image(this.game, 125, 20, 'background');
-    fondo.scale.setTo(2.75,2.5);
-    this.game.world.addChild(fondo);
+    this.fondo = new Phaser.Image(this.game, 125, 20, 'background');
+    this.game.world.addChild(this.fondo);
 
     //2.Pelota
     var playerPos = new Par(350, 525);
     var ballPos = new Par(playerPos._x, playerPos._y - 12);
     var ballVel = new Par(166,-250);
-    ball=new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
-    ball.scale.setTo(1.7,1.7);
-    this.game.world.addChild(ball);
+    this.ball=new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
+    this.game.world.addChild(this.ball);
 
     //3.Paredes y techo (grupo walls)
-    walls = this.game.add.physicsGroup();
+    this.walls = this.game.add.physicsGroup();
 
     var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
     var pared1 = new Phaser.Sprite(this.game, 108, 35, 'pared');
     var pared2 = new Phaser.Sprite(this.game, 633, 35, 'pared');
-    techo.scale.setTo(0.8,0.2); //Escalamos
-    pared1.scale.setTo(0.2,0.8);
-    pared2.scale.setTo(0.2,0.8);
-    walls.add(techo);
-    walls.add(pared1);
-    walls.add(pared2);
-    walls.setAll('body.immovable', true);
-    walls.setAll('visible', false);
+    this.walls.add(techo);
+    this.walls.add(pared1);
+    this.walls.add(pared2);
+    this.walls.setAll('body.immovable', true);
+    this.walls.setAll('visible', false);
 
     //4.Límites de la pantalla
-    leftLimit = pared1.x + pared1.width; 
-    rightLimit = pared2.x - 2;
+    this.leftLimit = pared1.x + pared1.width; 
+    this.rightLimit = pared2.x - 2;
 
     //5.Ladrillos (grupo bricks)
-    bricks = this.game.add.physicsGroup();
-    bricks.classType = Destroyable;
+    this.bricks = this.game.add.physicsGroup();
+    this.bricks.classType = Destroyable;
     
-    var width = (rightLimit-leftLimit) / NUM_COLS;
+    var width = (this.rightLimit-this.leftLimit) / NUM_COLS;
     for(var i = 0; i < NUM_ROWS; i++)
     {
         for(var j = 0; j < NUM_COLS; j++)
         {
             //Posición
-            var pos= new Par(leftLimit + (j*width), 125 + (i*21));
+            var pos= new Par(this.leftLimit + (j*width), 125 + (i*21));
 
             //Tipo de ladrillo
             var lad;
@@ -84,71 +82,62 @@ var PlayScene =
             else
               lad = new Destroyable(this.game, pos, 'ladrilloBueno', 'sound', 1); 
 
-            //Lo escalamos y añadimos al grupo
-            lad.scale.setTo(2.77,2.7);
-            bricks.add(lad);
+            //Lo añadimos al grupo
+            this.bricks.add(lad);
         }
     }
-    bricks.setAll('body.immovable', true);
+    this.bricks.setAll('body.immovable', true);
 
     //6.Cursores
-    cursors = this.game.input.keyboard.createCursorKeys();
+    this.cursors = this.game.input.keyboard.createCursorKeys();
 
     //7.Balas
-    playerWeapon = new Movable(this.game, playerPos, 'bullet', 'sound',3, playerVel);
-    playerWeapon = this.game.add.weapon(8, 'bullet');
-    playerWeapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
-    playerWeapon.bullets.forEach((b) => {
-        b.scale.setTo(3, 3);
+    this.playerWeapon = new Movable(this.game, playerPos, 'bullet', 'sound',3, playerVel);
+    this.playerWeapon = this.game.add.weapon(8, 'bullet');
+    this.playerWeapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+    this.playerWeapon.bullets.forEach((b) => {
         b.body.updateBounds();
     }, this);
-    playerWeapon.bulletAngleOffset = 90; //Ángulo
-    playerWeapon.bulletSpeed = 600; //Velocidad
-    playerWeapon.fireRate = 500; //FireRate
+    this.playerWeapon.bulletAngleOffset = 90; //Ángulo
+    this.playerWeapon.bulletSpeed = 600; //Velocidad
+    this.playerWeapon.fireRate = 500; //FireRate
 
-
-
-    //8.Jugador
+    //7.Jugador
     var playerVel = new Par(0,0);
-    player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, cursors, playerWeapon, leftLimit, rightLimit, ball);
-    player.scale.setTo(2.5, 2.5);
+    player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, this.cursors, 
+                                               this.playerWeapon, this.leftLimit, this.rightLimit, this.ball);
     this.game.world.addChild(player);
-    this.game.physics.enable([player,ball], Phaser.Physics.ARCADE);
+    this.game.physics.enable([player,this.ball], Phaser.Physics.ARCADE);
     player.body.immovable = true;
 
-    //9.PowerUps
-    powerUps = this.game.add.physicsGroup();
-    powerUps.classType = PowerUp;
-
-
-    AllPowerUps = [this.enableShot];
+    //8.PowerUps
+    this.powerUps = this.game.add.physicsGroup();
+    this.powerUps.classType = PowerUp;
+    this.AllPowerUps = [this.enableShot];
     
-    //10.Enemigos
-    enemigos = this.game.add.physicsGroup();
-    enemigos.classType = Enemy;
+    //9.Enemigos
+    this.enemigos = this.game.add.physicsGroup();
+    this.enemigos.classType = Enemy;
 
     
-    var enemyPos = new Par(leftLimit + 40, 50);
-    var enemyVel = new Par(0, 2);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigo', 'sound', 2, enemyVel, leftLimit, rightLimit);
-    enem1.scale.setTo(2.5, 2.5);
-    enemigos.add(enem1);
+    var enemyPos = new Par(this.leftLimit + 40, 50);
+    var enemyVel = new Par(0, 1);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigo', 'sound', 1, enemyVel, this.leftLimit, this.rightLimit);
+    this.enemigos.add(enem1);
     
 
+    var enemyPos2 = new Par(this.rightLimit-90, 55); 
+    var enemyVel2 = new Par(0, 1);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigo', 'sound', 1, enemyVel2, this.leftLimit, this.rightLimit);
+    this.enemigos.add(enem2);
 
-    var enemyPos2 = new Par(rightLimit-90, 55); 
-    var enemyVel2 = new Par(0, 2);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigo', 'sound', 2, enemyVel2, leftLimit, rightLimit);
-    enem2.scale.setTo(2.5, 2.5);
-    enemigos.add(enem2);
-
-    enemigos.setAll('body.immovable', true);
+    this.enemigos.setAll('body.immovable', true);
 
 
     //Cosas de la pelota
-    ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y); //Físicas de la pelota
-    ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
-    ball.attach(); //La pegamos al jugador
+    this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
+    this.ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
+    this.ball.attach(); //La pegamos al jugador
   },
   
 
@@ -156,24 +145,24 @@ var PlayScene =
   update: function()
   {
     //Colisiones de la pelota
-    this.game.physics.arcade.overlap(ball, walls, this.ballCollisions, null, this);
-    this.game.physics.arcade.overlap(ball, bricks, this.ballCollisions, null, this);
-    this.game.physics.arcade.overlap(ball, player, this.ballCollisions, null, this);
-    this.game.physics.arcade.overlap(ball, enemigos, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(this.ball, this.walls, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(this.ball, this.bricks, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(this.ball, player, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(this.ball, this.enemigos, this.ballCollisions, null, this);
 
     //Colisiones de la bala
-    this.game.physics.arcade.overlap(playerWeapon.bullets, walls, this.bulletCollisions, null, this);
-    this.game.physics.arcade.overlap(playerWeapon.bullets, bricks, this.bulletCollisions, null, this);
-    this.game.physics.arcade.overlap(playerWeapon.bullets, enemigos, this.bulletCollisions, null, this);
+    this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.walls, this.bulletCollisions, null, this);
+    this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.bricks, this.bulletCollisions, null, this);
+    this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.enemigos, this.bulletCollisions, null, this);
 
     //Colisiones del jugador
-    this.game.physics.arcade.overlap(player, powerUps, this.playerCollisions, null, this);
-    this.game.physics.arcade.overlap(player, enemigos, this.playerCollisions, null, this);
+    this.game.physics.arcade.overlap(player, this.powerUps, this.playerCollisions, null, this);
+    this.game.physics.arcade.overlap(player, this.enemigos, this.playerCollisions, null, this);
 
     //Colisiones del enemigo
-    this.game.physics.arcade.overlap(enemigos, walls, this.enemyCollisions, null, this);
-    this.game.physics.arcade.overlap(enemigos, bricks, this.enemyCollisions, null, this);
-    this.game.physics.arcade.overlap(enemigos, enemigos, this.enemyCollisions, null, this);
+    this.game.physics.arcade.overlap(this.enemigos, this.walls, this.enemyCollisions, null, this);
+    this.game.physics.arcade.overlap(this.enemigos, this.bricks, this.enemyCollisions, null, this);
+    this.game.physics.arcade.overlap(this.enemigos, this.enemigos, this.enemyCollisions, null, this);
   },
 
   // COLISIONES
@@ -224,8 +213,7 @@ var PlayScene =
      // this.animations.add('rotate');
      // this.animations.play('rotate', 30, true);
  
-      powerUps.add(powerUp);
-      powerUp.scale.setTo(2.5, 2.5);
+      this.powerUps.add(powerUp);
       this.game.physics.enable([powerUp, player], Phaser.Physics.ARCADE);
       powerUp.body.immovable = true;
       powerUp.body.velocity.y = 2;
@@ -255,7 +243,7 @@ var PlayScene =
    // C) Recoge un Power-Up y determina su función
    takePowerUp: function(player, powerUps)
    {
-      AllPowerUps[powerUps.getPowerUpNum()]();
+       this.AllPowerUps[powerUps.getPowerUpNum()]();
      
        powerUps.destroy();
    },
@@ -368,7 +356,7 @@ Movable.prototype.setVelocity = function(velocity) //Cambia la velocidad
 Movable.prototype.update = function() //Para la DeadZone
 {
     if(this.y>this.game.height - 20)
-        this.takeDamage();
+        this.destroy();
 }
 
 
@@ -399,12 +387,13 @@ Enemy.prototype.move = function() //Se mueve con "pathfinding"
 
 Enemy.prototype.update = function() 
 {
+    Movable.prototype.update.call(this);
     this.move();
 }
 
 Enemy.prototype.choca = function(obj, limiteIzda, limiteDcha) 
 {
-    console.log("Enemigo: {"+ this.x + ","+this.y+"}, Obstáculo: {"+ obj.x + ","+obj.y+"}");
+    //console.log("Enemigo: {"+ this.x + ","+this.y+"}, Obstáculo: {"+ obj.x + ","+obj.y+"}");
 
    //1.Cambiamos la dirección actual
     //Iba hacia abajo   
@@ -440,7 +429,7 @@ Enemy.prototype.choca = function(obj, limiteIzda, limiteDcha)
         this._cicloHecho=true;
     }
 
-    console.log(this._dir);
+
    //2.Cambiamos las velocidades
    this.updateSpeed();
 }
@@ -514,7 +503,7 @@ Player.prototype.readInput = function() //Mueve el jugador a la izquierda
 
 Player.prototype.update = function() //Update
 {
-  this.readInput();
+   this.readInput();
 }
 
 Player.prototype.getAnchor = function (i)
@@ -527,7 +516,7 @@ Player.prototype.getAnchor = function (i)
 
 Player.prototype.enableShot = function ()
 {   
-this._shotEnabled = true;
+   this._shotEnabled = true;
 }
 
 
