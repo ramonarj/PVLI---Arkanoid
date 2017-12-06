@@ -57,7 +57,7 @@ var PlayScene =
 
     //4.Límites de la pantalla
     leftLimit = pared1.x + pared1.width; 
-    rightLimit = pared2.x;
+    rightLimit = pared2.x - 2;
 
     //5.Ladrillos (grupo bricks)
     bricks = this.game.add.physicsGroup();
@@ -69,7 +69,7 @@ var PlayScene =
         for(var j = 0; j < NUM_COLS; j++)
         {
             //Posición
-            var pos= new Par(leftLimit + (j*width), 100 + (i*21));
+            var pos= new Par(leftLimit + (j*width), 125 + (i*21));
 
             //Tipo de ladrillo
             var lad;
@@ -126,11 +126,22 @@ var PlayScene =
     //10.Enemigos
     enemigos = this.game.add.physicsGroup();
     enemigos.classType = Enemy;
-    var enemyPos = new Par(leftLimit + 20, 50);
 
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigo', 'sound', 2, playerVel);
+    
+    var enemyPos = new Par(leftLimit + 40, 50);
+    var enemyVel = new Par(0, 2);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigo', 'sound', 2, enemyVel, leftLimit, rightLimit);
     enem1.scale.setTo(2.5, 2.5);
     enemigos.add(enem1);
+    
+
+
+    var enemyPos2 = new Par(rightLimit-90, 55); 
+    var enemyVel2 = new Par(0, 2);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigo', 'sound', 2, enemyVel2, leftLimit, rightLimit);
+    enem2.scale.setTo(2.5, 2.5);
+    enemigos.add(enem2);
+
     enemigos.setAll('body.immovable', true);
 
 
@@ -158,6 +169,11 @@ var PlayScene =
     //Colisiones del jugador
     this.game.physics.arcade.overlap(player, powerUps, this.playerCollisions, null, this);
     this.game.physics.arcade.overlap(player, enemigos, this.playerCollisions, null, this);
+
+    //Colisiones del enemigo
+    this.game.physics.arcade.overlap(enemigos, walls, this.enemyCollisions, null, this);
+    this.game.physics.arcade.overlap(enemigos, bricks, this.enemyCollisions, null, this);
+    this.game.physics.arcade.overlap(enemigos, enemigos, this.enemyCollisions, null, this);
   },
 
   // COLISIONES
@@ -189,6 +205,12 @@ var PlayScene =
       else if (obj.constructor === Enemy)
           obj.takeDamage(this);
   },
+
+    // D) Detecta las colisones con el enemigo
+    enemyCollisions: function(enemy, obj)
+    {
+        enemy.choca(obj);
+    },
   
   // POWER-UPS
 
@@ -352,9 +374,18 @@ Movable.prototype.update = function() //Para la DeadZone
 
 ////////////////////////////////////////
 //2.2.1.1.CLASE ENEMIGO
-function Enemy(game, position, sprite, sound, lives, velocity)
+function Enemy(game, position, sprite, sound, lives, velocity, limiteIzda, limiteDcha)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
+    this._dir = 3; //Derecha, izquierda, arriba, abajo (en ese orden)
+    this._vel = this._velocity._y; //El módulo de la velocidad
+    this._cicloHecho=false;
+    
+    //Dirección a la que irá al principio
+    if(this.x - limiteIzda < limiteDcha - this.x)
+       this._dirPreferente = 1;
+    else
+       this._dirPreferente = 0;
 }
 
 Enemy.prototype = Object.create(Movable.prototype);
@@ -362,14 +393,73 @@ Enemy.prototype.constructor = Enemy;
 
 Enemy.prototype.move = function() //Se mueve con "pathfinding"
 {
-    
+    this.x+=this._velocity._x;
+    this.y+=this._velocity._y;
 }
 
-Enemy.prototype.update = function() //Se mueve con "pathfinding"
+Enemy.prototype.update = function() 
 {
-    
     this.move();
 }
+
+Enemy.prototype.choca = function(obj, limiteIzda, limiteDcha) 
+{
+    console.log("Enemigo: {"+ this.x + ","+this.y+"}, Obstáculo: {"+ obj.x + ","+obj.y+"}");
+
+   //1.Cambiamos la dirección actual
+    //Iba hacia abajo   
+    if(obj.y > this.y && this._dir == 3)
+    {
+        if(this._cicloHecho)
+           this._dir = 0;
+        else
+           this._dir = this._dirPreferente;
+        
+        this.y-=3;
+    }
+
+   //Iba hacia la derecha
+   else if(obj.x > this.x && this._dir == 0)
+   {
+      this._dir = 1;
+      this.x-=3;
+   }
+
+   //Iba hacia la izquierda
+   else if(obj.x < this.x && this._dir == 1)
+   {
+      this._dir = 2;
+      this.x+=3;
+   }
+
+    //Iba hacia arriba  
+    else if (obj.y < this.y && this._dir == 2)
+    {
+        this._dir=3;
+        this.y+=3;
+        this._cicloHecho=true;
+    }
+
+    console.log(this._dir);
+   //2.Cambiamos las velocidades
+   this.updateSpeed();
+}
+
+Enemy.prototype.updateSpeed = function() 
+{
+    this._velocity._x=0;
+    this._velocity._y=0;
+
+    if(this._dir==0)
+        this._velocity._x = this._vel;
+    else if (this._dir==1)
+        this._velocity._x = -this._vel;
+    else if (this._dir==2)
+        this._velocity._y = -this._vel;
+    else
+        this._velocity._y = this._vel;
+}
+
 
 /////////////////////////////////////////
 //2.2.1.2.CLASE JUGADOR 
