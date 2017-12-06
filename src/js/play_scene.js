@@ -15,6 +15,7 @@ var AllPowerUps;
 var MAX_VELOCITY = 600;
 var NUM_ROWS = 6;
 var NUM_COLS = 11;
+var enemigos;
 
 
 var PlayScene =
@@ -107,7 +108,7 @@ var PlayScene =
 
 
 
-    //Jugador
+    //8.Jugador
     var playerVel = new Par(0,0);
     player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, cursors, playerWeapon, leftLimit, rightLimit, ball);
     player.scale.setTo(2.5, 2.5);
@@ -115,13 +116,24 @@ var PlayScene =
     this.game.physics.enable([player,ball], Phaser.Physics.ARCADE);
     player.body.immovable = true;
 
-    //PowerUps
+    //9.PowerUps
     powerUps = this.game.add.physicsGroup();
     powerUps.classType = PowerUp;
 
 
     AllPowerUps = [this.enableShot];
     
+    //10.Enemigos
+    enemigos = this.game.add.physicsGroup();
+    enemigos.classType = Enemy;
+    var enemyPos = new Par(leftLimit + 20, 50);
+
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigo', 'sound', 2, playerVel);
+    enem1.scale.setTo(2.5, 2.5);
+    enemigos.add(enem1);
+    enemigos.setAll('body.immovable', true);
+
+
     //Cosas de la pelota
     ball.body.velocity.setTo(ball._velocity._x, ball._velocity._y); //Físicas de la pelota
     ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
@@ -136,40 +148,46 @@ var PlayScene =
     this.game.physics.arcade.overlap(ball, walls, this.ballCollisions, null, this);
     this.game.physics.arcade.overlap(ball, bricks, this.ballCollisions, null, this);
     this.game.physics.arcade.overlap(ball, player, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(ball, enemigos, this.ballCollisions, null, this);
 
     //Colisiones de la bala
     this.game.physics.arcade.overlap(playerWeapon.bullets, walls, this.bulletCollisions, null, this);
     this.game.physics.arcade.overlap(playerWeapon.bullets, bricks, this.bulletCollisions, null, this);
+    this.game.physics.arcade.overlap(playerWeapon.bullets, enemigos, this.bulletCollisions, null, this);
 
     //Colisiones del jugador
-    this.game.physics.arcade.overlap(player, powerUps, this.takePowerUp, null, this);
-    //console.log("{" + ball._velocity._x + ", " + ball._velocity._y+"}" );
-
+    this.game.physics.arcade.overlap(player, powerUps, this.playerCollisions, null, this);
+    this.game.physics.arcade.overlap(player, enemigos, this.playerCollisions, null, this);
   },
 
   // COLISIONES
-
-
   // A) Detecta las colisones con las balas
   bulletCollisions: function(bullet, obj)
   {
     //Si es un destruible, le quita vida
-    if(Object.getPrototypeOf(obj).hasOwnProperty('takeDamage'))
-       obj.takeDamage(this);
+    if(obj.hasOwnProperty('_lives'))
+        obj.takeDamage(this);
 
-   bullet.kill(); //Destruimos la bala
+    bullet.kill(); //Destruimos la bala
   },
 
   // B) Detecta las colisones con la pelota
   ballCollisions: function(ball, obj)
   {
+      //La pelota rebota en ese algo (siempre que no esté parada)
       if(!ball.isAttached())
-      {
-        this.game.physics.arcade.collide(ball, obj);
-        
-       //La pelota rebota en algo
-       ball.bounce(obj, this);
-      }
+         ball.bounce(obj, this);
+  },
+
+  // C) Detecta las colisones con el jugador
+  playerCollisions: function(player, obj)
+  {
+      //Power-ups
+      if(obj.hasOwnProperty('_powerUpNum'))
+          this.takePowerUp(player, obj);
+      //Enemigos    
+      else if (obj.constructor === Enemy)
+          obj.takeDamage(this);
   },
   
   // POWER-UPS
@@ -212,7 +230,7 @@ var PlayScene =
      }
    },
  
-      // C) Recoge un Power-Up y determina su función
+   // C) Recoge un Power-Up y determina su función
    takePowerUp: function(player, powerUps)
    {
       AllPowerUps[powerUps.getPowerUpNum()]();
@@ -229,13 +247,10 @@ var PlayScene =
 
    // Usado para hacer debug
   render: function() 
-  {
+   {
         // Player debug info
         this.game.debug.text(player._shotEnabled, 32, 32);
-
     }
-
-
 };
 
 module.exports = PlayScene;
@@ -345,9 +360,15 @@ function Enemy(game, position, sprite, sound, lives, velocity)
 Enemy.prototype = Object.create(Movable.prototype);
 Enemy.prototype.constructor = Enemy;
 
-Enemy.prototype.pathfinding = function() //Se mueve con "pathfinding"
+Enemy.prototype.move = function() //Se mueve con "pathfinding"
 {
+    
+}
 
+Enemy.prototype.update = function() //Se mueve con "pathfinding"
+{
+    
+    this.move();
 }
 
 /////////////////////////////////////////
@@ -434,8 +455,12 @@ Ball.prototype.constructor = Ball;
 //Funciones de pelota
 Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 {
-    var angle = Math.atan(this.body.velocity.y / this.body.velocity.x); //Ángulo después de rebotar
-    var v = this.body.velocity.x / Math.cos(angle); //Velocidad absoluta
+    //Rebota
+    this.game.physics.arcade.collide(this, obj);
+
+    //Cogemos su velocidad y ángulo después de rebotar
+    var angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
+    var v = this.body.velocity.x / Math.cos(angle); 
 
     //Jugador (rebota)
     if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
@@ -460,8 +485,8 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
         }
 
         //Para los ladrillos destruibles
-        if(Object.getPrototypeOf(obj).hasOwnProperty('takeDamage'))
-            obj.takeDamage(playscene);
+        if(obj.hasOwnProperty('_lives'))
+            obj.takeDamage(playscene); 
     }
 
     //Actualizamos la velocidad de nuestra jerarquía
