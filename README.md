@@ -1,4 +1,4 @@
-# PVLI---Arkanoid
+# Arkanoid Remake
 This repository holds an Arkanoid (Taito, 1986) remake. This project is being made at the  
 Commputer Science Faculty of the Complutense Unversity of Madrid.  
 Authors:
