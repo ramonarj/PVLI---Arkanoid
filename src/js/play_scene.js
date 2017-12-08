@@ -3,7 +3,7 @@
 var player; //No puedo ponerla local
 
 //Variables globales (constantes)
-var NUM_POWERUPS = 7;
+var NUM_POWERUPS = 3;
 var MAX_VELOCITY = 600;
 var MAX_ENEMIES = 3;
 var NUM_ROWS = 6;
@@ -113,7 +113,7 @@ var PlayScene =
     //8.PowerUps
     this.powerUps = this.game.add.physicsGroup();
     this.powerUps.classType = PowerUp;
-    this.AllPowerUps = [this.enableShot];
+    this.AllPowerUps = [this.enableShot, this.gainLife, this.getWider];
     
     //9.Enemigos
     this.enemigos = this.game.add.physicsGroup();
@@ -209,9 +209,6 @@ var PlayScene =
      var brickPosition = new Par(brick.x, brick.y)
      var powerUp = new PowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), nPowerUp);
  
-    // powerUp.frame = 0;
-     // this.animations.add('rotate');
-     // this.animations.play('rotate', 30, true);
  
       this.powerUps.add(powerUp);
       this.game.physics.enable([powerUp, player], Phaser.Physics.ARCADE);
@@ -234,9 +231,9 @@ var PlayScene =
      {
      // this. num = Math.floor(Math.random() * (max - min)) + min;
      // Seleccionamos así una powerUp random de entre los que hay
-    //this.num = Math.floor(Math.random() * (NUM_POWERUPS));
+    num = Math.floor(Math.random() * (NUM_POWERUPS));
    
-    this.createPowerUp(brick, 0);
+    this.createPowerUp(brick, num);
      }
    },
  
@@ -255,11 +252,24 @@ var PlayScene =
       return player.enableShot();
    },
 
+   // 2) Grey: gain a life
+   gainLife: function()
+   {
+     return player.addLife();
+   },
+
+    // 3) Blue: get wider
+    getWider: function()
+    {
+      return player.getWider();
+    },
+
    // Usado para hacer debug
   render: function() 
    {
         // Player debug info
-        this.game.debug.text(player._shotEnabled, 32, 32);
+        this.game.debug.text('shot: '+ player._shotEnabled, 25, 32);
+        this.game.debug.text('wider: '+ player._wider, 25, 45);
     }
 };
 
@@ -456,7 +466,11 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     
-    this._powerUpActual=0;
+
+    // Constantes
+    this._originalSize = this.width;
+
+    this._powerUpActual = -1;
     this.anchor.setTo(0.5, 0); //Ancla del jugador
 
     this._cursors = cursors;
@@ -465,8 +479,11 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
     this._playerWeapon.trackSprite(this, 0, 0);
     this._leftLimit = leftLimit;
     this._rightLimit = rightLimit;
-    this._shotEnabled = false;
     this._ball = ball;
+
+    // Variables de control
+    this._shotEnabled = false;
+    this._wider = false;
 }
 
 Player.prototype = Object.create(Movable.prototype);
@@ -506,6 +523,7 @@ Player.prototype.update = function() //Update
    this.readInput();
 }
 
+// Power-Ups
 Player.prototype.getAnchor = function (i)
 {
     if(i===0)
@@ -514,10 +532,50 @@ Player.prototype.getAnchor = function (i)
        return this.anchor.y;   
 }
 
+// 1) Rojo -> Disparo
 Player.prototype.enableShot = function ()
 {   
+    this.disablePowerUps();
    this._shotEnabled = true;
 }
+
+// 2) Gris -> Ganar vida
+Player.prototype.addLife = function ()
+{   
+   this._lives++;
+}
+
+// 3) Azul -> Ensanchar la pala 
+Player.prototype.getWider = function ()
+{   
+    this.disablePowerUps();
+    // Comprobamos que no se haya ensanchado ya (Posibles cambios. De momento, tal cual en el original)
+    if(!this._wider)
+    {
+       this._wider = true;
+       var widerPaddle = this.width *= 1.5;
+       this.body.setSize(widerPaddle, this.height);
+    }
+}
+
+// Deshabilita el resto de Power-Ups (Posibles cambios. De momento, solo un Power-Up al mismo tiempo)
+Player.prototype.disablePowerUps = function ()
+{   
+    this._shotEnabled = false;
+    this.getNarrow();
+}
+
+// FUNCIONES AUXILIARES
+Player.prototype.getNarrow = function ()
+{   
+    if(this._wider)
+    {
+       this._wider = false;
+       var narrowPaddle = this.width /= 1.5;
+       this.body.setSize(narrowPaddle, this.height);
+    }
+}
+
 
 
 //////////////////////////////////////
@@ -603,7 +661,6 @@ function PowerUp(game, position, sprite, sound, lives, velocity, powerUpNum)
     this.animations.add('rotate');
     // Comienza la animación: a 5 frames, y 'true' para repetirla en bucle
     this.animations.play('rotate', 6, true);
-
 }
 
 PowerUp.prototype = Object.create(Movable.prototype);
