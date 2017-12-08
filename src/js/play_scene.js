@@ -3,7 +3,6 @@
 var player; //No puedo ponerla local
 
 //Variables globales (constantes)
-var NUM_POWERUPS = 7;
 var NUM_POWERUPS = 3;
 var MAX_VELOCITY = 600;
 var MAX_ENEMIES = 3;
