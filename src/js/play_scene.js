@@ -3,7 +3,9 @@
 var player; //No puedo ponerla local
 
 //Variables globales (constantes)
-var NUM_POWERUPS = 3;
+var NUM_POWERUPS = 5;
+var BASE_VELOCITY = 300;
+var BASE_ANGLE = 60 * Math.PI / 180; //Está en radianes
 var MAX_VELOCITY = 600;
 var MAX_ENEMIES = 3;
 var NUM_ROWS = 6;
@@ -21,7 +23,6 @@ var PlayScene =
      bricks:null,
      walls:null,
      powerUps:null,
-     AllPowerUps:null,
 
    //Función Create
   create: function () 
@@ -37,7 +38,7 @@ var PlayScene =
     //2.Pelota
     var playerPos = new Par(350, 525);
     var ballPos = new Par(playerPos._x, playerPos._y - 12);
-    var ballVel = new Par(166,-250);
+    var ballVel = new Par(BASE_VELOCITY * Math.cos(BASE_ANGLE), -BASE_VELOCITY *  Math.sin(BASE_ANGLE));
     this.ball=new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
     this.game.world.addChild(this.ball);
 
@@ -113,7 +114,6 @@ var PlayScene =
     //8.PowerUps
     this.powerUps = this.game.add.physicsGroup();
     this.powerUps.classType = PowerUp;
-    this.AllPowerUps = [this.enableShot, this.gainLife, this.getWider];
     
     //9.Enemigos
     this.enemigos = this.game.add.physicsGroup();
@@ -238,38 +238,19 @@ var PlayScene =
    },
  
    // C) Recoge un Power-Up y determina su función
-   takePowerUp: function(player, powerUps)
+   takePowerUp: function(player, powerUp)
    {
-       this.AllPowerUps[powerUps.getPowerUpNum()]();
+       player.enablePowerUp(powerUp.getPowerUpNum());
      
-       powerUps.destroy();
+       powerUp.destroy();
    },
-
-    // Power-Ups:
-    // 1) Red:  grants the player the ability to shoot
-   enableShot: function()
-   {
-      return player.enableShot();
-   },
-
-   // 2) Grey: gain a life
-   gainLife: function()
-   {
-     return player.addLife();
-   },
-
-    // 3) Blue: get wider
-    getWider: function()
-    {
-      return player.getWider();
-    },
 
    // Usado para hacer debug
   render: function() 
    {
         // Player debug info
-        this.game.debug.text('shot: '+ player._shotEnabled, 25, 32);
-        this.game.debug.text('wider: '+ player._wider, 25, 45);
+        this.game.debug.text('Power-up: '+ player._powerUpActual, 25, 32);
+        this.game.debug.text('Lives: '+ player._lives, 25, 45);
     }
 };
 
@@ -341,6 +322,11 @@ Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
 Destroyable.prototype.getLives = function()
 {
     return this._lives;
+}
+
+Destroyable.prototype.addLife = function()
+{
+    this._lives++;
 }
 
 /////////////////////////////////////////
@@ -466,11 +452,9 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     
-
     // Constantes
     this._originalSize = this.width;
 
-    this._powerUpActual = -1;
     this.anchor.setTo(0.5, 0); //Ancla del jugador
 
     this._cursors = cursors;
@@ -480,10 +464,7 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
     this._leftLimit = leftLimit;
     this._rightLimit = rightLimit;
     this._ball = ball;
-
-    // Variables de control
-    this._shotEnabled = false;
-    this._wider = false;
+    this._powerUpActual = -1; //-1=No hay power-up
 }
 
 Player.prototype = Object.create(Movable.prototype);
@@ -495,18 +476,14 @@ Player.prototype.readInput = function() //Mueve el jugador a la izquierda
     var delta = this.x;
     //Comprobación de cursores de Phaser
     if (this._cursors.left.isDown && this.x >  this._leftLimit + this.offsetX)
-    {
         this.x -= 6.5;
-    }
     
     else if (this._cursors.right.isDown && this.x < this._rightLimit - this.offsetX)
-    {
         this.x += 6.5;
-    }
 
     if(this._fireButton.isDown)
     {
-        if(this._shotEnabled)
+        if(this._powerUpActual == 0)
            this._playerWeapon.fire();
         else if(this._ball.isAttached())
            this._ball.throw();
@@ -532,51 +509,48 @@ Player.prototype.getAnchor = function (i)
        return this.anchor.y;   
 }
 
-// 1) Rojo -> Disparo
-Player.prototype.enableShot = function ()
+Player.prototype.enablePowerUp = function (num)
 {   
-    this.disablePowerUps();
-   this._shotEnabled = true;
+    //1.Desactivamos el power-up actual
+    this.disableEffects(this._powerUpActual);
+
+    //2.Hacemos lo que tengamos que hacer
+    //Gris
+    if(num == 1)
+       this.addLife();
+    //Azul
+    else if (num==2)
+       this.getWider();
+    //Naranja 
+    else if (num == 4)
+        this._ball.slowDown(); 
+    
+    //3.Actualizamos el power-up actual   
+    this._powerUpActual=num;
 }
 
-// 2) Gris -> Ganar vida
-Player.prototype.addLife = function ()
-{   
-   this._lives++;
-}
-
-// 3) Azul -> Ensanchar la pala 
-Player.prototype.getWider = function ()
-{   
-    this.disablePowerUps();
-    // Comprobamos que no se haya ensanchado ya (Posibles cambios. De momento, tal cual en el original)
-    if(!this._wider)
-    {
-       this._wider = true;
-       var widerPaddle = this.width *= 1.5;
-       this.body.setSize(widerPaddle, this.height);
-    }
-}
-
-// Deshabilita el resto de Power-Ups (Posibles cambios. De momento, solo un Power-Up al mismo tiempo)
-Player.prototype.disablePowerUps = function ()
-{   
-    this._shotEnabled = false;
-    this.getNarrow();
+Player.prototype.disableEffects = function (actual) //Quita los efectos visuales sobre todo
+{  
+    //Azul
+    if(actual == 2)
+      this.getNarrow();
+    //Verde
+    else if (actual == 3)
+      this._ball.throw();
 }
 
 // FUNCIONES AUXILIARES
-Player.prototype.getNarrow = function ()
+Player.prototype.getWider = function ()
 {   
-    if(this._wider)
-    {
-       this._wider = false;
-       var narrowPaddle = this.width /= 1.5;
-       this.body.setSize(narrowPaddle, this.height);
-    }
+    var widerPaddle = this.width *= 1.5;
+    this.body.setSize(widerPaddle, this.height);
 }
 
-
+Player.prototype.getNarrow = function ()
+{   
+    var narrowPaddle = this.width /= 1.5;
+    this.body.setSize(narrowPaddle, this.height);
+}
 
 //////////////////////////////////////
 //2.2.1.2.CLASE PELOTA
@@ -584,6 +558,7 @@ function Ball(game, position, sprite, sound, lives, velocity)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     this._attached = true; 
+    this._angle = BASE_ANGLE;
 }
 
 Ball.prototype = Object.create(Movable.prototype);
@@ -593,23 +568,32 @@ Ball.prototype.constructor = Ball;
 Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 {
     //Rebota
-    this.game.physics.arcade.collide(this, obj);
+    this.game.physics.arcade.collide(this, obj); 
 
-    //Cogemos su velocidad y ángulo después de rebotar
-    var angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
-    var v = this.body.velocity.x / Math.cos(angle); 
-
-    //Jugador (rebota)
+    //a)Jugador 
+    var pegada=false;
     if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
     {
         //Rebote en lado contrario al que se mueve la pelota
         if((this.x > obj.x && this.body.velocity.x < 0) || (this.x < obj.x && this.body.velocity.x > 0))
             this.body.velocity.x = -this.body.velocity.x;
-    }
 
-    //Ladrillos o paredes
+        //Actualizamos el ángulo    
+        this._angle = Math.atan(this.body.velocity.y / this.body.velocity.x);
+
+        //Miramos si el jugador tiene activo el power-up verde
+        if(obj._powerUpActual == 3)
+           pegada=true;
+    }
+    
+
+    //b)Ladrillos o paredes
     else if (obj.hasOwnProperty('_sound'))
     {
+        //Cogemos su velocidad y ángulo después de rebotar
+        this._angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
+        var v = this.body.velocity.x / Math.cos(this._angle);
+
         //Aceleramos la pelota
         if(Math.max(v, -v) < MAX_VELOCITY)
         {
@@ -617,8 +601,8 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
              v-=10;
           else
              v+=10;
-          this.body.velocity.x = v * Math.cos(angle);
-          this.body.velocity.y = v * Math.sin(angle);
+          this.body.velocity.x = v * Math.cos(this._angle);
+          this.body.velocity.y = v * Math.sin(this._angle);
         }
 
         //Para los ladrillos destruibles
@@ -629,6 +613,8 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
     //Actualizamos la velocidad de nuestra jerarquía
     this._velocity._x = this.body.velocity.x;
     this._velocity._y = this.body.velocity.y;
+    if(pegada)
+       this.attach(); 
 }
 
 Ball.prototype.isAttached = function()
@@ -649,6 +635,21 @@ Ball.prototype.attach= function()
     this.body.velocity.x = 0;
     this.body.velocity.y = 0;
 }
+
+Ball.prototype.slowDown= function()
+{
+    //Tenemos cuidado con los signos
+    var v = this.body.velocity.x / Math.cos(this._angle);
+    if(v<0)
+      v = -BASE_VELOCITY;
+    else
+      v = BASE_VELOCITY;
+
+    //Reducimos la velocidad a la base 
+    this.body.velocity.x = v * Math.cos(this._angle);
+    this.body.velocity.y = v * Math.sin(this._angle);
+}
+
 
 /////////////////////////////////////////
 //2.2.1.2.CLASE POWER-UP
