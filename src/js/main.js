@@ -35,20 +35,21 @@ var PreloaderScene =
     this.game.load.image('pared', 'images/pared.png');
     this.game.load.image('techo', 'images/techo.png');
     this.game.load.image('ladrillo', 'images/ladrillo.png');
-    this.game.load.image('ladrilloBueno', 'images/ladrilloBueno.png');
-    this.game.load.image('ladrilloPlata', 'images/ladrilloPlata.png');
-    this.game.load.image('ladrilloOro', 'images/ladrilloOro.png');
     this.game.load.image('bullet', 'images/bullet pair.png');
     this.game.load.image('enemigo', 'images/Enemigos.png');
 
    // this.game.load.image('powerUp0', 'images/powerUpTest.png');
 
    // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)'
+   //Power-ups
     this.game.load.spritesheet('powerUp0', 'images/powerUp4.png', 40, 18);
     this.game.load.spritesheet('powerUp1', 'images/powerUp5.png', 40, 18);
     this.game.load.spritesheet('powerUp2', 'images/powerUp3.png', 40, 18);
     this.game.load.spritesheet('powerUp3', 'images/powerUp1.png', 40, 18);
     this.game.load.spritesheet('powerUp4', 'images/powerUp6.png', 40, 18);
+
+    //Ladrillos
+    this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22);
 
   },
 
