@@ -37,7 +37,6 @@ var PreloaderScene =
     this.game.load.image('ladrillo', 'images/ladrillo.png');
     this.game.load.image('bullet', 'images/bullet pair.png');
 
-   // this.game.load.image('powerUp0', 'images/powerUpTest.png');
 
    // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)'
    //Power-ups
@@ -50,7 +49,6 @@ var PreloaderScene =
    
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
-
   },
 
   create: function () 

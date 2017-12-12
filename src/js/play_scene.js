@@ -3,15 +3,20 @@
 //Constantes
 var NUM_POWERUPS = 5;
 var POWERUP_CHANCE = 1/3;
+
 var BASE_VELOCITY = 300;
 var BASE_ANGLE = 60 * Math.PI / 180; //Está en radianes
 var MAX_VELOCITY = 600;
 var MAX_ENEMIES = 3;
 var ENEMIY_VEL = 1;
+
 var NUM_ROWS = 6;
 var NUM_COLS = 11;
 var BRICK_WIDTH = 44;
 var BRICK_HEIGHT = 22;
+
+var WHITE_BRICK_POINTS = 50;
+var ENEMY_POINTS = 100;
 
 var PlayScene =
  {
@@ -26,12 +31,17 @@ var PlayScene =
      walls:null,
      powerUps:null,
      player:null,
+     points:null,
+     levelNo:null,
 
    //Función Create
   create: function () 
   {
     //Sistema de físicas
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
+    //Para los puntos
+    this.points=0;
+    this.levelNo=1;
 
     //Añadimos las variables
     //1.Fondo
@@ -88,9 +98,9 @@ var PlayScene =
             var pos= new Par(this.leftLimit + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
 
             if(brickType==8)
-               brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3);
+               brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);
             else
-               brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1);
+               brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
 
             //Color del ladrillo
             brick.frame=brickType;
@@ -150,8 +160,8 @@ var PlayScene =
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
     this.ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
     this.ball.attach(); //La pegamos al jugador
+
   },
-  
 
   //FUNCIÓN UPDATE
   update: function()
@@ -172,7 +182,6 @@ var PlayScene =
     this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
 
     //Colisiones del enemigo
-    //this.game.physics.arcade.overlap(this.enemigos, this.walls, this.enemyCollisions, null, this);
     //this.game.physics.arcade.overlap(this.enemigos, this.enemigos, this.enemyCollisions, null, this);
   },
 
@@ -261,6 +270,7 @@ var PlayScene =
         // Player debug info
         this.game.debug.text('Power-up: '+ this.player._powerUpActual, 25, 32);
         this.game.debug.text('Lives: '+ this.player._lives, 25, 45);
+        this.game.debug.text('Points: '+ this.points, 25, 58);
     }
 };
 
@@ -305,10 +315,14 @@ HUD.prototype.constructor = HUD;
 
 ///////////////////////////////////////////////
 //2.2.CLASE DESTRUIBLE (Ladrillos) -> tienen número de vidas y método para quitarse vida
-function Destroyable(game, position, sprite, sound, lives)
+function Destroyable(game, position, sprite, sound, lives, numPoints)
 {
     SoundSource.apply(this, [game, position, sprite, sound]);
     this._lives = lives;
+    if(numPoints==null)
+       this._numPoints = 0;
+    else
+       this._numPoints = numPoints;
 }
 
 Destroyable.prototype = Object.create(SoundSource.prototype);
@@ -324,7 +338,8 @@ Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
         if(this.constructor === Destroyable)
             playscene.dropPowerUp(this);
             
-        //Se destruye
+        //Se destruye (y suma puntos)
+        playscene.points += this._numPoints;
         this.destroy();
     }
 }
@@ -341,9 +356,9 @@ Destroyable.prototype.addLife = function()
 
 /////////////////////////////////////////
 //2.2.1.CLASE MÓVIL (Bala) -> tienen velocidad en x e y
-function Movable(game, position, sprite, sound, lives, velocity)
+function Movable(game, position, sprite, sound, lives, velocity, points)
 {
-    Destroyable.apply(this, [game, position, sprite, sound, lives]);
+    Destroyable.apply(this, [game, position, sprite, sound, lives, points]);
     this._velocity = velocity;
 
 }
@@ -370,7 +385,7 @@ Movable.prototype.update = function() //Para la DeadZone
 //2.2.1.1.CLASE ENEMIGO
 function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks)
 {
-    Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
+    Movable.apply(this, [game, position, sprite, sound, lives, velocity, ENEMY_POINTS]);
     this._dir = 3; //Derecha, izquierda, arriba, abajo (en ese orden)
     this._vel = this._velocity._y; //El módulo de la velocidad
     this._dir = 3;//0-Dcha, 1-Izda, 2-Arriba, 3-Abajo
@@ -720,8 +735,6 @@ function PowerUp(game, position, sprite, sound, lives, velocity, powerUpNum)
     this.animations.add('rotate');
     // Comienza la animación: a 5 frames, y 'true' para repetirla en bucle
     this.animations.play('rotate', 6, true);
-    
-
 }
 
 PowerUp.prototype = Object.create(Movable.prototype);
