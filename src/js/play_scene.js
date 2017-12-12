@@ -7,8 +7,11 @@ var BASE_VELOCITY = 300;
 var BASE_ANGLE = 60 * Math.PI / 180; //Está en radianes
 var MAX_VELOCITY = 600;
 var MAX_ENEMIES = 3;
+var ENEMIY_VEL = 1;
 var NUM_ROWS = 6;
 var NUM_COLS = 11;
+var BRICK_WIDTH = 44;
+var BRICK_HEIGHT = 22;
 
 var PlayScene =
  {
@@ -62,7 +65,6 @@ var PlayScene =
     this.bricks = this.game.add.physicsGroup();
     this.bricks.classType = Destroyable;
     
-    var width = (this.rightLimit-this.leftLimit) / NUM_COLS;
     for(var i = 0; i < NUM_ROWS; i++)
     {
         //Tipo de ladrillo de la fila (esto es solo para el nivel 1)
@@ -83,8 +85,7 @@ var PlayScene =
         for(var j = 0; j < NUM_COLS; j++)
         {
             var brick;
-            var pos= new Par(this.leftLimit + (j*width), 125 + (i*21));
-
+            var pos= new Par(this.leftLimit + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
 
             if(brickType==8)
                brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3);
@@ -131,16 +132,16 @@ var PlayScene =
     this.enemigos.classType = Enemy;
 
     
-    var enemyPos = new Par(this.leftLimit + 40, 50);
-    var enemyVel = new Par(0, 1);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigo', 'sound', 1, enemyVel, this.leftLimit, this.rightLimit);
+    var enemyPos = new Par(this.leftLimit + 50, 50);
+    var enemyVel = new Par(0, ENEMIY_VEL);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks);
     this.enemigos.add(enem1);
     
 
-    var enemyPos2 = new Par(this.rightLimit-90, 55); 
-    var enemyVel2 = new Par(0, 1);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigo', 'sound', 1, enemyVel2, this.leftLimit, this.rightLimit);
-    this.enemigos.add(enem2);
+    //var enemyPos2 = new Par(this.rightLimit-90, 55); 
+    //var enemyVel2 = new Par(0, ENEMIY_VEL);
+    //var enem2 = new Enemy(this.game, enemyPos2, 'enemigo', 'sound', 1, enemyVel2, this.walls, this.bricks);
+    //this.enemigos.add(enem2);
 
     this.enemigos.setAll('body.immovable', true);
 
@@ -171,9 +172,8 @@ var PlayScene =
     this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
 
     //Colisiones del enemigo
-    this.game.physics.arcade.overlap(this.enemigos, this.walls, this.enemyCollisions, null, this);
-    this.game.physics.arcade.overlap(this.enemigos, this.bricks, this.enemyCollisions, null, this);
-    this.game.physics.arcade.overlap(this.enemigos, this.enemigos, this.enemyCollisions, null, this);
+    //this.game.physics.arcade.overlap(this.enemigos, this.walls, this.enemyCollisions, null, this);
+    //this.game.physics.arcade.overlap(this.enemigos, this.enemigos, this.enemyCollisions, null, this);
   },
 
   // COLISIONES
@@ -209,7 +209,7 @@ var PlayScene =
     // D) Detecta las colisones con el enemigo
     enemyCollisions: function(enemy, obj)
     {
-        enemy.choca(obj);
+        
     },
   
   // POWER-UPS
@@ -368,28 +368,24 @@ Movable.prototype.update = function() //Para la DeadZone
 
 ////////////////////////////////////////
 //2.2.1.1.CLASE ENEMIGO
-function Enemy(game, position, sprite, sound, lives, velocity, limiteIzda, limiteDcha)
+function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     this._dir = 3; //Derecha, izquierda, arriba, abajo (en ese orden)
     this._vel = this._velocity._y; //El módulo de la velocidad
-    this._cicloHecho=false;
-    
-    //Dirección a la que irá al principio
-    if(this.x - limiteIzda < limiteDcha - this.x)
-       this._dirPreferente = 1;
-    else
-       this._dirPreferente = 0;
+    this._dir = 3;//0-Dcha, 1-Izda, 2-Arriba, 3-Abajo
+    this._walls = walls;
+    this._bricks = bricks;
+    this.anchor.setTo(0.5, 0.5);
+
+    //Animación
+    this.animations.add('move');
+    this.animations.play('move', 8, true);
+    this.animations.currentAnim.speed = 6 * ENEMIY_VEL;
 }
 
 Enemy.prototype = Object.create(Movable.prototype);
 Enemy.prototype.constructor = Enemy;
-
-Enemy.prototype.move = function() //Se mueve con "pathfinding"
-{
-    this.x+=this._velocity._x;
-    this.y+=this._velocity._y;
-}
 
 Enemy.prototype.update = function() 
 {
@@ -397,47 +393,98 @@ Enemy.prototype.update = function()
     this.move();
 }
 
-Enemy.prototype.choca = function(obj, limiteIzda, limiteDcha) 
+Enemy.prototype.move = function() 
 {
-    //console.log("Enemigo: {"+ this.x + ","+this.y+"}, Obstáculo: {"+ obj.x + ","+obj.y+"}");
-
-   //1.Cambiamos la dirección actual
-    //Iba hacia abajo   
-    if(obj.y > this.y && this._dir == 3)
+    //1.ACTUALIZAMOS LA DIRECCIÓN ACTUAL
+    //Direcciones ordenadas por prioridad
+    //1.Va hacia la derecha
+    if (this._dir == 0)
     {
-        if(this._cicloHecho)
-           this._dir = 0;
-        else
-           this._dir = this._dirPreferente;
-        
-        this.y-=3;
+        //Intenta ir hacia abajo
+        if(!this.choque(0, 1))
+            this._dir = 3;
+
+        //Si no, si se choca yendo a la derecha, va a la izquierda 
+        else if(this.choque(1, 0))
+            this._dir = 1;
+        //Y si no, sigue hacia la derecha
     }
 
-   //Iba hacia la derecha
-   else if(obj.x > this.x && this._dir == 0)
-   {
-      this._dir = 1;
-      this.x-=3;
-   }
-
-   //Iba hacia la izquierda
-   else if(obj.x < this.x && this._dir == 1)
-   {
-      this._dir = 2;
-      this.x+=3;
-   }
-
-    //Iba hacia arriba  
-    else if (obj.y < this.y && this._dir == 2)
+    //2.Va hacia la izquierda
+    else if (this._dir == 1)
     {
-        this._dir=3;
-        this.y+=3;
-        this._cicloHecho=true;
+        //Intenta ir hacia abajo
+        if(!this.choque(0,1))
+            this._dir = 3;
+        //Si no, si se choca yendo a la izquierda, va arriba
+        else if(this.choque(-1,0))
+            this._dir = 2;
+        //Y si no, sigue hacia la izquierda
     }
 
+    //3.Va hacia arriba
+    else if (this._dir == 2)
+    {
+        //Si se choca, va hacia abajo
+        if(this.choque(0, -1))
+            this._dir = 3;
+        //Y si no, sigue hacia arriba
+    }
 
-   //2.Cambiamos las velocidades
-   this.updateSpeed();
+    //4.Va hacia abajo
+    else
+    {
+        //Si se choca, va hacia la derecha
+        if(this.choque(0, 1))
+            this._dir = 0;   
+        //Y si no, sigue hacia abajo
+    }
+
+    //2.ACTUALIZAMOS LAS VELOCIDADES
+    this.updateSpeed();
+    
+    //3.MOVEMOS AL ENEMIGO
+    this.x+=this._velocity._x;
+    this.y+=this._velocity._y;
+}
+Enemy.prototype.choque = function(dirX, dirY) 
+{
+    var nx = this.x + (dirX * this.width/2);
+    var ny = this.y + (dirY * (2 + this.height/2));
+    var numBricks = this._bricks.length;
+     
+    var i = 0;
+    var choque = false;
+
+    //Choque con los ladrillos
+    while(i < numBricks && !choque)
+    {
+        var brick = this._bricks.children[i];
+        if((nx > (brick.x - brick.width/2) && nx < brick.x + 3 / 2 * brick.width) && (ny > brick.y && ny < brick.y + brick.height))
+            {
+                choque=true;
+            } 
+            
+        i++;
+    }
+
+    if(!choque)
+    {
+        var j = 0;
+        var numWalls = this._walls.length;
+        //Choque con los enemigos
+        while(j < numWalls && !choque)
+        {
+            var wall = this._walls.children[j];
+            if((nx > wall.x && nx < wall.x + wall.width) && (ny > wall.y && ny < wall.y + wall.height))
+                {
+                    choque=true;
+                } 
+                
+            j++;
+        }
+    }
+    return choque;
 }
 
 Enemy.prototype.updateSpeed = function() 
@@ -673,6 +720,8 @@ function PowerUp(game, position, sprite, sound, lives, velocity, powerUpNum)
     this.animations.add('rotate');
     // Comienza la animación: a 5 frames, y 'true' para repetirla en bucle
     this.animations.play('rotate', 6, true);
+    
+
 }
 
 PowerUp.prototype = Object.create(Movable.prototype);
