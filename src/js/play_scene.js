@@ -1,7 +1,7 @@
 'use strict';
 
 //Constantes
-var NUM_POWERUPS = 2;
+var NUM_POWERUPS = 4;
 var POWERUP_CHANCE = 1/1;
 
 var BASE_VELOCITY = 300;
