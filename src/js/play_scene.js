@@ -17,6 +17,7 @@ var BRICK_HEIGHT = 22;
 
 var WHITE_BRICK_POINTS = 50;
 var ENEMY_POINTS = 100;
+var POWERUP_POINTS = 1000;
 
 var PlayScene =
  {
@@ -144,14 +145,14 @@ var PlayScene =
     
     var enemyPos = new Par(this.leftLimit + 50, 50);
     var enemyVel = new Par(0, ENEMIY_VEL);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
     this.enemigos.add(enem1);
     
 
-    //var enemyPos2 = new Par(this.rightLimit-90, 55); 
-    //var enemyVel2 = new Par(0, ENEMIY_VEL);
-    //var enem2 = new Enemy(this.game, enemyPos2, 'enemigo', 'sound', 1, enemyVel2, this.walls, this.bricks);
-    //this.enemigos.add(enem2);
+    var enemyPos2 = new Par(this.rightLimit-90, 55); 
+    var enemyVel2 = new Par(0, ENEMIY_VEL);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
+    this.enemigos.add(enem2);
 
     this.enemigos.setAll('body.immovable', true);
 
@@ -180,9 +181,6 @@ var PlayScene =
     //Colisiones del jugador
     this.game.physics.arcade.overlap(this.player, this.powerUps, this.playerCollisions, null, this);
     this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
-
-    //Colisiones del enemigo
-    //this.game.physics.arcade.overlap(this.enemigos, this.enemigos, this.enemyCollisions, null, this);
   },
 
   // COLISIONES
@@ -215,11 +213,6 @@ var PlayScene =
           obj.takeDamage(this);
   },
 
-    // D) Detecta las colisones con el enemigo
-    enemyCollisions: function(enemy, obj)
-    {
-        
-    },
   
   // POWER-UPS
 
@@ -261,16 +254,16 @@ var PlayScene =
    {
        player.enablePowerUp(powerUp.getPowerUpNum());
      
-       powerUp.destroy();
+       powerUp.takeDamage(this);
    },
 
    // Usado para hacer debug
   render: function() 
    {
         // Player debug info
-        this.game.debug.text('Power-up: '+ this.player._powerUpActual, 25, 32);
-        this.game.debug.text('Lives: '+ this.player._lives, 25, 45);
-        this.game.debug.text('Points: '+ this.points, 25, 58);
+        this.game.debug.text('Power-up: '+ this.player._powerUpActual, 5, 35);
+        this.game.debug.text('Lives: '+ this.player._lives, this.rightLimit + 50, 300);
+        this.game.debug.text('Points: '+ this.points, this.rightLimit + 50, 150);
     }
 };
 
@@ -383,7 +376,7 @@ Movable.prototype.update = function() //Para la DeadZone
 
 ////////////////////////////////////////
 //2.2.1.1.CLASE ENEMIGO
-function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks)
+function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity, ENEMY_POINTS]);
     this._dir = 3; //Derecha, izquierda, arriba, abajo (en ese orden)
@@ -391,6 +384,7 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks)
     this._dir = 3;//0-Dcha, 1-Izda, 2-Arriba, 3-Abajo
     this._walls = walls;
     this._bricks = bricks;
+    this._enemies = enemies;
     this.anchor.setTo(0.5, 0.5);
 
     //Animación
@@ -433,7 +427,11 @@ Enemy.prototype.move = function()
             this._dir = 3;
         //Si no, si se choca yendo a la izquierda, va arriba
         else if(this.choque(-1,0))
+        {
             this._dir = 2;
+            console.log("e");
+        }
+            
         //Y si no, sigue hacia la izquierda
     }
 
@@ -483,11 +481,12 @@ Enemy.prototype.choque = function(dirX, dirY)
         i++;
     }
 
+    
     if(!choque)
     {
         var j = 0;
         var numWalls = this._walls.length;
-        //Choque con los enemigos
+        //Choque con las paredes
         while(j < numWalls && !choque)
         {
             var wall = this._walls.children[j];
@@ -497,6 +496,25 @@ Enemy.prototype.choque = function(dirX, dirY)
                 } 
                 
             j++;
+        }
+
+        //Choque con los enemigos
+        if(!choque)
+        {
+            var k = 0;
+            var numEnemies= this._enemies.length;
+            //Choque con las paredes
+            while(k < numEnemies && !choque)
+            {
+                var enemy = this._enemies.children[k];
+                if((nx >= enemy.x - enemy.width/2 && nx <= enemy.x + enemy.width/2) && (ny > enemy.y-enemy.height/2 && ny < enemy.y + enemy.height/2)
+                 && enemy !=this)
+                    {
+                        choque=true;
+                    } 
+                    
+                k++;
+            }
         }
     }
     return choque;
@@ -723,12 +741,11 @@ Ball.prototype.slowDown= function()
     this.body.velocity.y = v * Math.sin(this._angle);
 }
 
-
 /////////////////////////////////////////
 //2.2.1.2.CLASE POWER-UP
 function PowerUp(game, position, sprite, sound, lives, velocity, powerUpNum)
 {
-    Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
+    Movable.apply(this, [game, position, sprite, sound, lives, velocity, POWERUP_POINTS]);
     this._powerUpNum = powerUpNum;
 
    // Para elegir un frame en concreto -> this.frame = x;
