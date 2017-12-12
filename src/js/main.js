@@ -20,7 +20,7 @@ var PreloaderScene =
 {
   preload: function () 
   {
-    this.game.load.baseURL = "https://ramonarj.github.io/Arkanoid-Remake/src/";
+    //this.game.load.baseURL = "https://ramonarj.github.io/Arkanoid-Remake/src/";
     
      this.game.load.crossOrigin = 'anonymous';
     //Fondo
