@@ -41,12 +41,12 @@ var PreloaderScene =
    // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)'
    //Power-ups
     this.game.load.spritesheet('powerUp0', 'images/powerUp0.png', 40, 18);
-    this.game.load.spritesheet('powerUp1', 'images/powerUp0.png', 40, 18);
-    this.game.load.spritesheet('powerUp2', 'images/powerUp0.png', 40, 18);
-    this.game.load.spritesheet('powerUp3', 'images/powerUp0.png', 40, 18);
-    this.game.load.spritesheet('powerUp4', 'images/powerUp0.png', 40, 18);
-    this.game.load.spritesheet('powerUp5', 'images/powerUp0.png', 40, 18);
-    this.game.load.spritesheet('powerUp6', 'images/powerUp0.png', 40, 18);
+    this.game.load.spritesheet('powerUp1', 'images/powerUp1.png', 40, 18);
+    this.game.load.spritesheet('powerUp2', 'images/powerUp2.png', 40, 18);
+    this.game.load.spritesheet('powerUp3', 'images/powerUp3.png', 40, 18);
+    this.game.load.spritesheet('powerUp4', 'images/powerUp4.png', 40, 18);
+    this.game.load.spritesheet('powerUp5', 'images/powerUp5.png', 40, 18);
+    this.game.load.spritesheet('powerUp6', 'images/powerUp6.png', 40, 18);
 
    
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
