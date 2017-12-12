@@ -143,7 +143,7 @@ var PlayScene =
     this.enemigos.classType = Enemy;
 
     
-    var enemyPos = new Par(this.leftLimit + 50, 50);
+    var enemyPos = new Par(this.leftLimit + 50, 55);
     var enemyVel = new Par(0, ENEMIY_VEL);
     var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
     this.enemigos.add(enem1);
@@ -462,60 +462,30 @@ Enemy.prototype.move = function()
 }
 Enemy.prototype.choque = function(dirX, dirY) 
 {
-    var nx = this.x + (dirX * this.width/2);
-    var ny = this.y + (dirY * (2 + this.height/2));
-    var numBricks = this._bricks.length;
-     
+    //Enemigo auxiliar para comprobar la colisión
+    var nx = this.x - this.width/2 + dirX;
+    var ny = this.y - this.height/2 + dirY;
+    var auxEnemy = new Phaser.Sprite(this.game, nx, ny, 'enemigos');
+    this.game.physics.enable(auxEnemy);
+
+    //Comprobamos colisiones de ese auxiliar con los 3 grupos que nos importan
+    var choque = (this.choqueGrupo(auxEnemy, this._bricks) || this.choqueGrupo(auxEnemy, this._walls) 
+    || this.choqueGrupo(auxEnemy, this._enemies));
+
+    return choque;
+}
+
+Enemy.prototype.choqueGrupo = function(obj1, grupo)
+{
+    var numElems = grupo.length;
     var i = 0;
     var choque = false;
-
-    //Choque con los ladrillos
-    while(i < numBricks && !choque)
+    //Choque con todos los elementos de ese grupo
+    while(i < numElems && !choque)
     {
-        var brick = this._bricks.children[i];
-        if((nx > (brick.x - brick.width/2) && nx < brick.x + 3 / 2 * brick.width) && (ny > brick.y && ny < brick.y + brick.height))
-            {
-                choque=true;
-            } 
-            
+        var element = grupo.children[i];
+        choque = (this.game.physics.arcade.overlap(obj1, element) && element != this);  
         i++;
-    }
-
-    
-    if(!choque)
-    {
-        var j = 0;
-        var numWalls = this._walls.length;
-        //Choque con las paredes
-        while(j < numWalls && !choque)
-        {
-            var wall = this._walls.children[j];
-            if((nx > wall.x && nx < wall.x + wall.width) && (ny > wall.y && ny < wall.y + wall.height))
-                {
-                    choque=true;
-                } 
-                
-            j++;
-        }
-
-        //Choque con los enemigos
-        if(!choque)
-        {
-            var k = 0;
-            var numEnemies= this._enemies.length;
-            //Choque con las paredes
-            while(k < numEnemies && !choque)
-            {
-                var enemy = this._enemies.children[k];
-                if((nx >= enemy.x - enemy.width/2 && nx <= enemy.x + enemy.width/2) && (ny > enemy.y-enemy.height/2 && ny < enemy.y + enemy.height/2)
-                 && enemy !=this)
-                    {
-                        choque=true;
-                    } 
-                    
-                k++;
-            }
-        }
     }
     return choque;
 }
