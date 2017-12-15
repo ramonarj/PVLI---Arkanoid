@@ -1,14 +1,34 @@
 'use strict';
+//Requires
+var SoundSource = require ('./SoundSource.js').SoundSource;
+var HUD = require ('./HUD.js');
+var Destroyable = require ('./Destroyable.js');
+var Movable = require ('./Movable.js');
+var Enemy = require ('./Enemy.js');
+var Player = require ('./Player.js');
+var Ball = require ('./Ball.js');
+var PowerUp = require ('./PowerUp.js');
+var GreenPowerUp = require ('./PowerUp.js').GreenPowerUp;
+var GreyPowerUp = require ('./PowerUp.js').GreyPowerUp; 
+var RedPowerUp = require ('./PowerUp.js').RedPowerUp;
+var BluePowerUp = require ('./PowerUp.js').BluePowerUp;
+var OrangePowerUp = require ('./PowerUp.js').OrangePowerUp;
+var LightBluePowerUp = require ('./PowerUp.js').LightBluePowerUp;
+
+var Par = require ('./SoundSource.js').Par;
+
+var BASE_VELOCITY = require ('./Ball.js').BASE_VELOCITY;
+var BASE_ANGLE = require ('./Ball.js').BASE_ANGLE;
+var ENEMY_VEL = require ('./Enemy.js').ENEMY_VEL;
+
+
+
 
 //Constantes
-var NUM_POWERUPS = 5;
+var NUM_POWERUPS = 6;
 var POWERUP_CHANCE = 1/1;
 
-var BASE_VELOCITY = 300;
-var BASE_ANGLE = 60 * Math.PI / 180; //Está en radianes
-var MAX_VELOCITY = 600;
 var MAX_ENEMIES = 3;
-var ENEMIY_VEL = 1;
 
 var NUM_ROWS = 6;
 var NUM_COLS = 11;
@@ -16,8 +36,6 @@ var BRICK_WIDTH = 44;
 var BRICK_HEIGHT = 22;
 
 var WHITE_BRICK_POINTS = 50;
-var ENEMY_POINTS = 100;
-var POWERUP_POINTS = 1000;
 
 var PlayScene =
  {
@@ -28,10 +46,12 @@ var PlayScene =
      playerWeapon:null,
      enemigos: null,
      ball:null,
+     ballsGroup:null,
      bricks:null,
      walls:null,
      powerUps:null,
      activePowerUp:null,
+     fallingPowerUp:null,
      player:null,
      points:null,
      levelNo:null,
@@ -42,8 +62,8 @@ var PlayScene =
     //Sistema de físicas
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     //Para los puntos
-    this.points=0;
-    this.levelNo=1;
+    this.points = 0;
+    this.levelNo = 1;
 
     //Añadimos las variables
     //1.Fondo
@@ -51,11 +71,17 @@ var PlayScene =
     this.game.world.addChild(this.fondo);
 
     //2.Pelota
+
+    this.ballsGroup = this.game.add.physicsGroup();
+    this.ballsGroup.classType = Ball;
+
     var playerPos = new Par(350, 525);
     var ballPos = new Par(playerPos._x, playerPos._y - 12);
-    var ballVel = new Par(BASE_VELOCITY * Math.cos(BASE_ANGLE), -BASE_VELOCITY *  Math.sin(BASE_ANGLE));
-    this.ball=new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
+    var ballVel = new Par(Ball.BASE_VELOCITY * Math.cos(Ball.BASE_ANGLE), -Ball.BASE_VELOCITY *  Math.sin(Ball.BASE_ANGLE));
+    this.ball = new Ball.Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
     this.game.world.addChild(this.ball);
+
+    this.ballsGroup.add(this.ball);
 
     //3.Paredes y techo (grupo walls)
     this.walls = this.game.add.physicsGroup();
@@ -94,10 +120,10 @@ var PlayScene =
         else if(i==5)
           brickType=3;
 
-        for(var j = 0; j < NUM_COLS; j++)
+        for(var j = 0; j < NUM_COLS - 2; j++)
         {
             var brick;
-            var pos= new Par(this.leftLimit + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
+            var pos= new Par(this.leftLimit + BRICK_WIDTH + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
 
             if(brickType==8)
                brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);
@@ -130,14 +156,15 @@ var PlayScene =
     //7.Jugador
     var playerVel = new Par(0,0);
     this.player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, this.cursors, 
-                                               this.playerWeapon, this.leftLimit, this.rightLimit, this.ball);
+                                               this.playerWeapon, this.leftLimit, this.rightLimit, this.ballsGroup);
     this.game.world.addChild(this.player);
-    this.game.physics.enable([this.player,this.ball], Phaser.Physics.ARCADE);
+    this.game.physics.enable([this.player, this.ballsGroup], Phaser.Physics.ARCADE);
     this.player.body.immovable = true;
 
     //8.PowerUps
     this.powerUps = this.game.add.physicsGroup();
     this.powerUps.classType = PowerUp;
+    this.game.physics.enable([this.player, this.powerUps], Phaser.Physics.ARCADE);
     
     //9.Enemigos
     this.enemigos = this.game.add.physicsGroup();
@@ -145,14 +172,14 @@ var PlayScene =
 
     
     var enemyPos = new Par(this.leftLimit + 50, 50);
-    var enemyVel = new Par(0, ENEMIY_VEL);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
+    var enemyVel = new Par(0, Enemy.ENEMY_VEL);
+    var enem1 = new Enemy.Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
     this.enemigos.add(enem1);
     
 
     var enemyPos2 = new Par(this.rightLimit-90, 55); 
-    var enemyVel2 = new Par(0, ENEMIY_VEL);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
+    var enemyVel2 = new Par(0, Enemy.ENEMY_VEL);
+    var enem2 = new Enemy.Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
     this.enemigos.add(enem2);
 
     this.enemigos.setAll('body.immovable', true);
@@ -169,10 +196,10 @@ var PlayScene =
   update: function()
   {
     //Colisiones de la pelota
-    this.game.physics.arcade.overlap(this.ball, this.walls, this.ballCollisions, null, this);
-    this.game.physics.arcade.overlap(this.ball, this.bricks, this.ballCollisions, null, this);
-    this.game.physics.arcade.overlap(this.ball, this.player, this.ballCollisions, null, this);
-    this.game.physics.arcade.overlap(this.ball, this.enemigos, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap( this.walls, this.ballsGroup, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(this.bricks, this.ballsGroup, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(this.player, this.ballsGroup, this.ballCollisions, null, this);
+    this.game.physics.arcade.overlap(this.enemigos, this.ballsGroup, this.ballCollisions, null, this);
 
     //Colisiones de la bala
     this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.walls, this.bulletCollisions, null, this);
@@ -185,6 +212,8 @@ var PlayScene =
   },
 
   // COLISIONES
+
+
   // A) Detecta las colisones con las balas
   bulletCollisions: function(bullet, obj)
   {
@@ -196,11 +225,13 @@ var PlayScene =
   },
 
   // B) Detecta las colisones con la pelota
-  ballCollisions: function(ball, obj)
+  ballCollisions: function(obj, ball)
   {
       //La pelota rebota en ese algo (siempre que no esté parada)
       if(!ball.isAttached())
+      {
          ball.bounce(obj, this);
+      }
   },
 
   // C) Detecta las colisones con el jugador
@@ -221,6 +252,11 @@ var PlayScene =
    // A) Dropea un Power-Up según una probabilidad
    dropPowerUp: function(brick)
    {
+       if(this.activePowerUp != null && this.activePowerUp.constructor == LightBluePowerUp && this.ballsGroup.length <= 1)
+       this.activePowerUp.disable();
+
+       if(this.fallingPowerUp == null || this.fallingPowerUp.dropEnabled())
+       {
      // 1) Obtenemos un número aleatorio del 0 (incluido) al 1 -> [0, 1)
      var num = Math.random();
      var drop = false;
@@ -231,14 +267,15 @@ var PlayScene =
 
      // 3) En caso de soltarlo:
      if(drop)
-     {//  num = Math.floor(Math.random() * (max - min)) + min -> fórmula para obtener un valor concreto entre el rango [min, max)
+     {// Math.floor(Math.random() * (max - min)) + min -> fórmula para obtener un valor concreto entre el rango [min, max)
      
-     // a) Obtenemos un Power-Up de entre los que hay en total (en este caso, nuestro mínimo es "0", y por tanto no lo ponemos en la fórmula)
-    num = Math.floor(Math.random() * (NUM_POWERUPS));
+      // a) Obtenemos un Power-Up de entre los que hay en total (en este caso, nuestro mínimo es "0", y por tanto no lo ponemos en la fórmula)
+     num = Math.floor(Math.random() * (NUM_POWERUPS));
    
-    // b) Lo creamos en la posición del ladrillo que se destruyó
-    this.createPowerUp(brick, num);
+      // b) Lo creamos en la posición del ladrillo que se destruyó
+     this.createPowerUp(brick, num);
      }
+    }
    },
 
       // B) Crea un Power-Up
@@ -251,27 +288,33 @@ var PlayScene =
         switch (nPowerUp)
         {
             case 0:
-            powerUp = new RedPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, this.player);
+            powerUp = new RedPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.player);
             break;
             case 1:
-            powerUp = new GreyPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), false, this.player);
+            powerUp = new GreyPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), false, false, this.player);
             break;
             case 2: 
-            powerUp = new BluePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, this.player);
+            powerUp = new BluePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.player);
             break;
             case 3:
-            powerUp = new GreenPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, this.ball);
+            powerUp = new GreenPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
             case 4:
-            powerUp = new OrangePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, this.ball);
+            powerUp = new OrangePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
+            case 5:
+            powerUp = new LightBluePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
+            break;
+
         }
        
         // 3) Lo añadimos al grupo de Power-Ups, activamos las colisiones con el jugador, etc.
          this.powerUps.add(powerUp);
-         this.game.physics.enable([powerUp, this.player], Phaser.Physics.ARCADE);
+    
          powerUp.body.immovable = true;
          powerUp.body.velocity.y = 2;
+
+         this.fallingPowerUp = powerUp;
         
       },
  
@@ -284,7 +327,7 @@ var PlayScene =
           y ganar vida no hace ninguna de las anteriores */
     if (powerUp.isEffect())
     {
-        // a) Desactivamos el efecto activo anterior, si es que lo hubiera (1ª comrpobación) y si no es el mismo efecto que ya está activo (2ª comprobación)
+        // a) Desactivamos el efecto activo anterior, si es que lo hubiera (1ª comprobación) y si no es el mismo efecto que ya está activo (2ª comprobación)
         if(this.activePowerUp != null && powerUp.constructor != this.activePowerUp.constructor)
           this.activePowerUp.disable();
 
@@ -293,8 +336,7 @@ var PlayScene =
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
        powerUp.enable();
-
-       powerUp.destroy();
+       powerUp.takeDamage();
    },
 
    // Usado para hacer debug
@@ -304,627 +346,9 @@ var PlayScene =
         this.game.debug.text('Power-up: '+ this.player._powerUpActual, 5, 35);
         this.game.debug.text('Lives: '+ this.player._lives, this.rightLimit + 50, 300);
         this.game.debug.text('Points: '+ this.points, this.rightLimit + 50, 150);
+        this.game.debug.text('Balls: '+ this.ballsGroup.length, this.rightLimit + 50, 450);
     }
 };
 
 module.exports = PlayScene;
 
-//////////////////////////////////////
-//////ARQUITECTURA DE HERENCIA////////
-//////////////////////////////////////
-//Estructura auxiliares
-function Par(x, y)
-{
-    this._x=x;
-    this._y=y;
-}
-
-///////////////////////////////////////////////
-//1.CLASE EMISOR DE SONIDOS (Ladrillos dorados) -> pueden emitir sonido
-function SoundSource(game, position, sprite, sound)
-{
-    Phaser.Sprite.apply(this, [game ,position._x, position._y, sprite]);
-    this._sound = sound;
-}
-
-SoundSource.prototype = Object.create(Phaser.Sprite.prototype);
-SoundSource.prototype.constructor = SoundSource;
-
-//Funciones de destruible
-SoundSource.prototype.playSound = function () 
-{
-    //Suena el sonido
-}
-
-/////////////////////////////////////////////
-//2.1.CLASE HUD (Hud)
-function HUD(game, position, sprite, sound)
-{
-  SoundSource.apply(this, [game, position, sprite, sound]);
-}
-
-HUD.prototype = Object.create(SoundSource.prototype);
-HUD.prototype.constructor = HUD;
-
-///////////////////////////////////////////////
-//2.2.CLASE DESTRUIBLE (Ladrillos) -> tienen número de vidas y método para quitarse vida
-function Destroyable(game, position, sprite, sound, lives, numPoints)
-{
-    SoundSource.apply(this, [game, position, sprite, sound]);
-    this._lives = lives;
-    if(numPoints==null)
-       this._numPoints = 0;
-    else
-       this._numPoints = numPoints;
-}
-
-Destroyable.prototype = Object.create(SoundSource.prototype);
-Destroyable.prototype.constructor = Destroyable;
-
-//Funciones de destruible
-Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
-{
-    this._lives--;
-    if(this._lives <=0)
-    {
-        //Si es un ladrillo, puede dropear power-ups
-        if(this.constructor === Destroyable)
-            playscene.dropPowerUp(this);
-            
-        //Se destruye (y suma puntos)
-        playscene.points += this._numPoints;
-        this.destroy();
-    }
-}
-
-Destroyable.prototype.getLives = function()
-{
-    return this._lives;
-}
-
-Destroyable.prototype.addLife = function()
-{
-    this._lives++;
-}
-
-/////////////////////////////////////////
-//2.2.1.CLASE MÓVIL (Bala) -> tienen velocidad en x e y
-function Movable(game, position, sprite, sound, lives, velocity, points)
-{
-    Destroyable.apply(this, [game, position, sprite, sound, lives, points]);
-    this._velocity = velocity;
-
-}
-
-Movable.prototype = Object.create(Destroyable.prototype);
-Movable.prototype.constructor = Movable;
-
-
-//Funciones de moviles
-Movable.prototype.setVelocity = function(velocity) //Cambia la velocidad
-{
-    this._velocity._x = velocity._x;
-    this._velocity._y = velocity._y;
-}
-
-Movable.prototype.update = function() //Para la DeadZone
-{
-    if(this.y>this.game.height - 20)
-        this.destroy();
-}
-
-
-////////////////////////////////////////
-//2.2.1.1.CLASE ENEMIGO
-function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies)
-{
-    Movable.apply(this, [game, position, sprite, sound, lives, velocity, ENEMY_POINTS]);
-    this._dir = 3; //Derecha, izquierda, arriba, abajo (en ese orden)
-    this._vel = this._velocity._y; //El módulo de la velocidad
-    this._dir = 3;//0-Dcha, 1-Izda, 2-Arriba, 3-Abajo
-    this._walls = walls;
-    this._bricks = bricks;
-    this._enemies = enemies;
-    this.anchor.setTo(0.5, 0.5);
-
-    //Animación
-    this.animations.add('move');
-    this.animations.play('move', 8, true);
-    this.animations.currentAnim.speed = 6 * ENEMIY_VEL;
-}
-
-Enemy.prototype = Object.create(Movable.prototype);
-Enemy.prototype.constructor = Enemy;
-
-Enemy.prototype.update = function() 
-{
-    Movable.prototype.update.call(this);
-    this.move();
-}
-
-Enemy.prototype.move = function() 
-{
-    //1.ACTUALIZAMOS LA DIRECCIÓN ACTUAL
-    //Direcciones ordenadas por prioridad
-    //1.Va hacia la derecha
-    if (this._dir == 0)
-    {
-        //Intenta ir hacia abajo
-        if(!this.choque(0, 1))
-            this._dir = 3;
-
-        //Si no, si se choca yendo a la derecha, va a la izquierda 
-        else if(this.choque(1, 0))
-            this._dir = 1;
-        //Y si no, sigue hacia la derecha
-    }
-
-    //2.Va hacia la izquierda
-    else if (this._dir == 1)
-    {
-        //Intenta ir hacia abajo
-        if(!this.choque(0,1))
-            this._dir = 3;
-        //Si no, si se choca yendo a la izquierda, va arriba
-        else if(this.choque(-1,0))
-        {
-            this._dir = 2;
-            console.log("e");
-        }
-            
-        //Y si no, sigue hacia la izquierda
-    }
-
-    //3.Va hacia arriba
-    else if (this._dir == 2)
-    {
-        //Si se choca, va hacia abajo
-        if(this.choque(0, -1))
-            this._dir = 3;
-        //Y si no, sigue hacia arriba
-    }
-
-    //4.Va hacia abajo
-    else
-    {
-        //Si se choca, va hacia la derecha
-        if(this.choque(0, 1))
-            this._dir = 0;   
-        //Y si no, sigue hacia abajo
-    }
-
-    //2.ACTUALIZAMOS LAS VELOCIDADES
-    this.updateSpeed();
-    
-    //3.MOVEMOS AL ENEMIGO
-    this.x+=this._velocity._x;
-    this.y+=this._velocity._y;
-}
-Enemy.prototype.choque = function(dirX, dirY) 
-{
-    var nx = this.x + (dirX * this.width/2);
-    var ny = this.y + (dirY * (2 + this.height/2));
-    var numBricks = this._bricks.length;
-     
-    var i = 0;
-    var choque = false;
-
-    //Choque con los ladrillos
-    while(i < numBricks && !choque)
-    {
-        var brick = this._bricks.children[i];
-        if((nx > (brick.x - brick.width/2) && nx < brick.x + 3 / 2 * brick.width) && (ny > brick.y && ny < brick.y + brick.height))
-            {
-                choque=true;
-            } 
-            
-        i++;
-    }
-
-    
-    if(!choque)
-    {
-        var j = 0;
-        var numWalls = this._walls.length;
-        //Choque con las paredes
-        while(j < numWalls && !choque)
-        {
-            var wall = this._walls.children[j];
-            if((nx > wall.x && nx < wall.x + wall.width) && (ny > wall.y && ny < wall.y + wall.height))
-                {
-                    choque=true;
-                } 
-                
-            j++;
-        }
-
-        //Choque con los enemigos
-        if(!choque)
-        {
-            var k = 0;
-            var numEnemies= this._enemies.length;
-            //Choque con las paredes
-            while(k < numEnemies && !choque)
-            {
-                var enemy = this._enemies.children[k];
-                if((nx >= enemy.x - enemy.width/2 && nx <= enemy.x + enemy.width/2) && (ny > enemy.y-enemy.height/2 && ny < enemy.y + enemy.height/2)
-                 && enemy !=this)
-                    {
-                        choque=true;
-                    } 
-                    
-                k++;
-            }
-        }
-    }
-    return choque;
-}
-
-Enemy.prototype.updateSpeed = function() 
-{
-    this._velocity._x=0;
-    this._velocity._y=0;
-
-    if(this._dir==0)
-        this._velocity._x = this._vel;
-    else if (this._dir==1)
-        this._velocity._x = -this._vel;
-    else if (this._dir==2)
-        this._velocity._y = -this._vel;
-    else
-        this._velocity._y = this._vel;
-}
-
-
-/////////////////////////////////////////
-//2.2.1.2.CLASE JUGADOR 
-function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit, ball)
-{
-    Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
-    
-    // Constantes
-    this._originalSize = this.width;
-
-    this.anchor.setTo(0.5, 0); //Ancla del jugador
-
-    this._cursors = cursors;
-    this._fireButton = game.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
-    this._playerWeapon = playerWeapon;
-    this._playerWeapon.trackSprite(this, 0, 0);
-    this._leftLimit = leftLimit;
-    this._rightLimit = rightLimit;
-    this._ball = ball;
-
-    // Variables de control
-    this._shotEnabled = false;
-    this._isWide = false;
-}
-
-Player.prototype = Object.create(Movable.prototype);
-Player.prototype.constructor = Player;
-
-//Funciones de jugador
-Player.prototype.readInput = function() 
-{
-    var delta = this.x;
-    //Comprobación de cursores de Phaser
-    if (this._cursors.left.isDown && this.x >  this._leftLimit + this.offsetX)
-        this.x -= 6.5;
-    
-    else if (this._cursors.right.isDown && this.x < this._rightLimit - this.offsetX)
-        this.x += 6.5;
-
-    if(this._fireButton.isDown)
-    {
-        if(this._shotEnabled)
-           this._playerWeapon.fire();
-        else if(this._ball.isAttached())
-           this._ball.throw();
-    }
-
-    //La pelota es hija por programación
-    delta -= this.x;
-    if(this._ball.isAttached())
-        this._ball.x -= delta;
-}
-
-Player.prototype.update = function() //Update
-{
-   this.readInput();
-}
-
-Player.prototype.getAnchor = function (i)
-{
-    if(i===0)
-       return this.anchor.x;
-    else
-       return this.anchor.y;   
-}
-
-// Desactiva el efecto activo en función de cúal sea éste en el momento
-Player.prototype.disableEffects = function () 
-{  
-    if(this._isWide)
-    {
-      this._isWide = false;
-      this.getNarrow();
-    }
-      else if(this._shotEnabled)
-      this._shotEnabled = false;
-}
-
-// FUNCIONES AUXILIARES
-
-// Activa el disparo del jugador
-Player.prototype.enableShot = function ()
-{   
-   this._shotEnabled = true;
-}
-
-// Ensancha la pala del jugador (solo si no lo estuviera ya)
-Player.prototype.getWider = function ()
-{   
-    if(!this._isWide)
-    {
-        this._isWide = true;
-      var widerPaddle = this.width *= 1.5;
-      this.body.setSize(widerPaddle, this.height);
-    }
-}
-
-// Estrecha la pala del jugador
-Player.prototype.getNarrow = function ()
-{   
-    var narrowPaddle = this.width /= 1.5;
-    this.body.setSize(narrowPaddle, this.height);
-}
-
-//////////////////////////////////////
-//2.2.1.2.CLASE PELOTA
-function Ball(game, position, sprite, sound, lives, velocity)
-{
-    Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
-    this._attached = true; 
-    this._attachEnabled = false;
-    this._angle = BASE_ANGLE;
-    
-}
-
-Ball.prototype = Object.create(Movable.prototype);
-Ball.prototype.constructor = Ball;
-
-//Funciones de pelota
-Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
-{
-    //Rebota
-    this.game.physics.arcade.collide(this, obj); 
-
-    //a)Jugador 
-    if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
-    {
-        //Rebote en lado contrario al que se mueve la pelota
-        if((this.x > obj.x && this.body.velocity.x < 0) || (this.x < obj.x && this.body.velocity.x > 0))
-            this.body.velocity.x = -this.body.velocity.x;
-
-        //Actualizamos el ángulo    
-        this._angle = Math.atan(this.body.velocity.y / this.body.velocity.x);
-
-           //Actualizamos la velocidad de nuestra jerarquía
-        this._velocity._x = this.body.velocity.x;
-        this._velocity._y = this.body.velocity.y;
-        // Si se puede enganchar a la pala, ésta se quedará pegada
-       if(this._attachEnabled)
-        this.attach(); 
-    }
-    
-
-    //b)Ladrillos o paredes
-    else if (obj.hasOwnProperty('_sound'))
-    {
-        //Cogemos su velocidad y ángulo después de rebotar
-        this._angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
-        var v = this.body.velocity.x / Math.cos(this._angle);
-
-        //Aceleramos la pelota
-        if(Math.max(v, -v) < MAX_VELOCITY)
-        {
-          if(v < 0)
-             v -= 10;
-          else
-             v += 10;
-          this.body.velocity.x = v * Math.cos(this._angle);
-          this.body.velocity.y = v * Math.sin(this._angle);
-        }
-
-        //Para los ladrillos destruibles
-        if(obj.hasOwnProperty('_lives'))
-            obj.takeDamage(playscene); 
-    }
-}
-
-// FUNCIONES AUXILIARES 
-
-Ball.prototype.enableAttach = function()
-{
-     this._attachEnabled = true;
-}
-
-Ball.prototype.isAttached = function()
-{
-    return this._attached;
-}
-
-Ball.prototype.throw = function()
-{
-    this._attached = false;
-    this.body.velocity.x = this._velocity._x;
-    this.body.velocity.y = this._velocity._y;
-}
-
-Ball.prototype.attach = function()
-{
-    this._attached = true;
-    this.body.velocity.x = 0;
-    this.body.velocity.y = 0;
-}
-
-Ball.prototype.slowDown = function()
-{
-    //Tenemos cuidado con los signos
-    var v = this.body.velocity.x / Math.cos(this._angle);
-    if(v < 0)
-      v = -BASE_VELOCITY;
-    else
-      v = BASE_VELOCITY;
-
-    //Reducimos la velocidad a la base 
-    this.body.velocity.x = v * Math.cos(this._angle);
-    this.body.velocity.y = v * Math.sin(this._angle);
-}
-
-Ball.prototype.disableEffects = function()
-{
-    if(this._attachEnabled)
-    {
-      this._attachEnabled = false;
-      if(this._attached)
-      {
-        this.throw();
-      }
-
-    }
-}
-
-
-/////////////////////////////////////////
-//2.2.1.2.CLASE POWER-UP
-function PowerUp(game, position, sprite, sound, lives, velocity, effect)
-{
-    Movable.apply(this, [game, position, sprite, sound, lives, velocity, POWERUP_POINTS]);
-
-   // Determina si el Power-Up es un efecto activo o no (pasando 'true' o 'false')
-    this._effect = effect;
-
-   // Para elegir un frame en concreto -> this.frame = x;
-    this.animations.add('rotate');
-    // Comienza la animación: a 6 fps, y 'true' para repetirla en bucle
-    this.animations.play('rotate', 6, true);
-}
-
-PowerUp.prototype = Object.create(Movable.prototype);
-PowerUp.prototype.constructor = PowerUp;
-
-PowerUp.prototype.update = function()
-{
-    this.y += this.body.velocity.y;
-}
-
-// Devuelve si el Power-Up actual es un efecto activo o no
-PowerUp.prototype.isEffect = function()
-{
-    return this._effect;
-}
-
-
-// POWER-UPS
-
-// 1) Power-Up rojo -> disparo
-function RedPowerUp(game, position, sprite, sound, lives, velocity, effect, player)
-{
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, POWERUP_POINTS]);
-
-    this._player = player;
-
-    this._effect = true;
-}
-
-RedPowerUp.prototype = Object.create(PowerUp.prototype);
-RedPowerUp.prototype.constructor = RedPowerUp;
-
-RedPowerUp.prototype.enable = function()
-{
-    this._player.enableShot();
-}
-
-RedPowerUp.prototype.disable = function()
-{
-    this._player.disableEffects();
-}
-
-// 2) Power-Up gris -> ganar una vida
-function GreyPowerUp(game, position, sprite, sound, lives, velocity, effect,  player)
-{
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, POWERUP_POINTS]);
-
-    this._player = player;
-}
-
-GreyPowerUp.prototype = Object.create(PowerUp.prototype);
-GreyPowerUp.prototype.constructor = GreyPowerUp;
-
-GreyPowerUp.prototype.enable = function()
-{
-    this._player.addLife();
-}
-
-// 3) Power-Up azul -> ensanchar la pala
-function BluePowerUp(game, position, sprite, sound, lives, velocity, effect, player)
-{
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect,  POWERUP_POINTS]);
-
-    this._player = player;
-}
-
-BluePowerUp.prototype = Object.create(PowerUp.prototype);
-BluePowerUp.prototype.constructor = BluePowerUp;
-
-BluePowerUp.prototype.enable = function()
-{
-    this._player.getWider();
-}
-
-BluePowerUp.prototype.disable = function()
-{
-    this._player.disableEffects();
-}
-
-// 4) Power-Up verde -> atrapar la pelota
-function GreenPowerUp(game, position, sprite, sound, lives, velocity, effect,  ball)
-{
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, POWERUP_POINTS]);
-
-    this._ball = ball;
-}
-
-GreenPowerUp.prototype = Object.create(PowerUp.prototype);
-GreenPowerUp.prototype.constructor = GreenPowerUp;
-
-GreenPowerUp.prototype.enable = function()
-{
-    this._ball.enableAttach();
-}
-
-GreenPowerUp.prototype.disable = function()
-{
-    this._ball.disableEffects();
-}
-
-// 5) Power-Up naranja -> decelerar la pelota
-function OrangePowerUp(game, position, sprite, sound, lives, velocity, effect, ball)
-{
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, POWERUP_POINTS]);
-
-    this._ball = ball;
-}
-
-OrangePowerUp.prototype = Object.create(PowerUp.prototype);
-OrangePowerUp.prototype.constructor = OrangePowerUp;
-
-OrangePowerUp.prototype.enable = function()
-{
-    this._ball.slowDown();
-}
-// *Caso excepcional* -> No desactiva nada como tal, pero sí sobreescribe otros efectos activos (como en el juego original)
-OrangePowerUp.prototype.disable = function()
-{
-}
