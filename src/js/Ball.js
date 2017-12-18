@@ -13,8 +13,6 @@ function Ball(game, position, sprite, sound, lives, velocity)
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     this._attached = false; 
     this._attachEnabled = false;
-    this._angle = BASE_ANGLE;
-    
 }
 
 Ball.prototype = Object.create(Movable.prototype);
@@ -33,9 +31,6 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
         if((this.x > obj.x && this.body.velocity.x < 0) || (this.x < obj.x && this.body.velocity.x > 0))
             this.body.velocity.x = -this.body.velocity.x;
 
-        //Actualizamos el ángulo    
-        this._angle = Math.atan(this.body.velocity.y / this.body.velocity.x);
-
            //Actualizamos la velocidad de nuestra jerarquía
         this._velocity._x = this.body.velocity.x;
         this._velocity._y = this.body.velocity.y;
@@ -49,8 +44,8 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
     else if (obj.hasOwnProperty('_sound'))
     {
         //Cogemos su velocidad y ángulo después de rebotar
-        this._angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
-        var v = this.body.velocity.x / Math.cos(this._angle);
+        var angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
+        var v = this.body.velocity.x / Math.cos(angle);
 
         //Aceleramos la pelota
         if(Math.max(v, -v) < MAX_VELOCITY)
@@ -59,8 +54,8 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
              v -= 10;
           else
              v += 10;
-          this.body.velocity.x = v * Math.cos(this._angle);
-          this.body.velocity.y = v * Math.sin(this._angle);
+          this.body.velocity.x = v * Math.cos(angle);
+          this.body.velocity.y = v * Math.sin(angle);
         }
 
         //Para los ladrillos destruibles
@@ -121,16 +116,22 @@ Ball.prototype.attach = function()
 
 Ball.prototype.slowDown = function()
 {
-    //Tenemos cuidado con los signos
-    var v = this.body.velocity.x / Math.cos(this._angle);
-    if(v < 0)
-      v = -BASE_VELOCITY;
-    else
-      v = BASE_VELOCITY;
+    //Ángulo actual de la pelota (puede ser positivo o negativo)
+    var angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
+    var v = this.body.velocity.x / Math.cos(angle);
 
-    //Reducimos la velocidad a la base 
-    this.body.velocity.x = v * Math.cos(this._angle);
-    this.body.velocity.y = v * Math.sin(this._angle);
+    //Reducimos la velocidad a la base
+    //Eje X 
+    if(this.body.velocity.x > 0)
+        this.body.velocity.x = BASE_VELOCITY * Math.cos(angle); //El coseno va a ser positivo siempre
+    else
+        this.body.velocity.x = -BASE_VELOCITY * Math.cos(angle);
+
+    //Eje Y
+    if(this.body.velocity.y > 0)
+       this.body.velocity.y = BASE_VELOCITY * Math.abs(Math.sin(angle)); //El seno, por el contrario, puede ser > 0 o < 0
+    else
+       this.body.velocity.y = -BASE_VELOCITY * Math.abs(Math.sin(angle));
 }
 
 Ball.prototype.disableEffects = function()
@@ -139,10 +140,7 @@ Ball.prototype.disableEffects = function()
     {
       this._attachEnabled = false;
       if(this._attached)
-      {
-        this.throw();
-      }
-
+          this.throw();
     }
 }
 

@@ -14,8 +14,6 @@ function Ball(game, position, sprite, sound, lives, velocity)
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     this._attached = false; 
     this._attachEnabled = false;
-    this._angle = BASE_ANGLE;
-    
 }
 
 Ball.prototype = Object.create(Movable.prototype);
@@ -34,9 +32,6 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
         if((this.x > obj.x && this.body.velocity.x < 0) || (this.x < obj.x && this.body.velocity.x > 0))
             this.body.velocity.x = -this.body.velocity.x;
 
-        //Actualizamos el ángulo    
-        this._angle = Math.atan(this.body.velocity.y / this.body.velocity.x);
-
            //Actualizamos la velocidad de nuestra jerarquía
         this._velocity._x = this.body.velocity.x;
         this._velocity._y = this.body.velocity.y;
@@ -50,8 +45,8 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
     else if (obj.hasOwnProperty('_sound'))
     {
         //Cogemos su velocidad y ángulo después de rebotar
-        this._angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
-        var v = this.body.velocity.x / Math.cos(this._angle);
+        var angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
+        var v = this.body.velocity.x / Math.cos(angle);
 
         //Aceleramos la pelota
         if(Math.max(v, -v) < MAX_VELOCITY)
@@ -60,8 +55,8 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
              v -= 10;
           else
              v += 10;
-          this.body.velocity.x = v * Math.cos(this._angle);
-          this.body.velocity.y = v * Math.sin(this._angle);
+          this.body.velocity.x = v * Math.cos(angle);
+          this.body.velocity.y = v * Math.sin(angle);
         }
 
         //Para los ladrillos destruibles
@@ -122,16 +117,22 @@ Ball.prototype.attach = function()
 
 Ball.prototype.slowDown = function()
 {
-    //Tenemos cuidado con los signos
-    var v = this.body.velocity.x / Math.cos(this._angle);
-    if(v < 0)
-      v = -BASE_VELOCITY;
-    else
-      v = BASE_VELOCITY;
+    //Ángulo actual de la pelota (puede ser positivo o negativo)
+    var angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
+    var v = this.body.velocity.x / Math.cos(angle);
 
-    //Reducimos la velocidad a la base 
-    this.body.velocity.x = v * Math.cos(this._angle);
-    this.body.velocity.y = v * Math.sin(this._angle);
+    //Reducimos la velocidad a la base
+    //Eje X 
+    if(this.body.velocity.x > 0)
+        this.body.velocity.x = BASE_VELOCITY * Math.cos(angle); //El coseno va a ser positivo siempre
+    else
+        this.body.velocity.x = -BASE_VELOCITY * Math.cos(angle);
+
+    //Eje Y
+    if(this.body.velocity.y > 0)
+       this.body.velocity.y = BASE_VELOCITY * Math.abs(Math.sin(angle)); //El seno, por el contrario, puede ser > 0 o < 0
+    else
+       this.body.velocity.y = -BASE_VELOCITY * Math.abs(Math.sin(angle));
 }
 
 Ball.prototype.disableEffects = function()
@@ -140,10 +141,7 @@ Ball.prototype.disableEffects = function()
     {
       this._attachEnabled = false;
       if(this._attached)
-      {
-        this.throw();
-      }
-
+          this.throw();
     }
 }
 
@@ -210,6 +208,8 @@ module.exports = Destroyable;
 'use strict'
 
 var Movable = require ('./Movable.js');
+var Destroyable = require ('./Destroyable.js');
+var Par = require ('./SoundSource.js').Par;
 
 var ENEMY_POINTS = 100;
 var ENEMY_VEL = 1;
@@ -218,12 +218,14 @@ var ENEMY_VEL = 1;
 function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity, ENEMY_POINTS]);
-    this._dir = 3; //Derecha, izquierda, arriba, abajo (en ese orden)
     this._vel = this._velocity._y; //El módulo de la velocidad
     this._dir = 3;//0-Dcha, 1-Izda, 2-Arriba, 3-Abajo
     this._walls = walls;
     this._bricks = bricks;
     this._enemies = enemies;
+
+    this._iniX = position._x;
+    this._iniY = position._y;
     this.anchor.setTo(0.5, 0.5);
 
     //Animación
@@ -237,8 +239,8 @@ Enemy.prototype.constructor = Enemy;
 
 Enemy.prototype.update = function() 
 {
-    Movable.prototype.update.call(this);
     this.move();
+    Movable.prototype.update.call(this);
 }
 
 Enemy.prototype.move = function() 
@@ -266,10 +268,7 @@ Enemy.prototype.move = function()
             this._dir = 3;
         //Si no, si se choca yendo a la izquierda, va arriba
         else if(this.choque(-1,0))
-        {
             this._dir = 2;
-            console.log("e");
-        }
             
         //Y si no, sigue hacia la izquierda
     }
@@ -299,65 +298,37 @@ Enemy.prototype.move = function()
     this.x+=this._velocity._x;
     this.y+=this._velocity._y;
 }
+
 Enemy.prototype.choque = function(dirX, dirY) 
 {
-    var nx = this.x + (dirX * this.width / 2);
-    var ny = this.y + (dirY * (2 + this.height / 2));
-    var numBricks = this._bricks.length;
-     
+    //Enemigo auxiliar para comprobar la colisión
+    var nx = this.x - this.width/2 + dirX;
+    var ny = this.y - this.height/2 + dirY;
+    var auxEnemy = new Phaser.Sprite(this.game, nx, ny, 'enemigos');
+    this.game.physics.enable(auxEnemy);
+
+    //Comprobamos colisiones de ese auxiliar con los 3 grupos que nos importan
+    var choque = (this.choqueGrupo(auxEnemy, this._bricks) || this.choqueGrupo(auxEnemy, this._walls) 
+    || this.choqueGrupo(auxEnemy, this._enemies));
+
+    return choque;
+}
+
+Enemy.prototype.choqueGrupo = function(obj1, grupo)
+{
+    var numElems = grupo.length;
     var i = 0;
     var choque = false;
-
-    //Choque con los ladrillos
-    while(i < numBricks && !choque)
+    //Choque con todos los elementos de ese grupo
+    while(i < numElems && !choque)
     {
-        var brick = this._bricks.children[i];
-        if((nx > (brick.x - brick.width/2) && nx < brick.x + 3 / 2 * brick.width) && (ny > brick.y && ny < brick.y + brick.height))
-            {
-                choque=true;
-            } 
-            
+        var element = grupo.children[i];
+        choque = (this.game.physics.arcade.overlap(obj1, element) && element != this);  
         i++;
-    }
-
-    
-    if(!choque)
-    {
-        var j = 0;
-        var numWalls = this._walls.length;
-        //Choque con las paredes
-        while(j < numWalls && !choque)
-        {
-            var wall = this._walls.children[j];
-            if((nx > wall.x && nx < wall.x + wall.width) && (ny > wall.y && ny < wall.y + wall.height))
-                {
-                    choque=true;
-                } 
-                
-            j++;
-        }
-
-        //Choque con los enemigos
-        if(!choque)
-        {
-            var k = 0;
-            var numEnemies= this._enemies.length;
-            //Choque con las paredes
-            while(k < numEnemies && !choque)
-            {
-                var enemy = this._enemies.children[k];
-                if((nx >= enemy.x - enemy.width/2 && nx <= enemy.x + enemy.width/2) && (ny > enemy.y-enemy.height/2 && ny < enemy.y + enemy.height/2)
-                 && enemy !=this)
-                    {
-                        choque=true;
-                    } 
-                    
-                k++;
-            }
-        }
     }
     return choque;
 }
+
 
 Enemy.prototype.updateSpeed = function() 
 {
@@ -374,13 +345,26 @@ Enemy.prototype.updateSpeed = function()
         this._velocity._y = this._vel;
 }
 
+
+Enemy.prototype.takeDamage = function(playscene) 
+{
+    Destroyable.prototype.takeDamage.call(this, playscene);
+
+    //Se respawnea a si mismo
+    this.x = this._iniX;
+    this.y = this._iniY;
+    this._dir = 3;
+
+    this.revive();
+}
+
 module.exports = 
 {
     Enemy,
     ENEMY_POINTS,
     ENEMY_VEL
 };
-},{"./Movable.js":5}],4:[function(require,module,exports){
+},{"./Destroyable.js":2,"./Movable.js":5,"./SoundSource.js":8}],4:[function(require,module,exports){
 'use strict'
 
 var SoundSource = require ('./SoundSource.js').SoundSource;
@@ -863,15 +847,16 @@ window.onload = function ()
 
 },{"./play_scene.js":10}],10:[function(require,module,exports){
 'use strict';
-//Requires
+
+//Jerarquía de objetos
 var SoundSource = require ('./SoundSource.js').SoundSource;
 var HUD = require ('./HUD.js');
 var Destroyable = require ('./Destroyable.js');
 var Movable = require ('./Movable.js');
-var Enemy = require ('./Enemy.js');
+var Enemy = require ('./Enemy.js').Enemy;
 var Player = require ('./Player.js');
-var Ball = require ('./Ball.js');
-var PowerUp = require ('./PowerUp.js');
+var Ball = require ('./Ball.js').Ball;
+var PowerUp = require ('./PowerUp.js').PowerUp;
 var GreenPowerUp = require ('./PowerUp.js').GreenPowerUp;
 var GreyPowerUp = require ('./PowerUp.js').GreyPowerUp; 
 var RedPowerUp = require ('./PowerUp.js').RedPowerUp;
@@ -879,20 +864,15 @@ var BluePowerUp = require ('./PowerUp.js').BluePowerUp;
 var OrangePowerUp = require ('./PowerUp.js').OrangePowerUp;
 var LightBluePowerUp = require ('./PowerUp.js').LightBluePowerUp;
 
+//Estructuras auxiliares y constantes
 var Par = require ('./SoundSource.js').Par;
-
 var BASE_VELOCITY = require ('./Ball.js').BASE_VELOCITY;
 var BASE_ANGLE = require ('./Ball.js').BASE_ANGLE;
 var ENEMY_VEL = require ('./Enemy.js').ENEMY_VEL;
+var MAX_ENEMIES = 3;
 
-
-
-
-//Constantes
 var NUM_POWERUPS = 6;
 var POWERUP_CHANCE = 1/1;
-
-var MAX_ENEMIES = 3;
 
 var NUM_ROWS = 6;
 var NUM_COLS = 11;
@@ -941,8 +921,8 @@ var PlayScene =
 
     var playerPos = new Par(350, 525);
     var ballPos = new Par(playerPos._x, playerPos._y - 12);
-    var ballVel = new Par(Ball.BASE_VELOCITY * Math.cos(Ball.BASE_ANGLE), -Ball.BASE_VELOCITY *  Math.sin(Ball.BASE_ANGLE));
-    this.ball = new Ball.Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
+    var ballVel = new Par(BASE_VELOCITY * Math.cos(BASE_ANGLE), -BASE_VELOCITY *  Math.sin(BASE_ANGLE));
+    this.ball = new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
     this.game.world.addChild(this.ball);
 
     this.ballsGroup.add(this.ball);
@@ -1028,24 +1008,23 @@ var PlayScene =
     //8.PowerUps
     this.powerUps = this.game.add.physicsGroup();
     this.powerUps.classType = PowerUp;
-    this.game.physics.enable([this.player, this.powerUps], Phaser.Physics.ARCADE);
+    this.game.physics.enable([this.powerUps], Phaser.Physics.ARCADE);
     
     //9.Enemigos
     this.enemigos = this.game.add.physicsGroup();
     this.enemigos.classType = Enemy;
 
     
-    var enemyPos = new Par(this.leftLimit + 50, 50);
-    var enemyVel = new Par(0, Enemy.ENEMY_VEL);
-    var enem1 = new Enemy.Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
+    var enemyPos = new Par(this.leftLimit + 127, 55);
+    var enemyVel = new Par(0, ENEMY_VEL);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
     this.enemigos.add(enem1);
     
 
-    var enemyPos2 = new Par(this.rightLimit-90, 55); 
-    var enemyVel2 = new Par(0, Enemy.ENEMY_VEL);
-    var enem2 = new Enemy.Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
+    var enemyPos2 = new Par(this.rightLimit-120, 55); 
+    var enemyVel2 = new Par(0, ENEMY_VEL);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
     this.enemigos.add(enem2);
-
     this.enemigos.setAll('body.immovable', true);
 
 
@@ -1076,8 +1055,6 @@ var PlayScene =
   },
 
   // COLISIONES
-
-
   // A) Detecta las colisones con las balas
   bulletCollisions: function(bullet, obj)
   {
@@ -1111,8 +1088,6 @@ var PlayScene =
 
   
   // POWER-UPS
-
-
    // A) Dropea un Power-Up según una probabilidad
    dropPowerUp: function(brick)
    {
@@ -1200,7 +1175,7 @@ var PlayScene =
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
        powerUp.enable();
-       powerUp.takeDamage();
+       powerUp.takeDamage(this);
    },
 
    // Usado para hacer debug

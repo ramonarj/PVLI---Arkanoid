@@ -1,13 +1,14 @@
 'use strict';
-//Requires
+
+//Jerarquía de objetos
 var SoundSource = require ('./SoundSource.js').SoundSource;
 var HUD = require ('./HUD.js');
 var Destroyable = require ('./Destroyable.js');
 var Movable = require ('./Movable.js');
-var Enemy = require ('./Enemy.js');
+var Enemy = require ('./Enemy.js').Enemy;
 var Player = require ('./Player.js');
-var Ball = require ('./Ball.js');
-var PowerUp = require ('./PowerUp.js');
+var Ball = require ('./Ball.js').Ball;
+var PowerUp = require ('./PowerUp.js').PowerUp;
 var GreenPowerUp = require ('./PowerUp.js').GreenPowerUp;
 var GreyPowerUp = require ('./PowerUp.js').GreyPowerUp; 
 var RedPowerUp = require ('./PowerUp.js').RedPowerUp;
@@ -15,20 +16,15 @@ var BluePowerUp = require ('./PowerUp.js').BluePowerUp;
 var OrangePowerUp = require ('./PowerUp.js').OrangePowerUp;
 var LightBluePowerUp = require ('./PowerUp.js').LightBluePowerUp;
 
+//Estructuras auxiliares y constantes
 var Par = require ('./SoundSource.js').Par;
-
 var BASE_VELOCITY = require ('./Ball.js').BASE_VELOCITY;
 var BASE_ANGLE = require ('./Ball.js').BASE_ANGLE;
 var ENEMY_VEL = require ('./Enemy.js').ENEMY_VEL;
+var MAX_ENEMIES = 3;
 
-
-
-
-//Constantes
 var NUM_POWERUPS = 6;
 var POWERUP_CHANCE = 1/1;
-
-var MAX_ENEMIES = 3;
 
 var NUM_ROWS = 6;
 var NUM_COLS = 11;
@@ -77,8 +73,8 @@ var PlayScene =
 
     var playerPos = new Par(350, 525);
     var ballPos = new Par(playerPos._x, playerPos._y - 12);
-    var ballVel = new Par(Ball.BASE_VELOCITY * Math.cos(Ball.BASE_ANGLE), -Ball.BASE_VELOCITY *  Math.sin(Ball.BASE_ANGLE));
-    this.ball = new Ball.Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
+    var ballVel = new Par(BASE_VELOCITY * Math.cos(BASE_ANGLE), -BASE_VELOCITY *  Math.sin(BASE_ANGLE));
+    this.ball = new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
     this.game.world.addChild(this.ball);
 
     this.ballsGroup.add(this.ball);
@@ -164,24 +160,23 @@ var PlayScene =
     //8.PowerUps
     this.powerUps = this.game.add.physicsGroup();
     this.powerUps.classType = PowerUp;
-    this.game.physics.enable([this.player, this.powerUps], Phaser.Physics.ARCADE);
+    this.game.physics.enable([this.powerUps], Phaser.Physics.ARCADE);
     
     //9.Enemigos
     this.enemigos = this.game.add.physicsGroup();
     this.enemigos.classType = Enemy;
 
     
-    var enemyPos = new Par(this.leftLimit + 50, 50);
-    var enemyVel = new Par(0, Enemy.ENEMY_VEL);
-    var enem1 = new Enemy.Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
+    var enemyPos = new Par(this.leftLimit + 127, 55);
+    var enemyVel = new Par(0, ENEMY_VEL);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
     this.enemigos.add(enem1);
     
 
-    var enemyPos2 = new Par(this.rightLimit-90, 55); 
-    var enemyVel2 = new Par(0, Enemy.ENEMY_VEL);
-    var enem2 = new Enemy.Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
+    var enemyPos2 = new Par(this.rightLimit-120, 55); 
+    var enemyVel2 = new Par(0, ENEMY_VEL);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
     this.enemigos.add(enem2);
-
     this.enemigos.setAll('body.immovable', true);
 
 
@@ -212,8 +207,6 @@ var PlayScene =
   },
 
   // COLISIONES
-
-
   // A) Detecta las colisones con las balas
   bulletCollisions: function(bullet, obj)
   {
@@ -247,8 +240,6 @@ var PlayScene =
 
   
   // POWER-UPS
-
-
    // A) Dropea un Power-Up según una probabilidad
    dropPowerUp: function(brick)
    {
@@ -336,7 +327,7 @@ var PlayScene =
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
        powerUp.enable();
-       powerUp.takeDamage();
+       powerUp.takeDamage(this);
    },
 
    // Usado para hacer debug
