@@ -37,8 +37,12 @@ var PreloaderScene =
     this.game.load.image('techo', 'images/techo.png');
     this.game.load.image('ladrillo', 'images/ladrillo.png');
     this.game.load.image('bullet', 'images/bullet pair.png');
-    this.game.load.image('menu', 'images/menu.png');
     this.game.load.image('vidas', 'images/Vidas.png');
+    this.game.load.image('menu', 'images/menu.png');
+    this.game.load.image('cursor', 'images/Cursor.png');
+    this.game.load.image('1up', 'images/1up.png');
+    this.game.load.image('highscore', 'images/highscore.png');
+    
 
 
    // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)'

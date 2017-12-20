@@ -116,10 +116,10 @@ var PlayScene =
         else if(i==5)
           brickType=3;
 
-        for(var j = 0; j < NUM_COLS - 2; j++)
+        for(var j = 0; j < NUM_COLS; j++)
         {
             var brick;
-            var pos= new Par(this.leftLimit + BRICK_WIDTH + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
+            var pos= new Par(this.leftLimit + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
 
             if(brickType==8)
                brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);
@@ -180,7 +180,7 @@ var PlayScene =
     this.enemigos.setAll('body.immovable', true);
 
     //10.HUD
-    var hudPos = new Par(this.rightLimit + 30, 320);
+    var hudPos = new Par(this.rightLimit + 15, 320);
     this.hud = new HUD(this, hudPos, 'vidas','e');
 
     //Cosas de la pelota
@@ -333,18 +333,18 @@ var PlayScene =
        this.activePowerUp = powerUp;
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
+    var lives = this.player._lives;
        powerUp.enable();
        powerUp.takeDamage(this);
+     if(this.player._lives > lives)
+        this.hud.addLife();
    },
 
    // Usado para hacer debug
   render: function() 
    {
         // Player debug info
-        this.game.debug.text('Power-up: '+ this.player._powerUpActual, 5, 35);
-        this.game.debug.text('Lives: '+ this.player._lives, this.rightLimit + 50, 300);
-        this.game.debug.text('Points: '+ this.points, this.rightLimit + 50, 150);
-        this.game.debug.text('Balls: '+ this.ballsGroup.length, this.rightLimit + 50, 450);
+        this.game.debug.text(this.points, this.rightLimit + 50, 210);
     }
 };
 
