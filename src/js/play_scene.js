@@ -46,6 +46,7 @@ var PlayScene =
      bricks:null,
      walls:null,
      powerUps:null,
+     hud:null,
      activePowerUp:null,
      fallingPowerUp:null,
      player:null,
@@ -67,7 +68,6 @@ var PlayScene =
     this.game.world.addChild(this.fondo);
 
     //2.Pelota
-
     this.ballsGroup = this.game.add.physicsGroup();
     this.ballsGroup.classType = Ball;
 
@@ -179,6 +179,9 @@ var PlayScene =
     this.enemigos.add(enem2);
     this.enemigos.setAll('body.immovable', true);
 
+    //10.HUD
+    var hudPos = new Par(this.rightLimit + 30, 320);
+    this.hud = new HUD(this, hudPos, 'vidas','e');
 
     //Cosas de la pelota
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
@@ -204,6 +207,10 @@ var PlayScene =
     //Colisiones del jugador
     this.game.physics.arcade.overlap(this.player, this.powerUps, this.takePowerUp, null, this);
     this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
+
+    //Perdiste
+    if(this.ballsGroup.getFirstAlive() == null)
+       this.game.state.start('play');
   },
 
   // COLISIONES
@@ -303,7 +310,7 @@ var PlayScene =
          this.powerUps.add(powerUp);
     
          powerUp.body.immovable = true;
-         powerUp.body.velocity.y = 2;
+         powerUp.body.velocity.setTo(0, 2); //Físicas de la pelota
 
          this.fallingPowerUp = powerUp;
         

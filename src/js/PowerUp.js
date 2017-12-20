@@ -29,8 +29,7 @@ PowerUp.prototype.constructor = PowerUp;
 PowerUp.prototype.update = function()
 {
     this.y += this.body.velocity.y;
-    if(this.y>this.game.height - 20)
-    this.takeDamage();
+    Movable.prototype.update.call(this);
 }
 
 //

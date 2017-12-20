@@ -1,6 +1,7 @@
 'use strict';
 
 var PlayScene = require('./play_scene.js');
+var Menu = require ('./Menu.js');
 
 var BootScene = 
 {
@@ -20,7 +21,7 @@ var PreloaderScene =
 {
   preload: function () 
   {
-    this.game.load.baseURL = "https://ramonarj.github.io/Arkanoid-Remake/src/";
+    //this.game.load.baseURL = "https://ramonarj.github.io/Arkanoid-Remake/src/";
     
      this.game.load.crossOrigin = 'anonymous';
     //Fondo
@@ -36,6 +37,8 @@ var PreloaderScene =
     this.game.load.image('techo', 'images/techo.png');
     this.game.load.image('ladrillo', 'images/ladrillo.png');
     this.game.load.image('bullet', 'images/bullet pair.png');
+    this.game.load.image('menu', 'images/menu.png');
+    this.game.load.image('vidas', 'images/Vidas.png');
 
 
    // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)'
@@ -56,7 +59,7 @@ var PreloaderScene =
 
   create: function () 
   {
-    this.game.state.start('play');
+    this.game.state.start('menu');
   }
 };
 
@@ -68,6 +71,7 @@ window.onload = function ()
   game.state.add('boot', BootScene);
   game.state.add('preloader', PreloaderScene);
   game.state.add('play', PlayScene);
+  game.state.add('menu', Menu);
 
   game.state.start('boot');
 };
