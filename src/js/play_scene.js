@@ -116,7 +116,7 @@ var PlayScene =
         else if(i==5)
           brickType=3;
 
-        for(var j = 0; j < NUM_COLS; j++)
+        for(var j = 0; j < NUM_COLS - 3; j++)
         {
             var brick;
             var pos= new Par(this.leftLimit + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
@@ -169,13 +169,13 @@ var PlayScene =
     
     var enemyPos = new Par(this.leftLimit + 127, 55);
     var enemyVel = new Par(0, ENEMY_VEL);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos, this.player.y);
     this.enemigos.add(enem1);
     
 
     var enemyPos2 = new Par(this.rightLimit-120, 55); 
     var enemyVel2 = new Par(0, ENEMY_VEL);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos, this.player.y);
     this.enemigos.add(enem2);
     this.enemigos.setAll('body.immovable', true);
 
@@ -345,6 +345,7 @@ var PlayScene =
    {
         // Player debug info
         this.game.debug.text(this.points, this.rightLimit + 50, 210);
+        this.game.debug.text(this.levelNo, this.rightLimit + 50, 550);
     }
 };
 

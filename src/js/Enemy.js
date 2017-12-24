@@ -6,9 +6,10 @@ var Par = require ('./SoundSource.js').Par;
 
 var ENEMY_POINTS = 100;
 var ENEMY_VEL = 1;
+var SPIN_RADIUS = 60;
 
 //2.2.1.1.CLASE ENEMIGO
-function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies)
+function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies, playerY)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity, ENEMY_POINTS]);
     this._vel = this._velocity._y; //El módulo de la velocidad
@@ -16,6 +17,11 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
     this._walls = walls;
     this._bricks = bricks;
     this._enemies = enemies;
+
+    this._lowerBrickY = this.findLowerBrick();
+    this._playerY = playerY;
+    this._circles = false;
+    this._spinAxis = new Par (0,0);
 
     this._iniX = position._x;
     this._iniY = position._y;
@@ -32,11 +38,15 @@ Enemy.prototype.constructor = Enemy;
 
 Enemy.prototype.update = function() 
 {
-    this.move();
+    if(this._circles)
+       this.moveCircles();
+    else 
+       this.moveStraight();
+       
     Movable.prototype.update.call(this);
 }
 
-Enemy.prototype.move = function() 
+Enemy.prototype.moveStraight = function() 
 {
     //1.ACTUALIZAMOS LA DIRECCIÓN ACTUAL
     //Direcciones ordenadas por prioridad
@@ -90,6 +100,13 @@ Enemy.prototype.move = function()
     //3.MOVEMOS AL ENEMIGO
     this.x+=this._velocity._x;
     this.y+=this._velocity._y;
+
+    //4.COMPROBAMOS SI HAY QUE MOVERSE EN CÍRCULOS
+    if(this.y - this.height / 2 > this._lowerBrickY && this._spinAxis._y == 0)
+    {
+        this._circles = true;
+        this._spinAxis = new Par(this.x, this.y + SPIN_RADIUS);
+    } 
 }
 
 Enemy.prototype.choque = function(dirX, dirY) 
@@ -138,15 +155,48 @@ Enemy.prototype.updateSpeed = function()
         this._velocity._y = this._vel;
 }
 
+Enemy.prototype.findLowerBrick = function() 
+{
+    var posY = 0; var i=0;
+    for (i = 0; i < this._bricks.length; i++)
+    {
+        if(this._bricks.children[i].y >  posY)
+           posY = this._bricks.children[i].y;
+    } 
+    posY += this._bricks.children[0].height;
+    return posY;   
+}
+
+Enemy.prototype.moveCircles = function() 
+{
+    //MOVIMIENTO CIRCULAR
+    var oldY = this.y;
+    var periodo = this.game.time.now * 0.001;
+    this.x = this._spinAxis._x + Math.cos(1.5 * periodo) * SPIN_RADIUS;
+    this.y = this._spinAxis._y + Math.sin(1.5 * periodo) * SPIN_RADIUS;
+
+    //Si está yendo hacia arriba a partir del centro de rotación, bajamos el radio
+    if(this.y < oldY && this.y < this._spinAxis._y) 
+       this._spinAxis._y += 0.3;
+    //Si sobrepasa al jugador, deja de dar círculos
+    else if(this.y + (this.height*2) > this._playerY)
+    {
+        this._dir = 3;
+        this._circles=false;
+    }  
+}
+
 
 Enemy.prototype.takeDamage = function(playscene) 
 {
     Destroyable.prototype.takeDamage.call(this, playscene);
-
+    
     //Se respawnea a si mismo
     this.x = this._iniX;
     this.y = this._iniY;
     this._dir = 3;
+    this._circles = false;
+    this._spinAxis = new Par (0,0);
 
     this.revive();
 }

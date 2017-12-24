@@ -42,6 +42,7 @@ var PreloaderScene =
     this.game.load.image('cursor', 'images/Cursor.png');
     this.game.load.image('1up', 'images/1up.png');
     this.game.load.image('highscore', 'images/highscore.png');
+    this.game.load.image('round', 'images/round.png');
     
 
 

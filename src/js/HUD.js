@@ -17,6 +17,8 @@ function HUD(game, position, sprite, sound)
   this.game.world.addChild(this._1up);
   this._highscore = new Phaser.Image(this.game, position._x + 15, position._y - 250, "highscore");
   this.game.world.addChild(this._highscore);
+  this._round = new Phaser.Image(this.game, position._x + 15, 500, "round");
+  this.game.world.addChild(this._round);
   
   var cont=0;
   for(var i=0; i<NUM_ROWS; i++)
