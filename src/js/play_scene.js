@@ -91,6 +91,9 @@ var PlayScene =
     this.walls.setAll('body.immovable', true);
     this.walls.setAll('visible', false);
 
+
+    var pas = new Phaser.Sprite(this.game, 633, 35, 'PowerUps');
+    this.world.add(pas);
     //4.Límites de la pantalla
     this.leftLimit = pared1.x + pared1.width; 
     this.rightLimit = pared2.x - 2;
@@ -119,7 +122,7 @@ var PlayScene =
         for(var j = 0; j < NUM_COLS - 5; j++)
         {
             var brick;
-            var pos= new Par(this.leftLimit + 150 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
+            var pos= new Par(this.leftLimit + 100 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
 
             if(brickType==8)
                brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);
@@ -162,20 +165,29 @@ var PlayScene =
     this.powerUps.classType = PowerUp;
     this.game.physics.enable([this.powerUps], Phaser.Physics.ARCADE);
     
+    //9.Compuertas
+    var gate1 = new Phaser.Sprite(this.game, 236, 20, 'compuertas');
+    var gate2 = new Phaser.Sprite(this.game, 477, 20, 'compuertas');
+    this.world.add(gate1);
+    this.world.add(gate2);
+    gate1.animations.add('open');
+    gate2.animations.add('open');
+
+
     //9.Enemigos
     this.enemigos = this.game.add.physicsGroup();
     this.enemigos.classType = Enemy;
 
     
-    var enemyPos = new Par(this.leftLimit + 127, 55);
+    var enemyPos = new Par(gate1.x + gate1.width/2, gate1.y);
     var enemyVel = new Par(0, ENEMY_VEL);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos, this.player.y);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos, gate1, this.player.y);
     this.enemigos.add(enem1);
     
 
-    var enemyPos2 = new Par(this.rightLimit-120, 55); 
+    var enemyPos2 = new Par(gate2.x + gate2.width/2, gate2.y); 
     var enemyVel2 = new Par(0, ENEMY_VEL);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos, this.player.y);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos, gate2, this.player.y);
     this.enemigos.add(enem2);
     this.enemigos.setAll('body.immovable', true);
 
@@ -210,7 +222,7 @@ var PlayScene =
 
     //Perdiste
     if(this.ballsGroup.getFirstAlive() == null)
-       this.game.state.start('play');
+       this.game.state.restart();
   },
 
   // COLISIONES

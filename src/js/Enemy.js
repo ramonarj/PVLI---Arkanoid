@@ -7,9 +7,11 @@ var Par = require ('./SoundSource.js').Par;
 var ENEMY_POINTS = 100;
 var ENEMY_VEL = 1;
 var SPIN_RADIUS = 60;
+var MAX_ENEMIES = 3;
+var UPPERLIMIT = 40;
 
 //2.2.1.1.CLASE ENEMIGO
-function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies, playerY)
+function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies, gate, playerY)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity, ENEMY_POINTS]);
     //Para el movimiento recto
@@ -18,6 +20,7 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
     this._walls = walls;
     this._bricks = bricks;
     this._enemies = enemies;
+    this._gate = gate;
 
     //Para el movimiento circular
     this._lowerBrickY = this.findLowerBrick();
@@ -26,6 +29,7 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
     this._rotationDirection = 1; //-1 = clockwise 1 = counterclockwise
     this._spinAxis = new Par (0,0);
     this._initialTime = 0;
+    this._outOfGate = false;
 
     //Para el respawn
     this._iniX = position._x;
@@ -36,6 +40,9 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
     this.animations.add('move');
     this.animations.play('move', 8, true);
     this.animations.currentAnim.speed = 6 * ENEMY_VEL;
+    
+    this._gate.animations.play('open', 9, false);
+    this._gate.animations.currentAnim.speed = 6 * ENEMY_VEL;
 }
 
 Enemy.prototype = Object.create(Movable.prototype);
@@ -120,6 +127,9 @@ Enemy.prototype.moveStraight = function()
         this.y + (Math.sin(Math.PI / 4) * SPIN_RADIUS));
         this._initialTime = -Math.acos((Math.abs(this.x - this._spinAxis._x)) / SPIN_RADIUS);
     } 
+    //Comprobamos si ya ha salido de la compuerta
+    else if (!this._outOfGate && this.y - this.width/2 > UPPERLIMIT)
+        this._outOfGate=true;
 }
 
 Enemy.prototype.choque = function(dirX, dirY) 
@@ -131,8 +141,8 @@ Enemy.prototype.choque = function(dirX, dirY)
     this.game.physics.enable(auxEnemy);
 
     //Comprobamos colisiones de ese auxiliar con los 3 grupos que nos importan
-    var choque = (this.choqueGrupo(auxEnemy, this._bricks) || this.choqueGrupo(auxEnemy, this._walls) 
-    || this.choqueGrupo(auxEnemy, this._enemies));
+    var choque = ((this.choqueGrupo(auxEnemy, this._bricks) || this.choqueGrupo(auxEnemy, this._walls) 
+    || this.choqueGrupo(auxEnemy, this._enemies)) && this._outOfGate);
 
     return choque;
 }
@@ -218,6 +228,8 @@ Enemy.prototype.takeDamage = function(playscene)
     this._dir = 3;
     this._circles = false;
     this._spinAxis = new Par (0,0);
+    this._outOfGate = false;
+    this._gate.animations.play('open', 9, false);
 
     this.revive();
 }

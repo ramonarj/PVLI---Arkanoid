@@ -18,6 +18,7 @@ function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop)
     this._dropEnabled = drop;
 
    // Para elegir un frame en concreto -> this.frame = x;
+   
     this.animations.add('rotate');
     // Comienza la animación: a 6 fps, y 'true' para repetirla en bucle
     this.animations.play('rotate', 6, true);
