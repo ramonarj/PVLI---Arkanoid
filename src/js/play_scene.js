@@ -91,9 +91,6 @@ var PlayScene =
     this.walls.setAll('body.immovable', true);
     this.walls.setAll('visible', false);
 
-
-    var pas = new Phaser.Sprite(this.game, 633, 35, 'PowerUps');
-    this.world.add(pas);
     //4.Límites de la pantalla
     this.leftLimit = pared1.x + pared1.width; 
     this.rightLimit = pared2.x - 2;
@@ -193,7 +190,7 @@ var PlayScene =
 
     //10.HUD
     var hudPos = new Par(this.rightLimit + 15, 320);
-    this.hud = new HUD(this, hudPos, 'vidas','e');
+    this.hud = new HUD(this.game, hudPos, 'vidas','e');
 
     //Cosas de la pelota
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota

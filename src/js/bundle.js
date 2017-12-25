@@ -981,7 +981,7 @@ var PreloaderScene =
     this.game.load.image('techo', 'images/techo.png');
     this.game.load.image('bullet', 'images/bullet pair.png');
     this.game.load.image('vidas', 'images/Vidas.png');
-    this.game.load.image('menu', 'images/Menu.png');
+    this.game.load.image('menu', 'images/menu.png');
     this.game.load.image('cursor', 'images/Cursor.png');
     this.game.load.image('1up', 'images/1up.png');
     this.game.load.image('highscore', 'images/highscore.png');
@@ -992,7 +992,7 @@ var PreloaderScene =
     this.game.load.spritesheet('PowerUps', 'images/PowerUps.png', 40, 18, 42); //42 frames
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
-    this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Enemigos
+    this.game.load.spritesheet('compuertas', 'images/compuertas.png', 68, 20); //Enemigos
   },
 
   create: function () 
@@ -1108,9 +1108,6 @@ var PlayScene =
     this.walls.setAll('body.immovable', true);
     this.walls.setAll('visible', false);
 
-
-    var pas = new Phaser.Sprite(this.game, 633, 35, 'PowerUps');
-    this.world.add(pas);
     //4.Límites de la pantalla
     this.leftLimit = pared1.x + pared1.width; 
     this.rightLimit = pared2.x - 2;
@@ -1210,7 +1207,7 @@ var PlayScene =
 
     //10.HUD
     var hudPos = new Par(this.rightLimit + 15, 320);
-    this.hud = new HUD(this, hudPos, 'vidas','e');
+    this.hud = new HUD(this.game, hudPos, 'vidas','e');
 
     //Cosas de la pelota
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
