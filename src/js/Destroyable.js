@@ -24,13 +24,14 @@ Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
     this._lives--;
     if(this._lives <= 0)
     {
+        
         //Si es un ladrillo de color, puede dropear Power-Ups
         if(this.constructor === Destroyable && this._maxLives == 1)
         {
             playscene.dropPowerUp(this);
         }
         this.kill();
-
+        
         //Se destruye (y suma puntos) en caso de que no llamemos desde el update de movable
         if(playscene != null)
           playscene.points += this._numPoints;
