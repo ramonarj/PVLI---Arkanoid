@@ -981,7 +981,7 @@ var PreloaderScene =
     this.game.load.image('techo', 'images/techo.png');
     this.game.load.image('bullet', 'images/bullet pair.png');
     this.game.load.image('vidas', 'images/Vidas.png');
-    this.game.load.image('menu', 'images/menu.png');
+    this.game.load.image('menu', 'images/Menu.png');
     this.game.load.image('cursor', 'images/Cursor.png');
     this.game.load.image('1up', 'images/1up.png');
     this.game.load.image('highscore', 'images/highscore.png');
@@ -992,7 +992,7 @@ var PreloaderScene =
     this.game.load.spritesheet('PowerUps', 'images/PowerUps.png', 40, 18, 42); //42 frames
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
-    this.game.load.spritesheet('compuertas', 'images/compuertas.png', 68, 20); //Enemigos
+    this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Enemigos
   },
 
   create: function () 
@@ -1133,10 +1133,10 @@ var PlayScene =
         else if(i==5)
           brickType=3;
 
-        for(var j = 0; j < NUM_COLS - 5; j++)
+        for(var j = 0; j < NUM_COLS; j++)
         {
             var brick;
-            var pos= new Par(this.leftLimit + 100 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
+            var pos= new Par(this.leftLimit + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
 
             if(brickType==8)
                brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);

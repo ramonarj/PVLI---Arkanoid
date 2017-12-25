@@ -116,10 +116,10 @@ var PlayScene =
         else if(i==5)
           brickType=3;
 
-        for(var j = 0; j < NUM_COLS - 5; j++)
+        for(var j = 0; j < NUM_COLS; j++)
         {
             var brick;
-            var pos= new Par(this.leftLimit + 100 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
+            var pos= new Par(this.leftLimit + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
 
             if(brickType==8)
                brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);
