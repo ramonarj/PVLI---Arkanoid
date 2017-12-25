@@ -46,6 +46,7 @@ var PlayScene =
      bricks:null,
      walls:null,
      powerUps:null,
+     hud:null,
      activePowerUp:null,
      fallingPowerUp:null,
      player:null,
@@ -67,7 +68,6 @@ var PlayScene =
     this.game.world.addChild(this.fondo);
 
     //2.Pelota
-
     this.ballsGroup = this.game.add.physicsGroup();
     this.ballsGroup.classType = Ball;
 
@@ -91,6 +91,9 @@ var PlayScene =
     this.walls.setAll('body.immovable', true);
     this.walls.setAll('visible', false);
 
+
+    var pas = new Phaser.Sprite(this.game, 633, 35, 'PowerUps');
+    this.world.add(pas);
     //4.Límites de la pantalla
     this.leftLimit = pared1.x + pared1.width; 
     this.rightLimit = pared2.x - 2;
@@ -116,10 +119,10 @@ var PlayScene =
         else if(i==5)
           brickType=3;
 
-        for(var j = 0; j < NUM_COLS - 2; j++)
+        for(var j = 0; j < NUM_COLS - 5; j++)
         {
             var brick;
-            var pos= new Par(this.leftLimit + BRICK_WIDTH + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
+            var pos= new Par(this.leftLimit + 100 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
 
             if(brickType==8)
                brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);
@@ -162,23 +165,35 @@ var PlayScene =
     this.powerUps.classType = PowerUp;
     this.game.physics.enable([this.powerUps], Phaser.Physics.ARCADE);
     
+    //9.Compuertas
+    var gate1 = new Phaser.Sprite(this.game, 236, 20, 'compuertas');
+    var gate2 = new Phaser.Sprite(this.game, 477, 20, 'compuertas');
+    this.world.add(gate1);
+    this.world.add(gate2);
+    gate1.animations.add('open');
+    gate2.animations.add('open');
+
+
     //9.Enemigos
     this.enemigos = this.game.add.physicsGroup();
     this.enemigos.classType = Enemy;
 
     
-    var enemyPos = new Par(this.leftLimit + 127, 55);
+    var enemyPos = new Par(gate1.x + gate1.width/2, gate1.y);
     var enemyVel = new Par(0, ENEMY_VEL);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos, gate1, this.player.y);
     this.enemigos.add(enem1);
     
 
-    var enemyPos2 = new Par(this.rightLimit-120, 55); 
+    var enemyPos2 = new Par(gate2.x + gate2.width/2, gate2.y); 
     var enemyVel2 = new Par(0, ENEMY_VEL);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos, gate2, this.player.y);
     this.enemigos.add(enem2);
     this.enemigos.setAll('body.immovable', true);
 
+    //10.HUD
+    var hudPos = new Par(this.rightLimit + 15, 320);
+    this.hud = new HUD(this, hudPos, 'vidas','e');
 
     //Cosas de la pelota
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
@@ -204,6 +219,10 @@ var PlayScene =
     //Colisiones del jugador
     this.game.physics.arcade.overlap(this.player, this.powerUps, this.takePowerUp, null, this);
     this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
+
+    //Perdiste
+    if(this.ballsGroup.getFirstAlive() == null)
+       this.game.state.restart();
   },
 
   // COLISIONES
@@ -279,22 +298,22 @@ var PlayScene =
         switch (nPowerUp)
         {
             case 0:
-            powerUp = new RedPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.player);
+            powerUp = new RedPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.player);
             break;
             case 1:
-            powerUp = new GreyPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), false, false, this.player);
+            powerUp = new GreyPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), false, false, this.player);
             break;
             case 2: 
-            powerUp = new BluePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.player);
+            powerUp = new BluePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.player);
             break;
             case 3:
-            powerUp = new GreenPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
+            powerUp = new GreenPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
             case 4:
-            powerUp = new OrangePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
+            powerUp = new OrangePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
             case 5:
-            powerUp = new LightBluePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
+            powerUp = new LightBluePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
 
         }
@@ -303,7 +322,7 @@ var PlayScene =
          this.powerUps.add(powerUp);
     
          powerUp.body.immovable = true;
-         powerUp.body.velocity.y = 2;
+         powerUp.body.velocity.setTo(0, 2); //Físicas de la pelota
 
          this.fallingPowerUp = powerUp;
         
@@ -326,18 +345,20 @@ var PlayScene =
        this.activePowerUp = powerUp;
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
+    var lives = this.player._lives;
        powerUp.enable();
        powerUp.takeDamage(this);
+     if(this.player._lives > lives)
+        this.hud.addLife();
    },
 
    // Usado para hacer debug
   render: function() 
    {
         // Player debug info
-        this.game.debug.text('Power-up: '+ this.player._powerUpActual, 5, 35);
-        this.game.debug.text('Lives: '+ this.player._lives, this.rightLimit + 50, 300);
-        this.game.debug.text('Points: '+ this.points, this.rightLimit + 50, 150);
-        this.game.debug.text('Balls: '+ this.ballsGroup.length, this.rightLimit + 50, 450);
+        this.game.debug.text(this.points, this.rightLimit + 50, 130);
+        this.game.debug.text(this.points, this.rightLimit + 50, 210);
+        this.game.debug.text(this.levelNo, this.rightLimit + 50, 550);
     }
 };
 

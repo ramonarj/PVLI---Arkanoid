@@ -1,6 +1,7 @@
 'use strict'
 
 var Movable = require ('./Movable.js');
+var Destroyable = require ('./Destroyable.js');
 var Ball = require ('./Ball.js').Ball;
 var Par = require ('./SoundSource.js').Par;
 
@@ -8,7 +9,7 @@ var EXTRA_BALLS = 2;
 var POWERUP_POINTS = 1000;
 
 //2.2.1.2.CLASE POWER-UP
-function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop)
+function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop, powerUpNo)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity, POWERUP_POINTS]);
 
@@ -17,8 +18,9 @@ function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop)
 
     this._dropEnabled = drop;
 
-   // Para elegir un frame en concreto -> this.frame = x;
-    this.animations.add('rotate');
+   //Ponemos qué frames queremos para la animación (dependiendo del subtipo que sea)
+   var frame = powerUpNo*6;
+    this.animations.add('rotate', [frame, frame+1, frame+2, frame+3, frame+4, frame+5]);
     // Comienza la animación: a 6 fps, y 'true' para repetirla en bucle
     this.animations.play('rotate', 6, true);
 }
@@ -29,14 +31,14 @@ PowerUp.prototype.constructor = PowerUp;
 PowerUp.prototype.update = function()
 {
     this.y += this.body.velocity.y;
-    if(this.y>this.game.height - 20)
-    this.takeDamage();
+    Movable.prototype.update.call(this);
 }
 
 //
-PowerUp.prototype.takeDamage = function()
+PowerUp.prototype.takeDamage = function(playscene)
 {
     this._dropEnabled = true;
+    Destroyable.prototype.takeDamage.call(this, playscene);
     this.destroy();
 }
 
@@ -60,7 +62,7 @@ PowerUp.prototype.dropEnabled = function()
 // 1) Power-Up rojo -> disparo
 function RedPowerUp(game, position, sprite, sound, lives, velocity, effect, drop, player)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 0]);
 
     this._player = player;
 }
@@ -81,7 +83,7 @@ RedPowerUp.prototype.disable = function()
 // 2) Power-Up gris -> ganar una vida
 function GreyPowerUp(game, position, sprite, sound, lives, velocity, effect, drop,  player)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 1]);
 
     this._player = player;
 }
@@ -97,7 +99,7 @@ GreyPowerUp.prototype.enable = function()
 // 3) Power-Up azul -> ensanchar la pala
 function BluePowerUp(game, position, sprite, sound, lives, velocity, effect, drop, player)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop,  POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 2]);
 
     this._player = player;
 }
@@ -118,7 +120,7 @@ BluePowerUp.prototype.disable = function()
 // 4) Power-Up verde -> atrapar la pelota
 function GreenPowerUp(game, position, sprite, sound, lives, velocity, effect, drop,  ballsGroup)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 3]);
 
     this._balls = ballsGroup;
 }
@@ -139,7 +141,7 @@ GreenPowerUp.prototype.disable = function()
 // 5) Power-Up naranja -> decelerar la pelota
 function OrangePowerUp(game, position, sprite, sound, lives, velocity, effect, drop, ballsGroup)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 4]);
 
     this._balls = ballsGroup;
 }
@@ -159,7 +161,7 @@ OrangePowerUp.prototype.disable = function()
 // 6) Power-Up azul claro -> triplicar la pelota
 function LightBluePowerUp(game, position, sprite, sound, lives, velocity, effect, drop, ballsGroup)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 5]);
 
     this._balls = ballsGroup;
     this._mainBall = this._balls.getTop();
@@ -189,12 +191,13 @@ LightBluePowerUp.prototype.disable = function()
      this._dropEnabled = true;
 }
 
-LightBluePowerUp.prototype.takeDamage = function()
+LightBluePowerUp.prototype.takeDamage = function(playscene)
 {
-    this.destroy();
     // Diferenciamos así cuando se destruye con la Deadzone o cuando se ha recogido por el jugador (y, por tanto, se ha activado)
     if(this._balls.length <= 1)
-     this._dropEnabled = true;
+       this._dropEnabled = true;
+     Destroyable.prototype.takeDamage.call(this, playscene);
+     this.destroy();
 }
 
 

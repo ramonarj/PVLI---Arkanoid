@@ -64,11 +64,7 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
     }
 }
 
-// Redefinimos el método para que se haga 'destroy()' y no 'kill()' -> No es necesario mantenerlos cargados
-Ball.prototype.takeDamage = function()
-{
-    this.destroy();
-}
+
 
 // FUNCIONES AUXILIARES 
 
@@ -76,6 +72,7 @@ Ball.prototype.getPosX = function()
 {
      return this.body.x;
 }
+
 Ball.prototype.getPosY = function()
 {
      return this.body.y;

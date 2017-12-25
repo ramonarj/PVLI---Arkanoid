@@ -65,11 +65,7 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
     }
 }
 
-// Redefinimos el método para que se haga 'destroy()' y no 'kill()' -> No es necesario mantenerlos cargados
-Ball.prototype.takeDamage = function()
-{
-    this.destroy();
-}
+
 
 // FUNCIONES AUXILIARES 
 
@@ -77,6 +73,7 @@ Ball.prototype.getPosX = function()
 {
      return this.body.x;
 }
+
 Ball.prototype.getPosY = function()
 {
      return this.body.y;
@@ -153,7 +150,7 @@ module.exports =
 };
 
     
-},{"./Movable.js":5}],2:[function(require,module,exports){
+},{"./Movable.js":6}],2:[function(require,module,exports){
 'use strict'
 
 var SoundSource = require ('./SoundSource.js').SoundSource;
@@ -180,16 +177,17 @@ Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
     this._lives--;
     if(this._lives <= 0)
     {
+        
         //Si es un ladrillo de color, puede dropear Power-Ups
         if(this.constructor === Destroyable && this._maxLives == 1)
         {
             playscene.dropPowerUp(this);
         }
-
-            this.kill();
-
-        //Se destruye (y suma puntos)
-        playscene.points += this._numPoints;
+        this.kill();
+        
+        //Se destruye (y suma puntos) en caso de que no llamemos desde el update de movable
+        if(playscene != null)
+          playscene.points += this._numPoints;
     }
 }
 
@@ -204,7 +202,7 @@ Destroyable.prototype.addLife = function()
 }
 
 module.exports = Destroyable;
-},{"./SoundSource.js":8}],3:[function(require,module,exports){
+},{"./SoundSource.js":9}],3:[function(require,module,exports){
 'use strict'
 
 var Movable = require ('./Movable.js');
@@ -213,17 +211,32 @@ var Par = require ('./SoundSource.js').Par;
 
 var ENEMY_POINTS = 100;
 var ENEMY_VEL = 1;
+var SPIN_RADIUS = 60;
+var MAX_ENEMIES = 3;
+var UPPERLIMIT = 40;
 
 //2.2.1.1.CLASE ENEMIGO
-function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies)
+function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies, gate, playerY)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity, ENEMY_POINTS]);
+    //Para el movimiento recto
     this._vel = this._velocity._y; //El módulo de la velocidad
     this._dir = 3;//0-Dcha, 1-Izda, 2-Arriba, 3-Abajo
     this._walls = walls;
     this._bricks = bricks;
     this._enemies = enemies;
+    this._gate = gate;
 
+    //Para el movimiento circular
+    this._lowerBrickY = this.findLowerBrick();
+    this._playerY = playerY;
+    this._circles = false;
+    this._rotationDirection = 1; //-1 = clockwise 1 = counterclockwise
+    this._spinAxis = new Par (0,0);
+    this._initialTime = 0;
+    this._outOfGate = false;
+
+    //Para el respawn
     this._iniX = position._x;
     this._iniY = position._y;
     this.anchor.setTo(0.5, 0.5);
@@ -232,6 +245,9 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
     this.animations.add('move');
     this.animations.play('move', 8, true);
     this.animations.currentAnim.speed = 6 * ENEMY_VEL;
+    
+    this._gate.animations.play('open', 9, false);
+    this._gate.animations.currentAnim.speed = 6 * ENEMY_VEL;
 }
 
 Enemy.prototype = Object.create(Movable.prototype);
@@ -239,11 +255,15 @@ Enemy.prototype.constructor = Enemy;
 
 Enemy.prototype.update = function() 
 {
-    this.move();
+    if(this._circles)
+       this.moveCircles();
+    else 
+       this.moveStraight();
+       
     Movable.prototype.update.call(this);
 }
 
-Enemy.prototype.move = function() 
+Enemy.prototype.moveStraight = function() 
 {
     //1.ACTUALIZAMOS LA DIRECCIÓN ACTUAL
     //Direcciones ordenadas por prioridad
@@ -297,6 +317,24 @@ Enemy.prototype.move = function()
     //3.MOVEMOS AL ENEMIGO
     this.x+=this._velocity._x;
     this.y+=this._velocity._y;
+
+    //4.COMPROBAMOS SI HAY QUE MOVERSE EN CÍRCULOS
+    if(this.y - this.height / 2 > this._lowerBrickY && this._spinAxis._y == 0)
+    {
+        this._circles = true;
+        if(this.x > this.game.world.centerX)
+            this._rotationDirection = -1;
+        else
+            this._rotationDirection = 1;
+            
+        //Queremos que empiece la órbita con 45º (PI/4)
+        this._spinAxis = new Par(this.x + (Math.cos(Math.PI / 4) * SPIN_RADIUS) * this._rotationDirection, 
+        this.y + (Math.sin(Math.PI / 4) * SPIN_RADIUS));
+        this._initialTime = -Math.acos((Math.abs(this.x - this._spinAxis._x)) / SPIN_RADIUS);
+    } 
+    //Comprobamos si ya ha salido de la compuerta
+    else if (!this._outOfGate && this.y - this.width/2 > UPPERLIMIT)
+        this._outOfGate=true;
 }
 
 Enemy.prototype.choque = function(dirX, dirY) 
@@ -308,8 +346,8 @@ Enemy.prototype.choque = function(dirX, dirY)
     this.game.physics.enable(auxEnemy);
 
     //Comprobamos colisiones de ese auxiliar con los 3 grupos que nos importan
-    var choque = (this.choqueGrupo(auxEnemy, this._bricks) || this.choqueGrupo(auxEnemy, this._walls) 
-    || this.choqueGrupo(auxEnemy, this._enemies));
+    var choque = ((this.choqueGrupo(auxEnemy, this._bricks) || this.choqueGrupo(auxEnemy, this._walls) 
+    || this.choqueGrupo(auxEnemy, this._enemies)) && this._outOfGate);
 
     return choque;
 }
@@ -319,6 +357,7 @@ Enemy.prototype.choqueGrupo = function(obj1, grupo)
     var numElems = grupo.length;
     var i = 0;
     var choque = false;
+    var enemigoGirando = false;
     //Choque con todos los elementos de ese grupo
     while(i < numElems && !choque)
     {
@@ -326,6 +365,9 @@ Enemy.prototype.choqueGrupo = function(obj1, grupo)
         choque = (this.game.physics.arcade.overlap(obj1, element) && element != this);  
         i++;
     }
+    //Los enemigos que giran no se chocan
+    if(choque && grupo.children[i-1].hasOwnProperty("_circles") && grupo.children[i-1]._circles == true)
+       choque = false;
     return choque;
 }
 
@@ -345,15 +387,54 @@ Enemy.prototype.updateSpeed = function()
         this._velocity._y = this._vel;
 }
 
+Enemy.prototype.findLowerBrick = function() 
+{
+    var posY = 0; var i=0;
+    for (i = 0; i < this._bricks.length; i++)
+    {
+        if(this._bricks.children[i].y >  posY)
+           posY = this._bricks.children[i].y;
+    } 
+    posY += this._bricks.children[0].height;
+    return posY;   
+}
+
+Enemy.prototype.moveCircles = function() 
+{
+    //1º vez que se llama:
+    //x = this.x
+    //y = this.y
+    //MOVIMIENTO CIRCULAR
+    var oldY = this.y;
+
+    this.x = this._spinAxis._x + Math.cos(this._initialTime) * SPIN_RADIUS * -this._rotationDirection;
+    this.y = this._spinAxis._y + Math.sin(this._initialTime) * SPIN_RADIUS;
+    
+    this._initialTime += (this.game.time.now - this.game.time.prevTime) * 0.001 * 1.5;
+    //Si está yendo hacia arriba a partir del centro de rotación, bajamos el radio
+    if(this.y < oldY && this.y < this._spinAxis._y) 
+       this._spinAxis._y += 0.3;
+    //Si sobrepasa la altura del jugador, deja de dar círculos
+    else if(this.y + (this.height*2) > this._playerY)
+    {
+        this._dir = 3;
+        this._circles=false;
+    }  
+}
+
 
 Enemy.prototype.takeDamage = function(playscene) 
 {
     Destroyable.prototype.takeDamage.call(this, playscene);
-
+    
     //Se respawnea a si mismo
     this.x = this._iniX;
     this.y = this._iniY;
     this._dir = 3;
+    this._circles = false;
+    this._spinAxis = new Par (0,0);
+    this._outOfGate = false;
+    this._gate.animations.play('open', 9, false);
 
     this.revive();
 }
@@ -364,23 +445,111 @@ module.exports =
     ENEMY_POINTS,
     ENEMY_VEL
 };
-},{"./Destroyable.js":2,"./Movable.js":5,"./SoundSource.js":8}],4:[function(require,module,exports){
+},{"./Destroyable.js":2,"./Movable.js":6,"./SoundSource.js":9}],4:[function(require,module,exports){
 'use strict'
 
 var SoundSource = require ('./SoundSource.js').SoundSource;
+
+var MAX_SPRITES = 6;
+var NUM_ROWS = 2;
 
 //2.1.CLASE HUD (Hud)
 function HUD(game, position, sprite, sound)
 {
   SoundSource.apply(this, [game, position, sprite, sound]);
+  this._initialPos = position;
+  this._initialLives = 3;
+  this._actualLives = this._initialLives;
+  this._livesSprites = [];
+  this._1up = new Phaser.Image(this.game, position._x + 15, position._y - 150, "1up");
+  this.game.world.addChild(this._1up);
+  this._highscore = new Phaser.Image(this.game, position._x + 15, position._y - 250, "highscore");
+  this.game.world.addChild(this._highscore);
+  this._round = new Phaser.Image(this.game, position._x + 15, 500, "round");
+  this.game.world.addChild(this._round);
+  
+  var cont=0;
+  for(var i=0; i<NUM_ROWS; i++)
+  {
+    for(var j=0; j<MAX_SPRITES/NUM_ROWS; j++)
+    {
+      this._livesSprites[cont] = new Phaser.Image(this.game, position._x + j*this.width+10, position._y + i*20, "vidas");
+      this.game.world.addChild(this._livesSprites[cont]);
+      if(cont >= this._actualLives)
+         this._livesSprites[cont].kill();
+      cont++;
+    }
+  }
 }
 
 HUD.prototype = Object.create(SoundSource.prototype);
 HUD.prototype.constructor = HUD;
 
 
+HUD.prototype.addLife = function() 
+{
+   if(this._actualLives < MAX_SPRITES)
+      this._livesSprites[this._actualLives].revive();
+   this._actualLives++;
+}
+
+HUD.prototype.takeLife = function() 
+{
+   if(this._actualLives > 0)
+      this._livesSprites[this._actualLives - 1].kill();
+   this._actualLives--;
+}
+
+
 module.exports = HUD;
-},{"./SoundSource.js":8}],5:[function(require,module,exports){
+},{"./SoundSource.js":9}],5:[function(require,module,exports){
+'use strict'
+
+var Menu = 
+{
+    fondoMenu:null,
+    cursors:null,
+    selector:null,
+    enterButton:null,
+    eleccion:null,
+
+    create: function()
+    {
+        this.eleccion=0;
+        this.fondoMenu = new Phaser.Image(this.game, 0, 0, 'menu');
+        this.game.world.addChild(this.fondoMenu);
+        this.selector = new Phaser.Image(this.game, 275, 320 , 'cursor');
+        this.game.world.addChild(this.selector);
+
+        this.enterButton = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
+        this.cursors = this.game.input.keyboard.createCursorKeys();
+    },
+
+    update:function()
+    {
+        this.takeInput();
+    },
+
+    takeInput:function()
+    {
+        if(this.enterButton.isDown)
+            this.game.state.start('play');
+        else if (this.eleccion == 0 && this.cursors.down.isDown)
+        {
+            this.selector.y+=50;
+            this.eleccion=1;
+        }
+        else if (this.eleccion == 1 && this.cursors.up.isDown)
+        {
+            this.selector.y-=50;
+            this.eleccion=0;
+        }
+            
+    }
+};
+
+module.exports = Menu;
+},{}],6:[function(require,module,exports){
 'use strict'
 
 var Destroyable = require ('./Destroyable.js');
@@ -407,12 +576,12 @@ Movable.prototype.setVelocity = function(velocity) //Cambia la velocidad
 Movable.prototype.update = function() //Para la DeadZone
 {
     if(this.y>this.game.height - 20)
-        this.destroy();
+        this.takeDamage();
 }
 
 
 module.exports = Movable;
-},{"./Destroyable.js":2}],6:[function(require,module,exports){
+},{"./Destroyable.js":2}],7:[function(require,module,exports){
 'use strict'
 
 var Movable = require ('./Movable.js');
@@ -525,10 +694,11 @@ Player.prototype.getNarrow = function ()
 
 
 module.exports = Player;
-},{"./Movable.js":5}],7:[function(require,module,exports){
+},{"./Movable.js":6}],8:[function(require,module,exports){
 'use strict'
 
 var Movable = require ('./Movable.js');
+var Destroyable = require ('./Destroyable.js');
 var Ball = require ('./Ball.js').Ball;
 var Par = require ('./SoundSource.js').Par;
 
@@ -536,7 +706,7 @@ var EXTRA_BALLS = 2;
 var POWERUP_POINTS = 1000;
 
 //2.2.1.2.CLASE POWER-UP
-function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop)
+function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop, powerUpNo)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity, POWERUP_POINTS]);
 
@@ -545,8 +715,9 @@ function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop)
 
     this._dropEnabled = drop;
 
-   // Para elegir un frame en concreto -> this.frame = x;
-    this.animations.add('rotate');
+   //Ponemos qué frames queremos para la animación (dependiendo del subtipo que sea)
+   var frame = powerUpNo*6;
+    this.animations.add('rotate', [frame, frame+1, frame+2, frame+3, frame+4, frame+5]);
     // Comienza la animación: a 6 fps, y 'true' para repetirla en bucle
     this.animations.play('rotate', 6, true);
 }
@@ -557,14 +728,14 @@ PowerUp.prototype.constructor = PowerUp;
 PowerUp.prototype.update = function()
 {
     this.y += this.body.velocity.y;
-    if(this.y>this.game.height - 20)
-    this.takeDamage();
+    Movable.prototype.update.call(this);
 }
 
 //
-PowerUp.prototype.takeDamage = function()
+PowerUp.prototype.takeDamage = function(playscene)
 {
     this._dropEnabled = true;
+    Destroyable.prototype.takeDamage.call(this, playscene);
     this.destroy();
 }
 
@@ -588,7 +759,7 @@ PowerUp.prototype.dropEnabled = function()
 // 1) Power-Up rojo -> disparo
 function RedPowerUp(game, position, sprite, sound, lives, velocity, effect, drop, player)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 0]);
 
     this._player = player;
 }
@@ -609,7 +780,7 @@ RedPowerUp.prototype.disable = function()
 // 2) Power-Up gris -> ganar una vida
 function GreyPowerUp(game, position, sprite, sound, lives, velocity, effect, drop,  player)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 1]);
 
     this._player = player;
 }
@@ -625,7 +796,7 @@ GreyPowerUp.prototype.enable = function()
 // 3) Power-Up azul -> ensanchar la pala
 function BluePowerUp(game, position, sprite, sound, lives, velocity, effect, drop, player)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop,  POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 2]);
 
     this._player = player;
 }
@@ -646,7 +817,7 @@ BluePowerUp.prototype.disable = function()
 // 4) Power-Up verde -> atrapar la pelota
 function GreenPowerUp(game, position, sprite, sound, lives, velocity, effect, drop,  ballsGroup)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 3]);
 
     this._balls = ballsGroup;
 }
@@ -667,7 +838,7 @@ GreenPowerUp.prototype.disable = function()
 // 5) Power-Up naranja -> decelerar la pelota
 function OrangePowerUp(game, position, sprite, sound, lives, velocity, effect, drop, ballsGroup)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 4]);
 
     this._balls = ballsGroup;
 }
@@ -687,7 +858,7 @@ OrangePowerUp.prototype.disable = function()
 // 6) Power-Up azul claro -> triplicar la pelota
 function LightBluePowerUp(game, position, sprite, sound, lives, velocity, effect, drop, ballsGroup)
 {
-    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, POWERUP_POINTS]);
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 5]);
 
     this._balls = ballsGroup;
     this._mainBall = this._balls.getTop();
@@ -717,12 +888,13 @@ LightBluePowerUp.prototype.disable = function()
      this._dropEnabled = true;
 }
 
-LightBluePowerUp.prototype.takeDamage = function()
+LightBluePowerUp.prototype.takeDamage = function(playscene)
 {
-    this.destroy();
     // Diferenciamos así cuando se destruye con la Deadzone o cuando se ha recogido por el jugador (y, por tanto, se ha activado)
     if(this._balls.length <= 1)
-     this._dropEnabled = true;
+       this._dropEnabled = true;
+     Destroyable.prototype.takeDamage.call(this, playscene);
+     this.destroy();
 }
 
 
@@ -738,7 +910,7 @@ module.exports =
     EXTRA_BALLS,
     POWERUP_POINTS
 };
-},{"./Ball.js":1,"./Movable.js":5,"./SoundSource.js":8}],8:[function(require,module,exports){
+},{"./Ball.js":1,"./Destroyable.js":2,"./Movable.js":6,"./SoundSource.js":9}],9:[function(require,module,exports){
 'use strict';
 
 //1.CLASE EMISOR DE SONIDOS (Ladrillos dorados) -> pueden emitir sonido
@@ -770,10 +942,11 @@ module.exports =
     SoundSource, 
     Par
 };
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var PlayScene = require('./play_scene.js');
+var Menu = require ('./Menu.js');
 
 var BootScene = 
 {
@@ -799,37 +972,32 @@ var PreloaderScene =
     //Fondo
     this.game.stage.backgroundColor = '#000000';
 
-    // TODO: load here the assets for the game
-    //Cargamos los assets del juego
-    this.game.load.image('logo', 'images/phaser.png');
+    //Cargamos los assets del juego (sprites y spritesheets)
+    //Sprites
     this.game.load.image('player', 'images/Player.png');
     this.game.load.image('background', 'images/Fondo.png');
     this.game.load.image('ball', 'images/Pelota.png');
     this.game.load.image('pared', 'images/pared.png');
     this.game.load.image('techo', 'images/techo.png');
-    this.game.load.image('ladrillo', 'images/ladrillo.png');
     this.game.load.image('bullet', 'images/bullet pair.png');
-
-
-   // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)'
-   //Power-ups
-   this.game.load.spritesheet('powerUp0', 'images/powerUp0.png', 40, 18);
-   this.game.load.spritesheet('powerUp1', 'images/powerUp1.png', 40, 18);
-   this.game.load.spritesheet('powerUp2', 'images/powerUp2.png', 40, 18);
-   this.game.load.spritesheet('powerUp3', 'images/powerUp3.png', 40, 18);
-   this.game.load.spritesheet('powerUp4', 'images/powerUp4.png', 40, 18);
-   this.game.load.spritesheet('powerUp5', 'images/powerUp5.png', 40, 18);
-    //this.game.load.spritesheet('powerUp6', 'images/powerUp6.png', 40, 18);
-
-   
+    this.game.load.image('vidas', 'images/Vidas.png');
+    this.game.load.image('menu', 'images/menu.png');
+    this.game.load.image('cursor', 'images/Cursor.png');
+    this.game.load.image('1up', 'images/1up.png');
+    this.game.load.image('highscore', 'images/highscore.png');
+    this.game.load.image('round', 'images/round.png');
+    
+    
+   // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)', 'nº de frames' (opcional)
+    this.game.load.spritesheet('PowerUps', 'images/PowerUps.png', 40, 18, 42); //42 frames
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
-
+    this.game.load.spritesheet('compuertas', 'images/compuertas.png', 68, 20); //Enemigos
   },
 
   create: function () 
   {
-    this.game.state.start('play');
+    this.game.state.start('menu');
   }
 };
 
@@ -841,11 +1009,12 @@ window.onload = function ()
   game.state.add('boot', BootScene);
   game.state.add('preloader', PreloaderScene);
   game.state.add('play', PlayScene);
+  game.state.add('menu', Menu);
 
   game.state.start('boot');
 };
 
-},{"./play_scene.js":10}],10:[function(require,module,exports){
+},{"./Menu.js":5,"./play_scene.js":11}],11:[function(require,module,exports){
 'use strict';
 
 //Jerarquía de objetos
@@ -894,6 +1063,7 @@ var PlayScene =
      bricks:null,
      walls:null,
      powerUps:null,
+     hud:null,
      activePowerUp:null,
      fallingPowerUp:null,
      player:null,
@@ -915,7 +1085,6 @@ var PlayScene =
     this.game.world.addChild(this.fondo);
 
     //2.Pelota
-
     this.ballsGroup = this.game.add.physicsGroup();
     this.ballsGroup.classType = Ball;
 
@@ -939,6 +1108,9 @@ var PlayScene =
     this.walls.setAll('body.immovable', true);
     this.walls.setAll('visible', false);
 
+
+    var pas = new Phaser.Sprite(this.game, 633, 35, 'PowerUps');
+    this.world.add(pas);
     //4.Límites de la pantalla
     this.leftLimit = pared1.x + pared1.width; 
     this.rightLimit = pared2.x - 2;
@@ -964,10 +1136,10 @@ var PlayScene =
         else if(i==5)
           brickType=3;
 
-        for(var j = 0; j < NUM_COLS - 2; j++)
+        for(var j = 0; j < NUM_COLS - 5; j++)
         {
             var brick;
-            var pos= new Par(this.leftLimit + BRICK_WIDTH + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
+            var pos= new Par(this.leftLimit + 100 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
 
             if(brickType==8)
                brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);
@@ -1010,23 +1182,35 @@ var PlayScene =
     this.powerUps.classType = PowerUp;
     this.game.physics.enable([this.powerUps], Phaser.Physics.ARCADE);
     
+    //9.Compuertas
+    var gate1 = new Phaser.Sprite(this.game, 236, 20, 'compuertas');
+    var gate2 = new Phaser.Sprite(this.game, 477, 20, 'compuertas');
+    this.world.add(gate1);
+    this.world.add(gate2);
+    gate1.animations.add('open');
+    gate2.animations.add('open');
+
+
     //9.Enemigos
     this.enemigos = this.game.add.physicsGroup();
     this.enemigos.classType = Enemy;
 
     
-    var enemyPos = new Par(this.leftLimit + 127, 55);
+    var enemyPos = new Par(gate1.x + gate1.width/2, gate1.y);
     var enemyVel = new Par(0, ENEMY_VEL);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos, gate1, this.player.y);
     this.enemigos.add(enem1);
     
 
-    var enemyPos2 = new Par(this.rightLimit-120, 55); 
+    var enemyPos2 = new Par(gate2.x + gate2.width/2, gate2.y); 
     var enemyVel2 = new Par(0, ENEMY_VEL);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos, gate2, this.player.y);
     this.enemigos.add(enem2);
     this.enemigos.setAll('body.immovable', true);
 
+    //10.HUD
+    var hudPos = new Par(this.rightLimit + 15, 320);
+    this.hud = new HUD(this, hudPos, 'vidas','e');
 
     //Cosas de la pelota
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
@@ -1052,6 +1236,10 @@ var PlayScene =
     //Colisiones del jugador
     this.game.physics.arcade.overlap(this.player, this.powerUps, this.takePowerUp, null, this);
     this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
+
+    //Perdiste
+    if(this.ballsGroup.getFirstAlive() == null)
+       this.game.state.restart();
   },
 
   // COLISIONES
@@ -1127,22 +1315,22 @@ var PlayScene =
         switch (nPowerUp)
         {
             case 0:
-            powerUp = new RedPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.player);
+            powerUp = new RedPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.player);
             break;
             case 1:
-            powerUp = new GreyPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), false, false, this.player);
+            powerUp = new GreyPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), false, false, this.player);
             break;
             case 2: 
-            powerUp = new BluePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.player);
+            powerUp = new BluePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.player);
             break;
             case 3:
-            powerUp = new GreenPowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
+            powerUp = new GreenPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
             case 4:
-            powerUp = new OrangePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
+            powerUp = new OrangePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
             case 5:
-            powerUp = new LightBluePowerUp(this.game, brickPosition ,'powerUp' + nPowerUp, 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
+            powerUp = new LightBluePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
 
         }
@@ -1151,7 +1339,7 @@ var PlayScene =
          this.powerUps.add(powerUp);
     
          powerUp.body.immovable = true;
-         powerUp.body.velocity.y = 2;
+         powerUp.body.velocity.setTo(0, 2); //Físicas de la pelota
 
          this.fallingPowerUp = powerUp;
         
@@ -1174,22 +1362,24 @@ var PlayScene =
        this.activePowerUp = powerUp;
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
+    var lives = this.player._lives;
        powerUp.enable();
        powerUp.takeDamage(this);
+     if(this.player._lives > lives)
+        this.hud.addLife();
    },
 
    // Usado para hacer debug
   render: function() 
    {
         // Player debug info
-        this.game.debug.text('Power-up: '+ this.player._powerUpActual, 5, 35);
-        this.game.debug.text('Lives: '+ this.player._lives, this.rightLimit + 50, 300);
-        this.game.debug.text('Points: '+ this.points, this.rightLimit + 50, 150);
-        this.game.debug.text('Balls: '+ this.ballsGroup.length, this.rightLimit + 50, 450);
+        this.game.debug.text(this.points, this.rightLimit + 50, 130);
+        this.game.debug.text(this.points, this.rightLimit + 50, 210);
+        this.game.debug.text(this.levelNo, this.rightLimit + 50, 550);
     }
 };
 
 module.exports = PlayScene;
 
 
-},{"./Ball.js":1,"./Destroyable.js":2,"./Enemy.js":3,"./HUD.js":4,"./Movable.js":5,"./Player.js":6,"./PowerUp.js":7,"./SoundSource.js":8}]},{},[9]);
+},{"./Ball.js":1,"./Destroyable.js":2,"./Enemy.js":3,"./HUD.js":4,"./Movable.js":6,"./Player.js":7,"./PowerUp.js":8,"./SoundSource.js":9}]},{},[10]);
