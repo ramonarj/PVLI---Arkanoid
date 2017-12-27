@@ -21,7 +21,7 @@ var PreloaderScene =
 {
   preload: function () 
   {
-    this.game.load.baseURL = "https://ramonarj.github.io/Arkanoid-Remake/src/";
+  //  this.game.load.baseURL = "https://ramonarj.github.io/Arkanoid-Remake/src/";
     
      this.game.load.crossOrigin = 'anonymous';
     //Fondo
@@ -48,6 +48,10 @@ var PreloaderScene =
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
     this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Enemigos
+
+
+    // Datos del nivel
+    this.game.load.text('levels', 'assets/levels/levels.json');
   },
 
   create: function () 

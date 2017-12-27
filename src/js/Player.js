@@ -34,7 +34,7 @@ Player.prototype.constructor = Player;
 //Funciones de jugador
 Player.prototype.readInput = function() 
 {
-    this._currentBall = this._balls.getTop();
+    this._currentBall = this._balls.getFirstAlive();
     var delta = this.x;
     //Comprobación de cursores de Phaser
     if (this._cursors.left.isDown && this.x >  this._leftLimit + this.offsetX)
@@ -47,13 +47,13 @@ Player.prototype.readInput = function()
     {
         if(this._shotEnabled)
            this._playerWeapon.fire();
-        else if(this._currentBall.isAttached())
+        else if(this._currentBall != null && this._currentBall.isAttached())
            this._currentBall.throw();
     }
 
     //La pelota es hija por programación
     delta -= this.x;
-    if(this._currentBall.isAttached())
+    if(this._currentBall != null && this._currentBall.isAttached())
         this._currentBall.x -= delta;
 }
 
