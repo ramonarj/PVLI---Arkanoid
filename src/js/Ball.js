@@ -13,6 +13,9 @@ function Ball(game, position, sprite, sound, lives, velocity)
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     this._attached = false; 
     this._attachEnabled = false;
+
+    this._vel;
+    this._angle;
 }
 
 Ball.prototype = Object.create(Movable.prototype);
@@ -23,6 +26,10 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 {
     //Rebota
     this.game.physics.arcade.collide(this, obj); 
+    
+     //Cogemos su velocidad y ángulo después de rebotar
+     this._angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
+     this._vel = this.body.velocity.x / Math.cos(this._angle);
 
     //a)Jugador 
     if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
@@ -43,19 +50,16 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
     //b)Ladrillos o paredes
     else if (obj.hasOwnProperty('_sound'))
     {
-        //Cogemos su velocidad y ángulo después de rebotar
-        var angle = Math.atan(this.body.velocity.y / this.body.velocity.x); 
-        var v = this.body.velocity.x / Math.cos(angle);
-
         //Aceleramos la pelota
-        if(Math.max(v, -v) < MAX_VELOCITY)
+        if(Math.max(this._vel, -this._vel) < MAX_VELOCITY)
         {
-          if(v < 0)
-             v -= 10;
+          if(this._vel < 0)
+          this._vel -= 10;
           else
-             v += 10;
-          this.body.velocity.x = v * Math.cos(angle);
-          this.body.velocity.y = v * Math.sin(angle);
+          this._vel += 10;
+
+          this.body.velocity.x = this._vel * Math.cos(this._angle);
+          this.body.velocity.y = this._vel * Math.sin(this._angle);
         }
 
         //Para los ladrillos destruibles
@@ -77,6 +81,16 @@ Ball.prototype.getPosY = function()
 {
      return this.body.y;
 }
+Ball.prototype.setPosX = function(posX)
+{
+      this.x = posX;
+
+}
+
+Ball.prototype.setPosY = function(posY)
+{
+    this.y = posY;
+}
 
 Ball.prototype.getVelX = function()
 {
@@ -86,6 +100,18 @@ Ball.prototype.getVelY = function()
 {
      return this._velocity._y;
 }
+
+Ball.prototype.getVel = function()
+{
+     return this._vel;
+}
+
+Ball.prototype.getAngle = function()
+{
+     return this._angle;
+}
+
+
 
 Ball.prototype.enableAttach = function()
 {

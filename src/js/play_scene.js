@@ -15,6 +15,7 @@ var RedPowerUp = require ('./PowerUp.js').RedPowerUp;
 var BluePowerUp = require ('./PowerUp.js').BluePowerUp;
 var OrangePowerUp = require ('./PowerUp.js').OrangePowerUp;
 var LightBluePowerUp = require ('./PowerUp.js').LightBluePowerUp;
+var PinkPowerUp = require ('./PowerUp.js').PinkPowerUp;
 
 //Estructuras auxiliares y constantes
 var Par = require ('./SoundSource.js').Par;
@@ -23,21 +24,27 @@ var BASE_ANGLE = require ('./Ball.js').BASE_ANGLE;
 var ENEMY_VEL = require ('./Enemy.js').ENEMY_VEL;
 var MAX_ENEMIES = 3;
 
-var NUM_POWERUPS = 6;
+var NUM_POWERUPS = 7;
 var POWERUP_CHANCE = 1/1;
 
-var NUM_ROWS = 6;
+var NUM_ROWS = 12;
 var NUM_COLS = 11;
 var BRICK_WIDTH = 44;
 var BRICK_HEIGHT = 22;
+var SILVER_BRICK = 8;
+var GOLDEN_BRICK = 9;
+
+var EXTRA_BALLS = 2;
 
 var WHITE_BRICK_POINTS = 50;
+
+var levelNo = 0;
 
 var PlayScene =
  {
      //Variables locales (de la escena)
      fondo:null,
-     leftlimit:null, rightLimit:null,
+     leftlimit:null, rightLimit:null, topBrickLimit: null,
      cursors:null,
      playerWeapon:null,
      enemigos: null,
@@ -51,7 +58,9 @@ var PlayScene =
      fallingPowerUp:null,
      player:null,
      points:null,
-     levelNo:null,
+     levelDoor:null,
+     doorOpen:null,
+     breakableBricks:null,
 
    //Función Create
   create: function () 
@@ -60,7 +69,7 @@ var PlayScene =
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     //Para los puntos
     this.points = 0;
-    this.levelNo = 1;
+ 
 
     //Añadimos las variables
     //1.Fondo
@@ -75,16 +84,25 @@ var PlayScene =
     var ballPos = new Par(playerPos._x, playerPos._y - 12);
     var ballVel = new Par(BASE_VELOCITY * Math.cos(BASE_ANGLE), -BASE_VELOCITY *  Math.sin(BASE_ANGLE));
     this.ball = new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
-    this.game.world.addChild(this.ball);
-
+    //this.game.world.addChild(this.ball);
     this.ballsGroup.add(this.ball);
+
+    for(var i = 0; i < EXTRA_BALLS; i++)
+    {
+       var extraBall = new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
+        this.ballsGroup.add(extraBall);
+        extraBall.kill();
+    }
+
+    
 
     //3.Paredes y techo (grupo walls)
     this.walls = this.game.add.physicsGroup();
 
     var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
-    var pared1 = new Phaser.Sprite(this.game, 108, 35, 'pared');
+    var pared1 = new Phaser.Sprite(this.game, 110, 35, 'pared');
     var pared2 = new Phaser.Sprite(this.game, 633, 35, 'pared');
+    
     this.walls.add(techo);
     this.walls.add(pared1);
     this.walls.add(pared2);
@@ -93,12 +111,57 @@ var PlayScene =
 
     //4.Límites de la pantalla
     this.leftLimit = pared1.x + pared1.width; 
-    this.rightLimit = pared2.x - 2;
+    this.rightLimit = pared2.x;
+
 
     //5.Ladrillos (grupo bricks)
     this.bricks = this.game.add.physicsGroup();
     this.bricks.classType = Destroyable;
+    this.breakableBricks = 0;
     
+
+    // Creación del nivel
+    var JSONfile = JSON.parse(this.game.cache.getText('levels'));
+
+    var i, j;
+    i =  j = 0;
+    JSONfile.levels[levelNo].forEach(function(element)
+    {
+      j = 0;
+      element.forEach(function(brickType)
+      {
+
+        var brick;
+        var pos = new Par(this.leftLimit + (j*BRICK_WIDTH), (BRICK_HEIGHT*5)-4 + (i*BRICK_HEIGHT));
+
+        if(brickType != 0)
+        {
+        if(brickType == GOLDEN_BRICK)
+            brick = new SoundSource(this.game, pos, 'ladrillos', 'sound');
+
+        else
+        {    
+         if(brickType == SILVER_BRICK)
+           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * levelNo);
+
+        else
+           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
+
+           this.breakableBricks++;
+        }   
+         //Color del ladrillo
+         brick.frame = brickType;
+            
+         //Lo añadimos al grupo
+          this.bricks.add(brick);
+        }
+
+        j++;
+        
+      }, this)
+      i++;
+    }, this)
+    /*
     for(var i = 0; i < NUM_ROWS; i++)
     {
         //Tipo de ladrillo de la fila (esto es solo para el nivel 1)
@@ -132,7 +195,7 @@ var PlayScene =
             //Lo añadimos al grupo
             this.bricks.add(brick);
         }
-    }
+    }*/
     this.bricks.setAll('body.immovable', true);
 
     //6.Cursores
@@ -161,6 +224,9 @@ var PlayScene =
     this.powerUps = this.game.add.physicsGroup();
     this.powerUps.classType = PowerUp;
     this.game.physics.enable([this.powerUps], Phaser.Physics.ARCADE);
+
+    this.fallingPowerUp = null;
+    this.activePowerUp = null;
     
     //9.Compuertas
     var gate1 = new Phaser.Sprite(this.game, 236, 20, 'compuertas');
@@ -169,6 +235,16 @@ var PlayScene =
     this.world.add(gate2);
     gate1.animations.add('open');
     gate2.animations.add('open');
+
+     // Puerta al siguiente nivel
+      this.levelDoor = new Phaser.Sprite(this.game, this.rightLimit + 10, 526, 'compuertas');
+      this.levelDoor.anchor.setTo(0.5,0.5);
+      this.levelDoor.angle += 90;
+      this.world.add(this.levelDoor);
+      this.levelDoor.animations.add('open',[0,1,2,3,4]);
+      this.levelDoor.animations.frame = 7;
+      this.game.physics.enable([this.player, this.levelDoor], Phaser.Physics.ARCADE);
+      this.doorOpen = false;
 
 
     //9.Enemigos
@@ -202,6 +278,11 @@ var PlayScene =
   //FUNCIÓN UPDATE
   update: function()
   {
+        //Colisiones del jugador
+        this.game.physics.arcade.overlap(this.player, this.powerUps, this.takePowerUp, null, this);
+        this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
+        this.game.physics.arcade.overlap(this.player, this.levelDoor, this.advanceLevel, null, this);
+
     //Colisiones de la pelota
     this.game.physics.arcade.overlap( this.walls, this.ballsGroup, this.ballCollisions, null, this);
     this.game.physics.arcade.overlap(this.bricks, this.ballsGroup, this.ballCollisions, null, this);
@@ -213,13 +294,17 @@ var PlayScene =
     this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.bricks, this.bulletCollisions, null, this);
     this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.enemigos, this.bulletCollisions, null, this);
 
-    //Colisiones del jugador
-    this.game.physics.arcade.overlap(this.player, this.powerUps, this.takePowerUp, null, this);
-    this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
+    //Ganaste
+    if(this.breakableBricks == 0)
+    {
+     levelNo++;
+     this.game.state.restart();
+    }
 
     //Perdiste
-    if(this.ballsGroup.getFirstAlive() == null)
-       this.game.state.restart();
+    if(this.ballsGroup.countLiving() == 0)
+    this.game.state.restart();
+      
   },
 
   // COLISIONES
@@ -259,7 +344,7 @@ var PlayScene =
    // A) Dropea un Power-Up según una probabilidad
    dropPowerUp: function(brick)
    {
-       if(this.activePowerUp != null && this.activePowerUp.constructor == LightBluePowerUp && this.ballsGroup.length <= 1)
+       if(this.activePowerUp != null && this.activePowerUp.constructor == LightBluePowerUp && this.ballsGroup.countLiving() <= 1)
        this.activePowerUp.disable();
 
        if(this.fallingPowerUp == null || this.fallingPowerUp.dropEnabled())
@@ -312,6 +397,9 @@ var PlayScene =
             case 5:
             powerUp = new LightBluePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
+            case 6:
+            powerUp = new PinkPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), false, false, this);
+            break;
 
         }
        
@@ -342,11 +430,27 @@ var PlayScene =
        this.activePowerUp = powerUp;
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
-    var lives = this.player._lives;
+    var lives = player._lives;
        powerUp.enable();
        powerUp.takeDamage(this);
-     if(this.player._lives > lives)
+     if(player._lives > lives)
         this.hud.addLife();
+   },
+
+   advanceLevel: function(player, door)
+   {
+     this.doorOpen = true;
+     if(this.doorOpen)
+     {
+       levelNo++;
+       this.game.state.restart();
+     }
+   },
+
+   openDoor: function()
+   {
+     this.doorOpen = true;
+     this.levelDoor.animations.play('open',2,false);
    },
 
    // Usado para hacer debug
@@ -355,7 +459,13 @@ var PlayScene =
         // Player debug info
         this.game.debug.text(this.points, this.rightLimit + 50, 130);
         this.game.debug.text(this.points, this.rightLimit + 50, 210);
-        this.game.debug.text(this.levelNo, this.rightLimit + 50, 550);
+        this.game.debug.text(levelNo, this.rightLimit + 50, 550);
+
+        this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), this.rightLimit + 15, 230);
+        this.game.debug.text('balls length: ' +this.ballsGroup.length, this.rightLimit + 15, 250);
+        this.game.debug.text('b bricks: ' +this.breakableBricks, this.rightLimit + 15, 270);
+
+        
     }
 };
 

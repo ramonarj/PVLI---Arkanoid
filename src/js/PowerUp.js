@@ -16,6 +16,7 @@ function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop, p
    // Determina si el Power-Up es un efecto activo o no (pasando 'true' o 'false')
     this._effect = effect;
 
+    // Determina si el drop de otros Power-Ups está activo mientras éste está aún cayendo
     this._dropEnabled = drop;
 
    //Ponemos qué frames queremos para la animación (dependiendo del subtipo que sea)
@@ -164,7 +165,7 @@ function LightBluePowerUp(game, position, sprite, sound, lives, velocity, effect
     PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 5]);
 
     this._balls = ballsGroup;
-    this._mainBall = this._balls.getTop();
+    this._mainBall = this._balls.getFirstAlive();
 }
 
 LightBluePowerUp.prototype = Object.create(PowerUp.prototype);
@@ -173,17 +174,23 @@ LightBluePowerUp.prototype.constructor = LightBluePowerUp;
 LightBluePowerUp.prototype.enable = function()
 {
     var extraBall;
-    var ballPos = new Par(this._mainBall.getPosX(), this._mainBall.getPosY());
-    var ballVel = new Par(this._mainBall.getVelX() *0.8 , this._mainBall.getVelY() *0.8);
+    var ballVel = this._mainBall.getVel();
+    var dir = 1;
+  
   //  var ballVel = new Par(BASE_VELOCITY * Math.cos(BASE_ANGLE), -BASE_VELOCITY *  Math.sin(BASE_ANGLE));
-    for(var i = 0; i < EXTRA_BALLS; i++)
-    {
-        extraBall = new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
-        this._balls.add(extraBall);
+this._balls.forEachDead(function(extraBall, mainBall)
+{
+    extraBall.revive();
+    extraBall.setPosX (mainBall.getPosX());
+    extraBall.setPosY (mainBall.getPosY());
+    var ballAngle = this._mainBall.getAngle() + (Math.floor(Math.random() * (50 - 15))/100);
+    ballAngle * dir;
+    extraBall.body.velocity.setTo(ballVel*Math.cos(ballAngle), ballVel*Math.sin(ballAngle)); //Físicas de la pelota
 
-        extraBall.body.velocity.setTo(this._mainBall.body.velocity.x*0.8, this._mainBall.body.velocity.y*0.8); //Físicas de la pelota
-        extraBall.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
-    }
+    extraBall.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
+
+    dir = -dir;
+},this, this._mainBall)
 }
 
 LightBluePowerUp.prototype.disable = function()
@@ -194,11 +201,28 @@ LightBluePowerUp.prototype.disable = function()
 LightBluePowerUp.prototype.takeDamage = function(playscene)
 {
     // Diferenciamos así cuando se destruye con la Deadzone o cuando se ha recogido por el jugador (y, por tanto, se ha activado)
-    if(this._balls.length <= 1)
+    if(this._balls.countLiving() <= 1)
        this._dropEnabled = true;
      Destroyable.prototype.takeDamage.call(this, playscene);
      this.destroy();
 }
+
+// 7) Power-Up rosa ->abre la puerta al siguiente nivel
+function PinkPowerUp(game, position, sprite, sound, lives, velocity, effect, drop,  playScene)
+{
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 6]);
+
+    this._playScene = playScene;
+}
+
+PinkPowerUp.prototype = Object.create(PowerUp.prototype);
+PinkPowerUp.prototype.constructor = PinkPowerUp;
+
+PinkPowerUp.prototype.enable = function()
+{
+    this._playScene.openDoor();
+}
+
 
 
 module.exports = 
@@ -210,6 +234,7 @@ module.exports =
     BluePowerUp, 
     OrangePowerUp,
     LightBluePowerUp,
+    PinkPowerUp,
     EXTRA_BALLS,
     POWERUP_POINTS
 };
