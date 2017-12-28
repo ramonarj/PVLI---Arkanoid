@@ -15,6 +15,7 @@ var RedPowerUp = require ('./PowerUp.js').RedPowerUp;
 var BluePowerUp = require ('./PowerUp.js').BluePowerUp;
 var OrangePowerUp = require ('./PowerUp.js').OrangePowerUp;
 var LightBluePowerUp = require ('./PowerUp.js').LightBluePowerUp;
+var PinkPowerUp = require ('./PowerUp.js').PinkPowerUp;
 
 //Estructuras auxiliares y constantes
 var Par = require ('./SoundSource.js').Par;
@@ -23,10 +24,10 @@ var BASE_ANGLE = require ('./Ball.js').BASE_ANGLE;
 var ENEMY_VEL = require ('./Enemy.js').ENEMY_VEL;
 var MAX_ENEMIES = 3;
 
-var NUM_POWERUPS = 6;
+var NUM_POWERUPS = 7;
 var POWERUP_CHANCE = 1/1;
 
-var NUM_ROWS = 6;
+var NUM_ROWS = 12;
 var NUM_COLS = 11;
 var BRICK_WIDTH = 44;
 var BRICK_HEIGHT = 22;
@@ -131,7 +132,7 @@ var PlayScene =
       {
 
         var brick;
-        var pos = new Par(this.leftLimit + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
+        var pos = new Par(this.leftLimit + (j*BRICK_WIDTH), (BRICK_HEIGHT*5)-4 + (i*BRICK_HEIGHT));
 
         if(brickType != 0)
         {
@@ -242,8 +243,8 @@ var PlayScene =
       this.world.add(this.levelDoor);
       this.levelDoor.animations.add('open',[0,1,2,3,4]);
       this.levelDoor.animations.frame = 7;
-      this.levelDoor.animations.play('open',2,false);
       this.game.physics.enable([this.player, this.levelDoor], Phaser.Physics.ARCADE);
+      this.doorOpen = false;
 
 
     //9.Enemigos
@@ -396,6 +397,9 @@ var PlayScene =
             case 5:
             powerUp = new LightBluePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
             break;
+            case 6:
+            powerUp = new PinkPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), false, false, this);
+            break;
 
         }
        
@@ -435,12 +439,18 @@ var PlayScene =
 
    advanceLevel: function(player, door)
    {
-     this.doorOpen = false;
+     this.doorOpen = true;
      if(this.doorOpen)
      {
        levelNo++;
        this.game.state.restart();
      }
+   },
+
+   openDoor: function()
+   {
+     this.doorOpen = true;
+     this.levelDoor.animations.play('open',2,false);
    },
 
    // Usado para hacer debug

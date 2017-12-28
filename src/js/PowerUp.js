@@ -16,6 +16,7 @@ function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop, p
    // Determina si el Power-Up es un efecto activo o no (pasando 'true' o 'false')
     this._effect = effect;
 
+    // Determina si el drop de otros Power-Ups está activo mientras éste está aún cayendo
     this._dropEnabled = drop;
 
    //Ponemos qué frames queremos para la animación (dependiendo del subtipo que sea)
@@ -206,6 +207,23 @@ LightBluePowerUp.prototype.takeDamage = function(playscene)
      this.destroy();
 }
 
+// 7) Power-Up rosa ->abre la puerta al siguiente nivel
+function PinkPowerUp(game, position, sprite, sound, lives, velocity, effect, drop,  playScene)
+{
+    PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 6]);
+
+    this._playScene = playScene;
+}
+
+PinkPowerUp.prototype = Object.create(PowerUp.prototype);
+PinkPowerUp.prototype.constructor = PinkPowerUp;
+
+PinkPowerUp.prototype.enable = function()
+{
+    this._playScene.openDoor();
+}
+
+
 
 module.exports = 
 {
@@ -216,6 +234,7 @@ module.exports =
     BluePowerUp, 
     OrangePowerUp,
     LightBluePowerUp,
+    PinkPowerUp,
     EXTRA_BALLS,
     POWERUP_POINTS
 };
