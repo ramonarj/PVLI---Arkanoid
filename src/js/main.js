@@ -49,7 +49,6 @@ var PreloaderScene =
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
     this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Enemigos
 
-
     // Datos del nivel
     this.game.load.text('levels', 'assets/levels/levels.json');
   },

@@ -109,6 +109,9 @@ var PlayScene =
     this.walls.setAll('body.immovable', true);
     this.walls.setAll('visible', false);
 
+
+    var pas = new Phaser.Sprite(this.game, 633, 35, 'PowerUps');
+    this.world.add(pas);
     //4.Límites de la pantalla
     this.leftLimit = pared1.x + pared1.width; 
     this.rightLimit = pared2.x;
@@ -179,10 +182,12 @@ var PlayScene =
         else if(i==5)
           brickType=3;
 
+
         for(var j = 0; j < NUM_COLS; j++)
         {
             var brick;
             var pos= new Par(this.leftLimit + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
+
 
             if(brickType==8)
                brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);
@@ -236,6 +241,7 @@ var PlayScene =
     gate1.animations.add('open');
     gate2.animations.add('open');
 
+
      // Puerta al siguiente nivel
       this.levelDoor = new Phaser.Sprite(this.game, this.rightLimit + 10, 526, 'compuertas');
       this.levelDoor.anchor.setTo(0.5,0.5);
@@ -245,6 +251,7 @@ var PlayScene =
       this.levelDoor.animations.frame = 7;
       this.game.physics.enable([this.player, this.levelDoor], Phaser.Physics.ARCADE);
       this.doorOpen = false;
+
 
 
     //9.Enemigos
@@ -267,6 +274,7 @@ var PlayScene =
     //10.HUD
     var hudPos = new Par(this.rightLimit + 15, 320);
     this.hud = new HUD(this.game, hudPos, 'vidas','e');
+
 
     //Cosas de la pelota
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
@@ -399,6 +407,7 @@ var PlayScene =
             break;
             case 6:
             powerUp = new PinkPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), false, false, this);
+
             break;
 
         }
@@ -451,6 +460,7 @@ var PlayScene =
    {
      this.doorOpen = true;
      this.levelDoor.animations.play('open',2,false);
+
    },
 
    // Usado para hacer debug
@@ -465,7 +475,6 @@ var PlayScene =
         this.game.debug.text('balls length: ' +this.ballsGroup.length, this.rightLimit + 15, 250);
         this.game.debug.text('b bricks: ' +this.breakableBricks, this.rightLimit + 15, 270);
 
-        
     }
 };
 
