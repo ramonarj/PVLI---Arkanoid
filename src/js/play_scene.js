@@ -38,7 +38,10 @@ var EXTRA_BALLS = 2;
 
 var WHITE_BRICK_POINTS = 50;
 
-var levelNo = 0;
+//Variables globales necesarias (nivel, vidas y puntos)
+var level = 0;
+var lives = 3;
+var score = 0;
 
 var PlayScene =
  {
@@ -57,7 +60,8 @@ var PlayScene =
      activePowerUp:null,
      fallingPowerUp:null,
      player:null,
-     points:null,
+     score:null,
+     highscore:null,
      levelDoor:null,
      doorOpen:null,
      breakableBricks:null,
@@ -68,7 +72,7 @@ var PlayScene =
     //Sistema de físicas
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     //Para los puntos
-    this.points = 0;
+    this.highscore = 5000;
  
 
     //Añadimos las variables
@@ -110,8 +114,6 @@ var PlayScene =
     this.walls.setAll('visible', false);
 
 
-    var pas = new Phaser.Sprite(this.game, 633, 35, 'PowerUps');
-    this.world.add(pas);
     //4.Límites de la pantalla
     this.leftLimit = pared1.x + pared1.width; 
     this.rightLimit = pared2.x;
@@ -128,7 +130,7 @@ var PlayScene =
 
     var i, j;
     i =  j = 0;
-    JSONfile.levels[levelNo].forEach(function(element)
+    JSONfile.levels[level].forEach(function(element)
     {
       j = 0;
       element.forEach(function(brickType)
@@ -145,7 +147,7 @@ var PlayScene =
         else
         {    
          if(brickType == SILVER_BRICK)
-           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * levelNo);
+           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * level);
 
         else
            brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
@@ -164,43 +166,6 @@ var PlayScene =
       }, this)
       i++;
     }, this)
-    /*
-    for(var i = 0; i < NUM_ROWS; i++)
-    {
-        //Tipo de ladrillo de la fila (esto es solo para el nivel 1)
-        var brickType;
-        if(i==0)
-          brickType=8;
-        else if(i==1)
-          brickType=4;
-        else if(i==2)
-          brickType=5;
-        else if(i==3)
-          brickType=7;
-        else if(i==4)
-          brickType=6;
-        else if(i==5)
-          brickType=3;
-
-
-        for(var j = 0; j < NUM_COLS; j++)
-        {
-            var brick;
-            var pos= new Par(this.leftLimit + 2 + (j*BRICK_WIDTH), 125 + (i*BRICK_HEIGHT));
-
-
-            if(brickType==8)
-               brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * this.levelNo);
-            else
-               brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
-
-            //Color del ladrillo
-            brick.frame=brickType;
-            
-            //Lo añadimos al grupo
-            this.bricks.add(brick);
-        }
-    }*/
     this.bricks.setAll('body.immovable', true);
 
     //6.Cursores
@@ -219,7 +184,7 @@ var PlayScene =
 
     //7.Jugador
     var playerVel = new Par(0,0);
-    this.player = new Player(this.game, playerPos, 'player', 'sound', 3, playerVel, this.cursors, 
+    this.player = new Player(this.game, playerPos, 'player', 'sound', 1, playerVel, this.cursors, 
                                                this.playerWeapon, this.leftLimit, this.rightLimit, this.ballsGroup);
     this.game.world.addChild(this.player);
     this.game.physics.enable([this.player, this.ballsGroup], Phaser.Physics.ARCADE);
@@ -273,7 +238,8 @@ var PlayScene =
 
     //10.HUD
     var hudPos = new Par(this.rightLimit + 15, 320);
-    this.hud = new HUD(this.game, hudPos, 'vidas','e');
+    this.hud = new HUD(this.game, hudPos, 'vidas','e', lives);
+    this.hud.renderRound(level);
 
 
     //Cosas de la pelota
@@ -305,14 +271,17 @@ var PlayScene =
     //Ganaste
     if(this.breakableBricks == 0)
     {
-     levelNo++;
+     level++;
      this.game.state.restart();
     }
 
     //Perdiste
     if(this.ballsGroup.countLiving() == 0)
-    this.game.state.restart();
-      
+    {
+      lives--;
+      this.hud.takeLife();
+      this.game.state.restart();
+    }  
   },
 
   // COLISIONES
@@ -451,7 +420,7 @@ var PlayScene =
      this.doorOpen = true;
      if(this.doorOpen)
      {
-       levelNo++;
+       level++;
        this.game.state.restart();
      }
    },
@@ -463,14 +432,17 @@ var PlayScene =
 
    },
 
+   //Otros métodos
+   addScore:function(i)
+   {
+     score+=i;
+     this.hud.renderScore(score, this.highscore);
+   },
+
    // Usado para hacer debug
   render: function() 
    {
         // Player debug info
-        this.game.debug.text(this.points, this.rightLimit + 50, 130);
-        this.game.debug.text(this.points, this.rightLimit + 50, 210);
-        this.game.debug.text(levelNo, this.rightLimit + 50, 550);
-
         this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), this.rightLimit + 15, 230);
         this.game.debug.text('balls length: ' +this.ballsGroup.length, this.rightLimit + 15, 250);
         this.game.debug.text('b bricks: ' +this.breakableBricks, this.rightLimit + 15, 270);
