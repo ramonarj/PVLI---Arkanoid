@@ -39,7 +39,7 @@ Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
         //Se destruye (y suma puntos) en caso de que no llamemos desde el update de movable
         if(playscene != null)
         {
-          playscene.points += this._numPoints;
+          playscene.addScore(this._numPoints);
         }
     }
 }
