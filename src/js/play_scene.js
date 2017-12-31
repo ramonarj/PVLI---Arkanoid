@@ -38,10 +38,11 @@ var EXTRA_BALLS = 2;
 
 var WHITE_BRICK_POINTS = 50;
 
-//Variables globales necesarias (nivel, vidas y puntos)
-var level = 0;
+//Variables globales necesarias (nivel, vidas y puntuación actual y máxima)
+var level = 1;
 var lives = 3;
 var score = 0;
+var highscore = 5000;
 
 var PlayScene =
  {
@@ -60,8 +61,6 @@ var PlayScene =
      activePowerUp:null,
      fallingPowerUp:null,
      player:null,
-     score:null,
-     highscore:null,
      levelDoor:null,
      doorOpen:null,
      breakableBricks:null,
@@ -71,9 +70,6 @@ var PlayScene =
   {
     //Sistema de físicas
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    //Para los puntos
-    this.highscore = 5000;
- 
 
     //Añadimos las variables
     //1.Fondo
@@ -97,7 +93,6 @@ var PlayScene =
         this.ballsGroup.add(extraBall);
         extraBall.kill();
     }
-
     
 
     //3.Paredes y techo (grupo walls)
@@ -226,13 +221,13 @@ var PlayScene =
     
     var enemyPos = new Par(gate1.x + gate1.width/2, gate1.y);
     var enemyVel = new Par(0, ENEMY_VEL);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos, gate1, this.player.y);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos, gate1, this.player.y, level);
     this.enemigos.add(enem1);
     
 
     var enemyPos2 = new Par(gate2.x + gate2.width/2, gate2.y); 
     var enemyVel2 = new Par(0, ENEMY_VEL);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos, gate2, this.player.y);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos, gate2, this.player.y, level);
     this.enemigos.add(enem2);
     this.enemigos.setAll('body.immovable', true);
 
@@ -240,22 +235,22 @@ var PlayScene =
     var hudPos = new Par(this.rightLimit + 15, 320);
     this.hud = new HUD(this.game, hudPos, 'vidas','e', lives);
     this.hud.renderRound(level);
+    this.hud.renderScore(score, highscore); //Render inicial
 
 
     //Cosas de la pelota
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
     this.ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
     this.ball.attach(); //La pegamos al jugador
-
   },
 
   //FUNCIÓN UPDATE
   update: function()
   {
-        //Colisiones del jugador
-        this.game.physics.arcade.overlap(this.player, this.powerUps, this.takePowerUp, null, this);
-        this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
-        this.game.physics.arcade.overlap(this.player, this.levelDoor, this.advanceLevel, null, this);
+    //Colisiones del jugador
+    this.game.physics.arcade.overlap(this.player, this.powerUps, this.takePowerUp, null, this);
+    this.game.physics.arcade.overlap(this.player, this.enemigos, this.playerCollisions, null, this);
+    this.game.physics.arcade.overlap(this.player, this.levelDoor, this.advanceLevel, null, this);
 
     //Colisiones de la pelota
     this.game.physics.arcade.overlap( this.walls, this.ballsGroup, this.ballCollisions, null, this);
@@ -276,11 +271,26 @@ var PlayScene =
     }
 
     //Perdiste
-    if(this.ballsGroup.countLiving() == 0)
+    else if(this.ballsGroup.countLiving() == 0)
     {
       lives--;
       this.hud.takeLife();
-      this.game.state.restart();
+      //Perdiste del todo
+      //Restablecemos todos los valores a su valor inicial y volvemos al menú
+      if(lives < 0)
+      {
+        if(score > highscore)
+           highscore = score;
+
+        level = 1;
+        lives = 3;
+        score = 0;
+        this.game.state.start('menu');
+      }
+       
+      //Solo perdiste una vida
+      else
+         this.game.state.restart();
     }  
   },
 
@@ -436,7 +446,7 @@ var PlayScene =
    addScore:function(i)
    {
      score+=i;
-     this.hud.renderScore(score, this.highscore);
+     this.hud.renderScore(score, highscore);
    },
 
    // Usado para hacer debug

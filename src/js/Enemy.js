@@ -8,10 +8,11 @@ var ENEMY_POINTS = 100;
 var ENEMY_VEL = 1;
 var SPIN_RADIUS = 60;
 var MAX_ENEMIES = 3;
+var DIFFERENT_ENEMIES = 2;
 var UPPERLIMIT = 40;
 
 //2.2.1.1.CLASE ENEMIGO
-function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies, gate, playerY)
+function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies, gate, playerY, level)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity, ENEMY_POINTS]);
     //Para el movimiento recto
@@ -37,7 +38,12 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
     this.anchor.setTo(0.5, 0.5);
 
     //Animación
-    this.animations.add('move');
+    this._enemyType = (DIFFERENT_ENEMIES + level - 1) % DIFFERENT_ENEMIES;
+    console.log(this._enemyType);
+    if(this._enemyType == 0)
+        this.animations.add('move', [0, 1, 2, 3, 4, 5, 6, 7]);
+    else if (this._enemyType == 1)
+        this.animations.add('move', [8, 9, 10, 11, 12, 13, 14]);
     this.animations.play('move', 8, true);
     this.animations.currentAnim.speed = 6 * ENEMY_VEL;
     

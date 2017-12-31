@@ -27,7 +27,7 @@ var Menu =
 
     takeInput:function()
     {
-        if(this.enterButton.isDown)
+        if(this.enterButton.isDown && this.eleccion == 0)
             this.game.state.start('play');
         else if (this.eleccion == 0 && this.cursors.down.isDown)
         {
