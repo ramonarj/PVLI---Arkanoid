@@ -70,6 +70,8 @@ HUD.prototype.renderScore = function(score, highscore)
   this._scoreText.text = score;
   if(score > highscore)
       this._highScoreText.text = score;
+  else
+      this._highScoreText.text = highscore;
 }
 
 HUD.prototype.renderRound = function(round)
