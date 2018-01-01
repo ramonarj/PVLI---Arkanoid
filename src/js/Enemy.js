@@ -8,7 +8,7 @@ var ENEMY_POINTS = 100;
 var ENEMY_VEL = 1;
 var SPIN_RADIUS = 60;
 var MAX_ENEMIES = 3;
-var DIFFERENT_ENEMIES = 2;
+var DIFFERENT_ENEMIES = 4;
 var UPPERLIMIT = 40;
 
 //2.2.1.1.CLASE ENEMIGO
@@ -22,6 +22,7 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
     this._bricks = bricks;
     this._enemies = enemies;
     this._gate = gate;
+    this._dead = false;
 
     //Para el movimiento circular
     this._lowerBrickY = this.findLowerBrick();
@@ -37,16 +38,22 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
     this._iniY = position._y;
     this.anchor.setTo(0.5, 0.5);
 
-    //Animación
+    //Animaciones de lo enemigos
     this._enemyType = (DIFFERENT_ENEMIES + level - 1) % DIFFERENT_ENEMIES;
-    console.log(this._enemyType);
     if(this._enemyType == 0)
         this.animations.add('move', [0, 1, 2, 3, 4, 5, 6, 7]);
     else if (this._enemyType == 1)
         this.animations.add('move', [8, 9, 10, 11, 12, 13, 14]);
+    else if (this._enemyType == 2)
+        this.animations.add('move', [16, 17, 18, 19, 20, 21]);
+    else if (this._enemyType == 3)
+        this.animations.add('move', [24, 25, 26, 27, 28, 29, 30, 31]);
+    this.animations.add('explode', [32, 33, 34, 35]); //Explosión
+
     this.animations.play('move', 8, true);
     this.animations.currentAnim.speed = 6 * ENEMY_VEL;
-    
+
+    //Animaciones de las compuertas
     this._gate.animations.play('open', 9, false);
     this._gate.animations.currentAnim.speed = 6 * ENEMY_VEL;
 }
@@ -56,12 +63,16 @@ Enemy.prototype.constructor = Enemy;
 
 Enemy.prototype.update = function() 
 {
-    if(this._circles)
-       this.moveCircles();
-    else 
-       this.moveStraight();
-       
-    Movable.prototype.update.call(this);
+    if(!this._dead)
+    {
+        if(this._circles)
+        this.moveCircles();
+     else 
+        this.moveStraight();
+        
+     Movable.prototype.update.call(this);
+
+    }
 }
 
 Enemy.prototype.moveStraight = function() 
@@ -226,18 +237,28 @@ Enemy.prototype.moveCircles = function()
 
 Enemy.prototype.takeDamage = function(playscene) 
 {
-    Destroyable.prototype.takeDamage.call(this, playscene);
-    
-    //Se respawnea a si mismo
-    this.x = this._iniX;
-    this.y = this._iniY;
-    this._dir = 3;
-    this._circles = false;
-    this._spinAxis = new Par (0,0);
-    this._outOfGate = false;
-    this._gate.animations.play('open', 9, false);
+    this._dead = true;
+    this.body.enable = false;
+    this.animations.play('explode', 5, false);
 
-    this.revive();
+    this.animations.currentAnim.onComplete.add(function()
+    {
+        Destroyable.prototype.takeDamage.call(this, playscene);
+        
+        //Se respawnea a si mismo
+        this.x = this._iniX;
+        this.y = this._iniY;
+        this._dir = 3;
+        this._circles = false;
+        this._spinAxis = new Par (0,0);
+        this._outOfGate = false;
+        this._gate.animations.play('open', 9, false);
+        this.animations.play('move', 8, true);
+    
+        this.body.enable = true;
+        this._dead = false;
+        this.revive();
+    }, this);
 }
 
 module.exports = 

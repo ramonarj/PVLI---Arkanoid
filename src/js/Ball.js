@@ -1,8 +1,11 @@
 'use strict'
 
-var BASE_VELOCITY = 300;
-var BASE_ANGLE = 60 * Math.PI / 180; //Está en radianes
+var BASE_VELOCITY = 350;
+var BASE_ANGLE =  Math.PI / 3; //Está en radianes (60º)
 var MAX_VELOCITY = 600;
+
+var MAX_ANGLE = 4 * Math.PI / 9; //80º
+var MIN_ANGLE = Math.PI / 9; //20º
 
 
 var Movable = require ('./Movable.js');
@@ -33,19 +36,7 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 
     //a)Jugador 
     if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
-    {
-        //Rebote en lado contrario al que se mueve la pelota
-        if((this.x > obj.x && this.body.velocity.x < 0) || (this.x < obj.x && this.body.velocity.x > 0))
-            this.body.velocity.x = -this.body.velocity.x;
-
-           //Actualizamos la velocidad de nuestra jerarquía
-        this._velocity._x = this.body.velocity.x;
-        this._velocity._y = this.body.velocity.y;
-        // Si se puede enganchar a la pala, ésta se quedará pegada
-       if(this._attachEnabled)
-        this.attach(); 
-    }
-    
+        this.bounceInPlayer(obj);
 
     //b)Ladrillos o paredes
     else if (obj.hasOwnProperty('_sound'))
@@ -54,9 +45,9 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
         if(Math.max(this._vel, -this._vel) < MAX_VELOCITY)
         {
           if(this._vel < 0)
-          this._vel -= 10;
+             this._vel -= 10;
           else
-          this._vel += 10;
+             this._vel += 10;
 
           this.body.velocity.x = this._vel * Math.cos(this._angle);
           this.body.velocity.y = this._vel * Math.sin(this._angle);
@@ -68,6 +59,27 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
     }
 }
 
+Ball.prototype.bounceInPlayer = function(player)
+{
+    var delta = Math.abs(player.x - (this.x + this.width/2));
+    this._angle = MAX_ANGLE - (delta * Math.PI / 180); //Actualizamos el ángulo
+
+    //Actualizamos la velocidad en función del punto en que rebote del jugador
+    this.body.velocity.x = this._vel * Math.cos(this._angle);
+    this.body.velocity.y = -Math.abs(this._vel * Math.sin(this._angle));
+
+    //Esto es para el rebote en lado contrario al que se mueve la pelota
+    if((this.x > player.x && this.body.velocity.x < 0) || (this.x < player.x && this.body.velocity.x > 0))
+        this.body.velocity.x = -this.body.velocity.x;
+
+     //Actualizamos la velocidad de nuestra jerarquía
+     this._velocity._x = this.body.velocity.x;
+     this._velocity._y = this.body.velocity.y;
+
+     // Si se puede enganchar a la pala, ésta se quedará pegada
+     if(this._attachEnabled)
+        this.attach(); 
+}
 
 
 // FUNCIONES AUXILIARES 
