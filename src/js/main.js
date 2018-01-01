@@ -46,8 +46,8 @@ var PreloaderScene =
    // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)', 'nº de frames' (opcional)
     this.game.load.spritesheet('PowerUps', 'images/PowerUps.png', 40, 18, 42); //42 frames
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
-    this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37, 15); //Enemigos
-    this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Enemigos
+    this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
+    this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Compuertas
 
     // Datos del nivel
     this.game.load.text('levels', 'assets/levels/levels.json');
