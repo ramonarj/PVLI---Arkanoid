@@ -1,6 +1,7 @@
 'use strict';
 
-//Jerarquía de objetos
+//JERARQUÍA DE OBJETOS
+var Par = require ('./SoundSource.js').Par;
 var SoundSource = require ('./SoundSource.js').SoundSource;
 var HUD = require ('./HUD.js');
 var Destroyable = require ('./Destroyable.js');
@@ -8,6 +9,7 @@ var Movable = require ('./Movable.js');
 var Enemy = require ('./Enemy.js').Enemy;
 var Player = require ('./Player.js');
 var Ball = require ('./Ball.js').Ball;
+//Todos los Power-ups
 var PowerUp = require ('./PowerUp.js').PowerUp;
 var GreenPowerUp = require ('./PowerUp.js').GreenPowerUp;
 var GreyPowerUp = require ('./PowerUp.js').GreyPowerUp; 
@@ -17,11 +19,8 @@ var OrangePowerUp = require ('./PowerUp.js').OrangePowerUp;
 var LightBluePowerUp = require ('./PowerUp.js').LightBluePowerUp;
 var PinkPowerUp = require ('./PowerUp.js').PinkPowerUp;
 
-//Estructuras auxiliares y constantes
-var Par = require ('./SoundSource.js').Par;
-var BASE_VELOCITY = require ('./Ball.js').BASE_VELOCITY;
-var BASE_ANGLE = require ('./Ball.js').BASE_ANGLE;
-var ENEMY_VEL = require ('./Enemy.js').ENEMY_VEL;
+
+//CONSTANTES
 var MAX_ENEMIES = 3;
 
 var NUM_POWERUPS = 7;
@@ -29,14 +28,17 @@ var POWERUP_CHANCE = 1/1;
 
 var NUM_ROWS = 12;
 var NUM_COLS = 11;
+var LEFTLIMIT = 147;
+var RIGHTLIMIT = 633;
+
 var BRICK_WIDTH = 44;
 var BRICK_HEIGHT = 22;
 var SILVER_BRICK = 8;
 var GOLDEN_BRICK = 9;
+var WHITE_BRICK_POINTS = 50;
 
 var EXTRA_BALLS = 2;
 
-var WHITE_BRICK_POINTS = 50;
 
 //Variables globales necesarias (nivel, vidas y puntuación actual y máxima)
 var level = 1;
@@ -47,8 +49,7 @@ var highscore = 5000;
 var PlayScene =
  {
      //Variables locales (de la escena)
-     fondo:null,
-     leftlimit:null, rightLimit:null, topBrickLimit: null,
+     topBrickLimit: null,
      cursors:null,
      playerWeapon:null,
      enemigos: null,
@@ -72,54 +73,53 @@ var PlayScene =
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
     //Añadimos las variables
-    //1.Fondo
-    this.fondo = new Phaser.Image(this.game, 125, 20, 'background');
-    this.game.world.addChild(this.fondo);
-
-    //2.Pelota
-    this.ballsGroup = this.game.add.physicsGroup();
-    this.ballsGroup.classType = Ball;
-
-    var playerPos = new Par(350, 525);
-    var ballPos = new Par(playerPos._x, playerPos._y - 12);
-    var ballVel = new Par(BASE_VELOCITY * Math.cos(BASE_ANGLE), -BASE_VELOCITY *  Math.sin(BASE_ANGLE));
-    this.ball = new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
-    //this.game.world.addChild(this.ball);
-    this.ballsGroup.add(this.ball);
-
-    for(var i = 0; i < EXTRA_BALLS; i++)
-    {
-       var extraBall = new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
-        this.ballsGroup.add(extraBall);
-        extraBall.kill();
-    }
-    
-
-    //3.Paredes y techo (grupo walls)
+    //1.Paredes y techo (grupo walls)
     this.walls = this.game.add.physicsGroup();
-
     var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
-    var pared1 = new Phaser.Sprite(this.game, 110, 35, 'pared');
+    var pared1 = new Phaser.Sprite(this.game, LEFTLIMIT, 35, 'pared');
+    pared1.x-=pared1.width;
     var pared2 = new Phaser.Sprite(this.game, 633, 35, 'pared');
-    
+        
     this.walls.add(techo);
     this.walls.add(pared1);
     this.walls.add(pared2);
     this.walls.setAll('body.immovable', true);
     this.walls.setAll('visible', false);
 
+    //2.HUD
+    var hudPos = new Par(RIGHTLIMIT + 15, 320);
+    this.hud = new HUD(this.game, hudPos, 'vidas','e', lives, level);
+    this.hud.renderRound(level);
+    this.hud.renderScore(score, highscore); //Renders iniciales
 
-    //4.Límites de la pantalla
-    this.leftLimit = pared1.x + pared1.width; 
-    this.rightLimit = pared2.x;
+    //3.Pelota
+    this.ballsGroup = this.game.add.physicsGroup();
+    this.ballsGroup.classType = Ball;
+
+    var playerPos = new Par(350, 525);
+    var ballPos = new Par(playerPos._x, playerPos._y - 12);
+    
+    this.ball = new Ball(this.game, ballPos, 'ball', 'sound', 1, this);
+    this.ballsGroup.add(this.ball);
+
+    this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
+    this.ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
+    this.ball.attach(); //La pegamos al jugador
 
 
-    //5.Ladrillos (grupo bricks)
+    for(var i = 0; i < EXTRA_BALLS; i++) //Pelotas extra
+    {
+       var extraBall = new Ball(this.game, ballPos, 'ball', 'sound', 1, this);
+        this.ballsGroup.add(extraBall);
+        extraBall.kill();
+    }
+    
+
+    //4.Ladrillos (grupo bricks)
     this.bricks = this.game.add.physicsGroup();
     this.bricks.classType = Destroyable;
     this.breakableBricks = 0;
     
-
     // Creación del nivel
     var JSONfile = JSON.parse(this.game.cache.getText('levels'));
 
@@ -132,7 +132,7 @@ var PlayScene =
       {
 
         var brick;
-        var pos = new Par(this.leftLimit + (j*BRICK_WIDTH), (BRICK_HEIGHT*5)-4 + (i*BRICK_HEIGHT));
+        var pos = new Par(LEFTLIMIT + (j*BRICK_WIDTH), (BRICK_HEIGHT*5)-4 + (i*BRICK_HEIGHT));
 
         if(brickType != 0)
         {
@@ -163,10 +163,10 @@ var PlayScene =
     }, this)
     this.bricks.setAll('body.immovable', true);
 
-    //6.Cursores
+    //5.Cursores
     this.cursors = this.game.input.keyboard.createCursorKeys();
 
-    //7.Balas
+    //6.Balas
     this.playerWeapon = new Movable(this.game, playerPos, 'bullet', 'sound',3, playerVel);
     this.playerWeapon = this.game.add.weapon(8, 'bullet');
     this.playerWeapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
@@ -180,7 +180,7 @@ var PlayScene =
     //7.Jugador
     var playerVel = new Par(0,0);
     this.player = new Player(this.game, playerPos, 'player', 'sound', 1, playerVel, this.cursors, 
-                                               this.playerWeapon, this.leftLimit, this.rightLimit, this.ballsGroup);
+                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup);
     this.game.world.addChild(this.player);
     this.game.physics.enable([this.player, this.ballsGroup], Phaser.Physics.ARCADE);
     this.player.body.immovable = true;
@@ -202,46 +202,31 @@ var PlayScene =
     gate2.animations.add('open');
 
 
-     // Puerta al siguiente nivel
-      this.levelDoor = new Phaser.Sprite(this.game, this.rightLimit + 10, 526, 'compuertas');
-      this.levelDoor.anchor.setTo(0.5,0.5);
-      this.levelDoor.angle += 90;
-      this.world.add(this.levelDoor);
-      this.levelDoor.animations.add('open',[0,1,2,3,4]);
-      this.levelDoor.animations.frame = 7;
-      this.game.physics.enable([this.player, this.levelDoor], Phaser.Physics.ARCADE);
-      this.doorOpen = false;
+    // 10.Puerta al siguiente nivel
+    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, 526, 'compuertas');
+    this.levelDoor.anchor.setTo(0.5,0.5);
+    this.levelDoor.angle += 90;
+    this.world.add(this.levelDoor);
+    this.levelDoor.animations.add('open',[0,1,2,3,4]);
+    this.levelDoor.animations.frame = 7;
+    this.game.physics.enable([this.player, this.levelDoor], Phaser.Physics.ARCADE);
+    this.doorOpen = false;
 
 
-
-    //9.Enemigos
+    //11.Enemigos
     this.enemigos = this.game.add.physicsGroup();
     this.enemigos.classType = Enemy;
 
-    
     var enemyPos = new Par(gate1.x + gate1.width/2, gate1.y);
-    var enemyVel = new Par(0, ENEMY_VEL);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos, gate1, this.player.y, level);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, this.walls, this.bricks, this.enemigos, gate1, this.player.y, level);
     this.enemigos.add(enem1);
     
 
     var enemyPos2 = new Par(gate2.x + gate2.width/2, gate2.y); 
-    var enemyVel2 = new Par(0, ENEMY_VEL);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos, gate2, this.player.y, level);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, this.walls, this.bricks, this.enemigos, gate2, this.player.y, level);
     this.enemigos.add(enem2);
     this.enemigos.setAll('body.immovable', true);
 
-    //10.HUD
-    var hudPos = new Par(this.rightLimit + 15, 320);
-    this.hud = new HUD(this.game, hudPos, 'vidas','e', lives);
-    this.hud.renderRound(level);
-    this.hud.renderScore(score, highscore); //Render inicial
-
-
-    //Cosas de la pelota
-    this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
-    this.ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
-    this.ball.attach(); //La pegamos al jugador
   },
 
   //FUNCIÓN UPDATE
@@ -263,15 +248,24 @@ var PlayScene =
     this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.bricks, this.bulletCollisions, null, this);
     this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.enemigos, this.bulletCollisions, null, this);
 
-    //Ganaste
+  },
+
+  //COMPROBACIONES DE VICTORIA/DERROTA (las llaman cuando es necesario: takeDamage() de Destroyable
+  // y takeDamage() de Ball, respectivamente)
+  //Victoria
+  checkWin: function ()
+  {
     if(this.breakableBricks == 0)
     {
      level++;
      this.game.state.restart();
     }
+  },
 
-    //Perdiste
-    else if(this.ballsGroup.countLiving() == 0)
+  //Derrota
+  checkGameOver : function()
+  {
+    if(this.ballsGroup.countLiving() == 0)
     {
       lives--;
       this.hud.takeLife();
@@ -293,7 +287,6 @@ var PlayScene =
          this.game.state.restart();
     }  
   },
-
   // COLISIONES
   // A) Detecta las colisones con las balas
   bulletCollisions: function(bullet, obj)
@@ -453,9 +446,9 @@ var PlayScene =
   render: function() 
    {
         // Player debug info
-        this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), this.rightLimit + 15, 230);
-        this.game.debug.text('balls length: ' +this.ballsGroup.length, this.rightLimit + 15, 250);
-        this.game.debug.text('b bricks: ' +this.breakableBricks, this.rightLimit + 15, 270);
+        this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), RIGHTLIMIT + 15, 230);
+        this.game.debug.text('balls length: ' +this.ballsGroup.length, RIGHTLIMIT + 15, 250);
+        this.game.debug.text('b bricks: ' +this.breakableBricks, RIGHTLIMIT + 15, 270);
 
     }
 };

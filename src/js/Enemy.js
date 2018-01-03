@@ -12,8 +12,9 @@ var DIFFERENT_ENEMIES = 4;
 var UPPERLIMIT = 40;
 
 //2.2.1.1.CLASE ENEMIGO
-function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, enemies, gate, playerY, level)
+function Enemy(game, position, sprite, sound, lives,  walls, bricks, enemies, gate, playerY, level)
 {
+    var velocity = new Par(0, ENEMY_VEL);
     Movable.apply(this, [game, position, sprite, sound, lives, velocity, ENEMY_POINTS]);
     //Para el movimiento recto
     this._vel = this._velocity._y; //El módulo de la velocidad
@@ -39,14 +40,14 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
     this.anchor.setTo(0.5, 0.5);
 
     //Animaciones de lo enemigos
-    this._enemyType = (DIFFERENT_ENEMIES + level - 1) % DIFFERENT_ENEMIES;
-    if(this._enemyType == 0)
+    var enemyType = (DIFFERENT_ENEMIES + level - 1) % DIFFERENT_ENEMIES;
+    if(enemyType == 0)
         this.animations.add('move', [0, 1, 2, 3, 4, 5, 6, 7]);
-    else if (this._enemyType == 1)
+    else if (enemyType == 1)
         this.animations.add('move', [8, 9, 10, 11, 12, 13, 14]);
-    else if (this._enemyType == 2)
+    else if (enemyType == 2)
         this.animations.add('move', [16, 17, 18, 19, 20, 21]);
-    else if (this._enemyType == 3)
+    else if (enemyType == 3)
         this.animations.add('move', [24, 25, 26, 27, 28, 29, 30, 31]);
     this.animations.add('explode', [32, 33, 34, 35]); //Explosión
 
@@ -63,15 +64,15 @@ Enemy.prototype.constructor = Enemy;
 
 Enemy.prototype.update = function() 
 {
+    //Si está muerto, no hace nada en el update
     if(!this._dead)
     {
-        if(this._circles)
+      if(this._circles)
         this.moveCircles();
      else 
         this.moveStraight();
         
      Movable.prototype.update.call(this);
-
     }
 }
 

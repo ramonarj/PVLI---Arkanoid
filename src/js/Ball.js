@@ -1,5 +1,8 @@
 'use strict'
 
+var Par = require ('./SoundSource.js').Par;
+var Destroyable = require ('./Destroyable.js');
+
 var BASE_VELOCITY = 350;
 var BASE_ANGLE =  Math.PI / 3; //Está en radianes (60º)
 var MAX_VELOCITY = 600;
@@ -11,20 +14,30 @@ var MIN_ANGLE = Math.PI / 9; //20º
 var Movable = require ('./Movable.js');
 
 //2.2.1.2.CLASE PELOTA
-function Ball(game, position, sprite, sound, lives, velocity)
+function Ball(game, position, sprite, sound, lives, scene)
 {
+    var velocity = new Par(BASE_VELOCITY * Math.cos(BASE_ANGLE), -BASE_VELOCITY *  Math.sin(BASE_ANGLE));
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     this._attached = false; 
     this._attachEnabled = false;
 
-    this._vel;
-    this._angle;
+    this._vel = BASE_VELOCITY;
+    this._angle = BASE_ANGLE;
+
+    this._scene = scene;
 }
 
 Ball.prototype = Object.create(Movable.prototype);
 Ball.prototype.constructor = Ball;
 
 //Funciones de pelota
+
+Ball.prototype.takeDamage = function() 
+{
+    Destroyable.prototype.takeDamage.call(this);
+    this._scene.checkGameOver();
+}
+
 Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 {
     //Rebota

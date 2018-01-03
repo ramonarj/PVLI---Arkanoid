@@ -19,16 +19,17 @@ Destroyable.prototype = Object.create(SoundSource.prototype);
 Destroyable.prototype.constructor = Destroyable;
 
 //Funciones de destruible
-Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
+//Quita una vida al destruible
+Destroyable.prototype.takeDamage = function (playscene) //NOTA: solo da puntos cuando playscene != null
 {
     this._lives--;
     if(this._lives <= 0)
     {
-        
-        //Si es un ladrillo de color, puede dropear Power-Ups
+        //Si es un ladrillo, se destruye
         if(this.constructor === Destroyable)
         {
             playscene.breakableBricks--;
+          //Si es de color, puede dropear Power-Ups
           if (this._maxLives == 1)
           {
             playscene.dropPowerUp(this);
@@ -36,10 +37,11 @@ Destroyable.prototype.takeDamage = function (playscene) //Quita una vida
         }
         this.kill();
         
-        //Se destruye (y suma puntos) en caso de que no llamemos desde el update de movable
+        //Se destruye (y suma puntos) en caso de que no llamemos desde el update de movable 
         if(playscene != null)
         {
           playscene.addScore(this._numPoints);
+          playscene.checkWin();
         }
     }
 }
