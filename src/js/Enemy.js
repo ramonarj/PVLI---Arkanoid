@@ -61,6 +61,7 @@ function Enemy(game, position, sprite, sound, lives, velocity, walls, bricks, en
 Enemy.prototype = Object.create(Movable.prototype);
 Enemy.prototype.constructor = Enemy;
 
+
 Enemy.prototype.update = function() 
 {
     if(!this._dead)
@@ -240,6 +241,7 @@ Enemy.prototype.takeDamage = function(playscene)
     this._dead = true;
     this.body.enable = false;
     this.animations.play('explode', 5, false);
+    this._sound.play();
 
     this.animations.currentAnim.onComplete.add(function()
     {

@@ -46,7 +46,10 @@ Player.prototype.readInput = function()
     if(this._fireButton.isDown)
     {
         if(this._shotEnabled)
+        {
            this._playerWeapon.fire();
+           this._playerWeapon.onFire.add(function() {this._sound[0].play()}, this);
+        }
         else if(this._currentBall != null && this._currentBall.isAttached())
            this._currentBall.throw();
     }
@@ -98,6 +101,8 @@ Player.prototype.getWider = function ()
         this._isWide = true;
       var widerPaddle = this.width *= 1.5;
       this.body.setSize(widerPaddle, this.height);
+
+      this._sound[1].play();
     }
 }
 
@@ -106,6 +111,12 @@ Player.prototype.getNarrow = function ()
 {   
     var narrowPaddle = this.width /= 1.5;
     this.body.setSize(narrowPaddle, this.height);
+}
+
+Player.prototype.addLife = function()
+{
+    this._lives++;
+this._sound[2].play();
 }
 
 

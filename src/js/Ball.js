@@ -36,7 +36,10 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 
     //a)Jugador 
     if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
+    {
         this.bounceInPlayer(obj);
+        this._sound[0].play();
+    }
 
     //b)Ladrillos o paredes
     else if (obj.hasOwnProperty('_sound'))
@@ -55,7 +58,13 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 
         //Para los ladrillos destruibles
         if(obj.hasOwnProperty('_lives'))
+        {
             obj.takeDamage(playscene); 
+
+            this._sound[1].play();
+        }
+        else
+        this._sound[2].play();
     }
 }
 
