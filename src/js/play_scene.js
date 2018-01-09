@@ -65,9 +65,42 @@ var PlayScene =
      doorOpen:null,
      breakableBricks:null,
 
+     //Audio
+     ball_dBrick:null,
+     ball_uBrick:null,
+     ball_player:null,
+
+     enemyDeath:null,
+
+     playerDeath:null,
+     playerShot:null,
+     
+     extraLife:null,
+     getWide:null,
+
+
+      
+
    //Función Create
   create: function () 
   {
+
+    // AUDIO
+    this.ball_dBrick = this.game.add.audio('ball&dBrick');
+    this.ball_uBrick = this.game.add.audio('ball&uBrick');
+    this.ball_player = this.game.add.audio('ball&player');
+
+    this.enemyDeath = this.game.add.audio('enemyDeath');
+
+    this.playerDeath = this.game.add.audio('playerDeath');
+    this.playerShot = this.game.add.audio('playerShot');
+
+    this.extraLife = this.game.add.audio('extraLife');
+    this.getWide = this.game.add.audio('getWide');
+
+
+
+
     //Sistema de físicas
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
@@ -77,19 +110,22 @@ var PlayScene =
     this.game.world.addChild(this.fondo);
 
     //2.Pelota
+
+    var ballSounds = [this.ball_player, this.ball_dBrick, this.ball_uBrick];
+    
     this.ballsGroup = this.game.add.physicsGroup();
     this.ballsGroup.classType = Ball;
 
     var playerPos = new Par(350, 525);
     var ballPos = new Par(playerPos._x, playerPos._y - 12);
     var ballVel = new Par(BASE_VELOCITY * Math.cos(BASE_ANGLE), -BASE_VELOCITY *  Math.sin(BASE_ANGLE));
-    this.ball = new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
+    this.ball = new Ball(this.game, ballPos, 'ball', ballSounds, 1, ballVel);
     //this.game.world.addChild(this.ball);
     this.ballsGroup.add(this.ball);
 
     for(var i = 0; i < EXTRA_BALLS; i++)
     {
-       var extraBall = new Ball(this.game, ballPos, 'ball', 'sound', 1, ballVel);
+       var extraBall = new Ball(this.game, ballPos, 'ball', ballSounds, 1, ballVel);
         this.ballsGroup.add(extraBall);
         extraBall.kill();
     }
@@ -178,8 +214,9 @@ var PlayScene =
     this.playerWeapon.fireRate = 500; //FireRate
 
     //7.Jugador
+    var playerSounds = [this.playerShot, this.getWide, this.extraLife];
     var playerVel = new Par(0,0);
-    this.player = new Player(this.game, playerPos, 'player', 'sound', 1, playerVel, this.cursors, 
+    this.player = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.cursors, 
                                                this.playerWeapon, this.leftLimit, this.rightLimit, this.ballsGroup);
     this.game.world.addChild(this.player);
     this.game.physics.enable([this.player, this.ballsGroup], Phaser.Physics.ARCADE);
@@ -221,13 +258,13 @@ var PlayScene =
     
     var enemyPos = new Par(gate1.x + gate1.width/2, gate1.y);
     var enemyVel = new Par(0, ENEMY_VEL);
-    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', 'sound', 1, enemyVel, this.walls, this.bricks, this.enemigos, gate1, this.player.y, level);
+    var enem1 = new Enemy(this.game, enemyPos, 'enemigos', this.enemyDeath, 1, enemyVel, this.walls, this.bricks, this.enemigos, gate1, this.player.y, level);
     this.enemigos.add(enem1);
     
 
     var enemyPos2 = new Par(gate2.x + gate2.width/2, gate2.y); 
     var enemyVel2 = new Par(0, ENEMY_VEL);
-    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', 'sound', 1, enemyVel2, this.walls, this.bricks, this.enemigos, gate2, this.player.y, level);
+    var enem2 = new Enemy(this.game, enemyPos2, 'enemigos', this.enemyDeath, 1, enemyVel2, this.walls, this.bricks, this.enemigos, gate2, this.player.y, level);
     this.enemigos.add(enem2);
     this.enemigos.setAll('body.immovable', true);
 
@@ -263,6 +300,7 @@ var PlayScene =
     this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.bricks, this.bulletCollisions, null, this);
     this.game.physics.arcade.overlap(this.playerWeapon.bullets, this.enemigos, this.bulletCollisions, null, this);
 
+
     //Ganaste
     if(this.breakableBricks == 0)
     {
@@ -275,6 +313,8 @@ var PlayScene =
     {
       lives--;
       this.hud.takeLife();
+      this.playerDeath.play();
+
       //Perdiste del todo
       //Restablecemos todos los valores a su valor inicial y volvemos al menú
       if(lives < 0)
@@ -427,7 +467,6 @@ var PlayScene =
 
    advanceLevel: function(player, door)
    {
-     this.doorOpen = true;
      if(this.doorOpen)
      {
        level++;
@@ -453,9 +492,9 @@ var PlayScene =
   render: function() 
    {
         // Player debug info
-        this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), this.rightLimit + 15, 230);
-        this.game.debug.text('balls length: ' +this.ballsGroup.length, this.rightLimit + 15, 250);
-        this.game.debug.text('b bricks: ' +this.breakableBricks, this.rightLimit + 15, 270);
+       
+
+     //   game.debug.soundInfo(this.ball_dBrick, this.rightLimit + 15, 270);
 
     }
 };

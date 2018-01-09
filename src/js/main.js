@@ -21,7 +21,7 @@ var PreloaderScene =
 {
   preload: function () 
   {
-    this.game.load.baseURL = "https://ramonarj.github.io/Arkanoid-Remake/src/";
+    //this.game.load.baseURL = "https://ramonarj.github.io/Arkanoid-Remake/src/";
     
      this.game.load.crossOrigin = 'anonymous';
     //Fondo
@@ -48,6 +48,19 @@ var PreloaderScene =
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
     this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Compuertas
+
+    // Sonidos
+    this.game.load.audio('ball&dBrick', 'assets/sounds/collision - ball&dBrick.ogg');
+    this.game.load.audio('ball&uBrick', 'assets/sounds/collision - ball&uBrick.mp3');
+    this.game.load.audio('ball&player', 'assets/sounds/collision - ball&player.mp3');
+
+    this.game.load.audio('enemyDeath', 'assets/sounds/enemy - death.wav');
+
+    this.game.load.audio('playerDeath', 'assets/sounds/player - death.wav');
+    this.game.load.audio('playerShot', 'assets/sounds/player - shot.wav');
+
+    this.game.load.audio('extraLife', 'assets/sounds/power up - extra life.wav');
+    this.game.load.audio('getWide', 'assets/sounds/power up - get wide.wav');
 
     // Datos del nivel
     this.game.load.text('levels', 'assets/levels/levels.json');
