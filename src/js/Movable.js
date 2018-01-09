@@ -23,7 +23,7 @@ Movable.prototype.setVelocity = function(velocity) //Cambia la velocidad
 
 Movable.prototype.update = function() //Para la DeadZone
 {
-    if(this.y>this.game.height - 20)
+    if(this.y > this.game.height - 20)
         this.takeDamage();
 }
 

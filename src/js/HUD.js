@@ -2,34 +2,46 @@
 
 var SoundSource = require ('./SoundSource.js').SoundSource;
 
+//Para los sprites de las vidas
 var MAX_SPRITES = 6;
 var NUM_ROWS = 2;
 
+var DIFFERENT_BACKGROUNDS = 4;
+
 //2.1.CLASE HUD (Hud)
-function HUD(game, position, sprite, sound, livesNo)
+function HUD(game, position, sprite, sound, livesNo, level)
 {
   SoundSource.apply(this, [game, position, sprite, sound]);
   this._initialPos = position;
+
+   //1.Fondo(s)
+   this._background = new Phaser.Image(this.game, 123, 20, 'fondos');
+   var backgroundImageNo = (DIFFERENT_BACKGROUNDS + level - 1) % DIFFERENT_BACKGROUNDS;
+   this._background.frame = backgroundImageNo;
+   this.game.world.addChild(this._background);
+
+   this._blackBackground = new Phaser.Image(this.game, 0, 0, 'black');
+   this._blackBackground.visible = false;
+   this.game.world.addChild(this._blackBackground);
   
-  //Ronda
-  this._round = new Phaser.Image(this.game, position._x + 15, 500, "round");
-  this.game.world.addChild(this._round);
+  //2.Textos
+  //2.1.Letras
+  this._scoreText = this.game.add.text(position._x + 15, position._y - 165, '1UP', 
+    { font: '26px Arial', fill: '#f00' });
+  this._highScoreText = this.game.add.text(position._x + 15, position._y - 250, 'HIGHSCORE', 
+    { font: '26px Arial', fill: '#f00' }); 
+  this._roundText = this.game.add.text(position._x + 15, 500, 'ROUND', 
+      { font: '26px Arial', fill: '#f00' });
 
-  //Puntuación y highscore
-  this._1up = new Phaser.Image(this.game, position._x + 15, position._y - 150, "1up");
-  this.game.world.addChild(this._1up);
-  this._highscore = new Phaser.Image(this.game, position._x + 15, position._y - 250, "highscore");
-  this.game.world.addChild(this._highscore);
-
-  //Texto
-  this._scoreText = this.game.add.text(this._1up.x + 10, this._1up.y + 20, 0, // Anyadir al juego la puntuacion en la posicion x, y
+  //2.2.Números    
+  this._scoreNoText = this.game.add.text(this._scoreText.x + 15, this._scoreText.y + 25, 0, 
     { font: '26px Arial', fill: '#fff' });
-  this._highScoreText = this.game.add.text(this._scoreText.x, this._highscore.y + 40, 5000, // Anyadir al juego la puntuacion en la posicion x, y
+  this._highScoreNoText = this.game.add.text(this._scoreText.x + 10, this._highScoreText.y + 35, 5000, 
     { font: '26px Arial', fill: '#fff' }); 
-  this._roundText = this.game.add.text(this._1up.x + 10, this._round.y + 30, 0, // Anyadir al juego la puntuacion en la posicion x, y
+  this._roundNoText = this.game.add.text(this._roundText.x + 10, this._roundText.y + 30, 0, 
       { font: '26px Arial', fill: '#fff' });
 
-  //Vidas
+  //3.Vidas
   this._initialLives = 3;
   this._actualLives = livesNo;
   this._livesSprites = [];
@@ -63,20 +75,22 @@ HUD.prototype.takeLife = function()
    if(this._actualLives > 0)
       this._livesSprites[this._actualLives - 1].kill();
    this._actualLives--;
+
+   this._blackBackground.visible = true;
 }
 
 HUD.prototype.renderScore = function(score, highscore)
 {
-  this._scoreText.text = score;
+  this._scoreNoText.text = score;
   if(score > highscore)
-      this._highScoreText.text = score;
+      this._highScoreNoText.text = score;
   else
-      this._highScoreText.text = highscore;
+      this._highScoreNoText.text = highscore;
 }
 
 HUD.prototype.renderRound = function(round)
 {
-  this._roundText.text = round;
+  this._roundNoText.text = round;
 }
 
 module.exports = HUD;
