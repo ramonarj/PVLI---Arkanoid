@@ -3,52 +3,68 @@
 var Menu = 
 {
     fondoMenu:null,
-    cursors:null,
     selector:null,
-    enterButton:null,
     eleccion:null,
     music:null,
 
+    upKey:null,
+    downKey:null,
+    enterKey:null,
+
     create: function()
     {
+        //Teclas
+        this.upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
+        this.upKey.onDown.add(this.moveUp, this);
+
+        this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
+        this.downKey.onDown.add(this.moveDown, this);
+
+        this.enterKey = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
+        this.enterKey.onDown.add(this.processEnterKey, this);
+
+        //Música
         this.music = this.game.add.audio('remix');
         this.music.loop = true;
-        this.music.play();
+        //this.music.play();
         this.music.volume = 1;
 
+       
+
+        //Fondo y selector
         this.eleccion=0;
         this.fondoMenu = new Phaser.Image(this.game, 0, 0, 'menu');
         this.game.world.addChild(this.fondoMenu);
         this.selector = new Phaser.Image(this.game, 275, 320 , 'cursor');
         this.game.world.addChild(this.selector);
-
-        this.enterButton = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
-        this.cursors = this.game.input.keyboard.createCursorKeys();
     },
 
-    update:function()
+    moveDown:function()
     {
-        this.takeInput();
-    },
-
-    takeInput:function()
-    {
-        if(this.cursors.down.isDown && this.eleccion < 2)
+        if(this.eleccion < 2)
         {
             this.selector.y+=50;
             this.eleccion++;
         }
-        else if(this.cursors.up.isDown && this.eleccion > 0)
+    },
+
+    moveUp:function()
+    {
+        if(this.eleccion > 0)
         {
             this.selector.y-=50;
             this.eleccion--;
         }
-        else if(this.enterButton.isDown && this.eleccion == 0)
+    },
+
+    processEnterKey:function()
+    {
+        if(this.eleccion == 0)
         {
             this.music.stop();
             this.game.state.start('play');
-        }    
-    }
+        }
+    },
 };
 
 module.exports = Menu;

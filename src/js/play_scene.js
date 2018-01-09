@@ -38,6 +38,11 @@ var GOLDEN_BRICK = 9;
 var WHITE_BRICK_POINTS = 50;
 
 var EXTRA_BALLS = 2;
+var PLAYER_POSY = 526;
+var HUD_POSY = 320;
+var GATES_POSY = 20;
+var GATE1_POSX = 236;
+var GATE2_POSX = 477;
 
 
 //Variables globales necesarias (nivel, vidas y puntuación actual y máxima)
@@ -111,7 +116,7 @@ var PlayScene =
     var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
     var pared1 = new Phaser.Sprite(this.game, LEFTLIMIT, 35, 'pared');
     pared1.x-=pared1.width;
-    var pared2 = new Phaser.Sprite(this.game, 633, 35, 'pared');
+    var pared2 = new Phaser.Sprite(this.game, RIGHTLIMIT, 35, 'pared');
         
     this.walls.add(techo);
     this.walls.add(pared1);
@@ -120,7 +125,7 @@ var PlayScene =
     this.walls.setAll('visible', false);
 
     //2.HUD
-    var hudPos = new Par(RIGHTLIMIT + 15, 320);
+    var hudPos = new Par(RIGHTLIMIT + 15, HUD_POSY);
     this.hud = new HUD(this.game, hudPos, 'vidas','e', lives, level);
     this.hud.renderRound(level);
     this.hud.renderScore(score, highscore); //Renders iniciales
@@ -131,9 +136,10 @@ var PlayScene =
     this.ballsGroup = this.game.add.physicsGroup();
     this.ballsGroup.classType = Ball;
 
-    var playerPos = new Par(350, 525);
-    var ballPos = new Par(playerPos._x, playerPos._y - 12);
+    var playerPos = new Par(this.world.width / 2, PLAYER_POSY);
+    var ballPos = new Par(playerPos._x, playerPos._y);
     this.ball = new Ball(this.game, ballPos, 'ball', ballSounds, 1, this);
+    this.ball.y -= this.ball.height;
 
     this.ballsGroup.add(this.ball);
 
@@ -171,22 +177,32 @@ var PlayScene =
 
         if(brickType != 0)
         {
-        if(brickType == GOLDEN_BRICK)
-            brick = new SoundSource(this.game, pos, 'ladrillos', 'sound');
+          if(brickType == GOLDEN_BRICK)
+          {
+            brick = new SoundSource(this.game, pos, 'ladrillosEsp', 'sound');
+            brick.frame = 6;
+            brick.animations.add('shine', [6, 7, 8, 9, 10, 11, 6]);
+          } 
 
-        else
-        {    
-         if(brickType == SILVER_BRICK)
-           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * level);
+          else
+          {    
+            if(brickType == SILVER_BRICK)
+            {
+              brick = new Destroyable(this.game, pos, 'ladrillosEsp', 'sound', 3, WHITE_BRICK_POINTS * level);
+              brick.frame = 0;
+              brick.animations.add('shine', [0, 1, 2, 3, 4, 5, 0]);
+            }
+              
 
-        else
-           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
-
-           this.breakableBricks++;
+            else
+            {
+              brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
+          
+              this.breakableBricks++;
+              brick.frame = brickType;
+            } 
+           
         }   
-         //Color del ladrillo
-         brick.frame = brickType;
-            
          //Lo añadimos al grupo
           this.bricks.add(brick);
         }
@@ -231,8 +247,8 @@ var PlayScene =
     this.activePowerUp = null;
     
     //9.Compuertas
-    var gate1 = new Phaser.Sprite(this.game, 236, 20, 'compuertas');
-    var gate2 = new Phaser.Sprite(this.game, 477, 20, 'compuertas');
+    var gate1 = new Phaser.Sprite(this.game, GATE1_POSX, GATES_POSY, 'compuertas');
+    var gate2 = new Phaser.Sprite(this.game, GATE2_POSX, GATES_POSY, 'compuertas');
     this.world.add(gate1);
     this.world.add(gate2);
     gate1.animations.add('open');
@@ -240,7 +256,7 @@ var PlayScene =
 
 
     // 10.Puerta al siguiente nivel
-    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, 526, 'compuertas');
+    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, PLAYER_POSY, 'compuertas');
     this.levelDoor.anchor.setTo(0.5,0.5);
     this.levelDoor.angle += 90;
     this.world.add(this.levelDoor);
@@ -494,5 +510,11 @@ var PlayScene =
     }
 };
 
-module.exports = PlayScene;
+module.exports = 
+{
+  PlayScene,
+  level,
+  score,
+  highscore
+};
 

@@ -72,12 +72,22 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
         //Para los ladrillos destruibles
         if(obj.hasOwnProperty('_lives'))
         {
-            obj.takeDamage(playscene); 
+            if(obj.getLives() > 1) //Si tiene más de una vida (plateados)
+            {
+                this._sound[2].play();
+                obj.animations.play('shine', 15, false);
+            }
+            else //Si es plateado con una vida (o normal)
+                this._sound[1].play();
 
-            this._sound[1].play();
+            obj.takeDamage(playscene); 
         }
+        //Para los dorados
         else
-        this._sound[2].play();
+        {
+            this._sound[2].play();
+            obj.animations.play('shine', 15, false);
+        }
     }
 }
 
