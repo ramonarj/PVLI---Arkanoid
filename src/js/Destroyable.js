@@ -51,9 +51,4 @@ Destroyable.prototype.getLives = function()
     return this._lives;
 }
 
-Destroyable.prototype.addLife = function()
-{
-    this._lives++;
-}
-
 module.exports = Destroyable;

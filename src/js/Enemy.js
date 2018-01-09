@@ -62,6 +62,7 @@ function Enemy(game, position, sprite, sound, lives,  walls, bricks, enemies, ga
 Enemy.prototype = Object.create(Movable.prototype);
 Enemy.prototype.constructor = Enemy;
 
+
 Enemy.prototype.update = function() 
 {
     //Si está muerto, no hace nada en el update
@@ -241,6 +242,7 @@ Enemy.prototype.takeDamage = function(playscene)
     this._dead = true;
     this.body.enable = false;
     this.animations.play('explode', 5, false);
+    this._sound.play();
 
     this.animations.currentAnim.onComplete.add(function()
     {
