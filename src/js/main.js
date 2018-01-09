@@ -61,8 +61,16 @@ var PreloaderScene =
     this.game.load.audio('extraLife', 'assets/sounds/power up - extra life.wav');
     this.game.load.audio('getWide', 'assets/sounds/power up - get wide.wav');
 
+    //Música
+    this.game.load.audio('remix', 'assets/music/remix.ogg');
+
+
     // Datos del nivel
     this.game.load.text('levels', 'assets/levels/levels.json');
+
+    //Fuentes
+    this.game.load.bitmapFont('whiteFont', 'assets/fonts/white.png', 'assets/fonts/white.fnt');
+    this.game.load.bitmapFont('redFont', 'assets/fonts/red.png', 'assets/fonts/red.fnt');
   },
 
   create: function () 

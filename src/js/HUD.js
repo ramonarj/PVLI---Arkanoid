@@ -26,20 +26,14 @@ function HUD(game, position, sprite, sound, livesNo, level)
   
   //2.Textos
   //2.1.Letras
-  this._scoreText = this.game.add.text(position._x + 15, position._y - 165, '1UP', 
-    { font: '26px Arial', fill: '#f00' });
-  this._highScoreText = this.game.add.text(position._x + 15, position._y - 250, 'HIGHSCORE', 
-    { font: '26px Arial', fill: '#f00' }); 
-  this._roundText = this.game.add.text(position._x + 15, 500, 'ROUND', 
-      { font: '26px Arial', fill: '#f00' });
+  this._scoreText = this.game.add.bitmapText(position._x + 15, position._y - 165, 'redFont','1UP', 20);
+  this._highScoreText = this.game.add.bitmapText(position._x + 15, position._y - 250, 'redFont','HIGHSCORE', 20);
+  this._roundText = this.game.add.bitmapText(position._x + 15, 500, 'redFont','ROUND', 20);
 
-  //2.2.Números    
-  this._scoreNoText = this.game.add.text(this._scoreText.x + 15, this._scoreText.y + 25, 0, 
-    { font: '26px Arial', fill: '#fff' });
-  this._highScoreNoText = this.game.add.text(this._scoreText.x + 10, this._highScoreText.y + 35, 5000, 
-    { font: '26px Arial', fill: '#fff' }); 
-  this._roundNoText = this.game.add.text(this._roundText.x + 10, this._roundText.y + 30, 0, 
-      { font: '26px Arial', fill: '#fff' });
+  //2.2.Números   
+  this._scoreNoText = this.game.add.bitmapText(this._scoreText.x + 15, this._scoreText.y + 25, 'whiteFont',0, 20); 
+  this._highScoreNoText = this.game.add.bitmapText(this._scoreText.x + 10, this._highScoreText.y + 35, 'whiteFont', 5000, 20); 
+  this._roundNoText = this.game.add.bitmapText(this._roundText.x + 10, this._roundText.y + 30, 'whiteFont',0, 20); 
 
   //3.Vidas
   this._initialLives = 3;
