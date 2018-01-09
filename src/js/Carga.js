@@ -20,12 +20,8 @@ var Carga =
         this.background = new Phaser.Sprite(this.game, 0, 0, 'black'); //Creamos
         this.game.world.addChild(this.background);
 
-        this._roundText = this.game.add.text(this.game.world.width / 2, 500, 'ROUND', 
-        { font: '26px Arial', fill: '#f00' });
 
-        this._roundNoText = this.game.add.text(this._roundText.x + this._roundText.width, this._roundText.y, 'X', 
-            { font: '26px Arial', fill: '#fff' });
-
+        var roundText = this.game.add.bitmapText(this.game.world.width / 2, this.game.world.height / 2, 'whiteFont','ROUND X', 20);
     },
 
     update:function()

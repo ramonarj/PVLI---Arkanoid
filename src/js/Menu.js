@@ -7,9 +7,15 @@ var Menu =
     selector:null,
     enterButton:null,
     eleccion:null,
+    music:null,
 
     create: function()
     {
+        this.music = this.game.add.audio('remix');
+        this.music.loop = true;
+        this.music.play();
+        this.music.volume = 1;
+
         this.eleccion=0;
         this.fondoMenu = new Phaser.Image(this.game, 0, 0, 'menu');
         this.game.world.addChild(this.fondoMenu);
@@ -27,19 +33,21 @@ var Menu =
 
     takeInput:function()
     {
-        if(this.enterButton.isDown && this.eleccion == 0)
-            this.game.state.start('play');
-        else if (this.eleccion == 0 && this.cursors.down.isDown)
+        if(this.cursors.down.isDown && this.eleccion < 2)
         {
             this.selector.y+=50;
-            this.eleccion=1;
+            this.eleccion++;
         }
-        else if (this.eleccion == 1 && this.cursors.up.isDown)
+        else if(this.cursors.up.isDown && this.eleccion > 0)
         {
             this.selector.y-=50;
-            this.eleccion=0;
+            this.eleccion--;
         }
-            
+        else if(this.enterButton.isDown && this.eleccion == 0)
+        {
+            this.music.stop();
+            this.game.state.start('play');
+        }    
     }
 };
 
