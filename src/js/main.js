@@ -2,6 +2,7 @@
 
 var PlayScene = require('./play_scene.js');
 var Menu = require ('./Menu.js');
+var Carga = require ('./Carga.js');
 
 var BootScene = 
 {
@@ -66,6 +67,7 @@ window.onload = function ()
   game.state.add('preloader', PreloaderScene);
   game.state.add('play', PlayScene);
   game.state.add('menu', Menu);
+  game.state.add('carga', Carga);
 
   game.state.start('boot');
 };

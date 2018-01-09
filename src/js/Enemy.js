@@ -262,9 +262,4 @@ Enemy.prototype.takeDamage = function(playscene)
     }, this);
 }
 
-module.exports = 
-{
-    Enemy,
-    ENEMY_POINTS,
-    ENEMY_VEL
-};
+module.exports = Enemy;

@@ -6,7 +6,7 @@ var SoundSource = require ('./SoundSource.js').SoundSource;
 var HUD = require ('./HUD.js');
 var Destroyable = require ('./Destroyable.js');
 var Movable = require ('./Movable.js');
-var Enemy = require ('./Enemy.js').Enemy;
+var Enemy = require ('./Enemy.js');
 var Player = require ('./Player.js');
 var Ball = require ('./Ball.js').Ball;
 //Todos los Power-ups
@@ -284,7 +284,7 @@ var PlayScene =
        
       //Solo perdiste una vida
       else
-         this.game.state.restart();
+         this.game.state.start('carga');
     }  
   },
   // COLISIONES
