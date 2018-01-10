@@ -2,6 +2,7 @@
 
 var PlayScene = require('./play_scene.js');
 var Menu = require ('./Menu.js');
+var Carga = require ('./Carga.js');
 
 var BootScene = 
 {
@@ -30,7 +31,6 @@ var PreloaderScene =
     //Cargamos los assets del juego (sprites y spritesheets)
     //Sprites
     this.game.load.image('player', 'images/Player.png');
-    this.game.load.image('background', 'images/Fondo.png');
     this.game.load.image('ball', 'images/Pelota.png');
     this.game.load.image('pared', 'images/pared.png');
     this.game.load.image('techo', 'images/techo.png');
@@ -38,9 +38,7 @@ var PreloaderScene =
     this.game.load.image('vidas', 'images/Vidas.png');
     this.game.load.image('menu', 'images/Menu.png');
     this.game.load.image('cursor', 'images/Cursor.png');
-    this.game.load.image('1up', 'images/1up.png');
-    this.game.load.image('highscore', 'images/highscore.png');
-    this.game.load.image('round', 'images/round.png');
+    this.game.load.image('black', 'images/Negro.png');
     
     
    // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)', 'nº de frames' (opcional)
@@ -48,6 +46,24 @@ var PreloaderScene =
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
     this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Compuertas
+    this.game.load.spritesheet('fondos', 'images/Fondos.png', 530, 580); //Fondos
+
+    // Sonidos
+    this.game.load.audio('ball&dBrick', 'assets/sounds/collision - ball&dBrick.ogg');
+    this.game.load.audio('ball&uBrick', 'assets/sounds/collision - ball&uBrick.mp3');
+    this.game.load.audio('ball&player', 'assets/sounds/collision - ball&player.mp3');
+
+    this.game.load.audio('enemyDeath', 'assets/sounds/enemy - death.wav');
+
+    this.game.load.audio('playerDeath', 'assets/sounds/player - death.wav');
+    this.game.load.audio('playerShot', 'assets/sounds/player - shot.wav');
+
+    this.game.load.audio('extraLife', 'assets/sounds/power up - extra life.wav');
+    this.game.load.audio('getWide', 'assets/sounds/power up - get wide.wav');
+
+    //Música
+    this.game.load.audio('remix', 'assets/music/remix.ogg');
+
 
     // Sonidos
     this.game.load.audio('ball&dBrick', 'assets/sounds/collision - ball&dBrick.ogg');
@@ -64,6 +80,10 @@ var PreloaderScene =
 
     // Datos del nivel
     this.game.load.text('levels', 'assets/levels/levels.json');
+
+    //Fuentes
+    this.game.load.bitmapFont('whiteFont', 'assets/fonts/white.png', 'assets/fonts/white.fnt');
+    this.game.load.bitmapFont('redFont', 'assets/fonts/red.png', 'assets/fonts/red.fnt');
   },
 
   create: function () 
@@ -81,6 +101,7 @@ window.onload = function ()
   game.state.add('preloader', PreloaderScene);
   game.state.add('play', PlayScene);
   game.state.add('menu', Menu);
+  game.state.add('carga', Carga);
 
   game.state.start('boot');
 };
