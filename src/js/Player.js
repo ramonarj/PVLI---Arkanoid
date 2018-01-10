@@ -1,9 +1,8 @@
 'use strict'
 
 var Movable = require ('./Movable.js');
+var PLAYER_VEL = 0.45;
 
-/////////////////////////////////////////
-//2.2.1.2.CLASE JUGADOR 
 function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit, ballsGroup)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
@@ -38,10 +37,10 @@ Player.prototype.readInput = function()
     var delta = this.x;
     //Comprobación de cursores de Phaser
     if (this._cursors.left.isDown && this.x >  this._leftLimit + this.offsetX)
-        this.x -= 6.5;
+        this.x -= PLAYER_VEL * (this.game.time.now - this.game.time.prevTime);
     
     else if (this._cursors.right.isDown && this.x < this._rightLimit - this.offsetX)
-        this.x += 6.5;
+        this.x += PLAYER_VEL * (this.game.time.now - this.game.time.prevTime);
 
     if(this._fireButton.isDown)
     {

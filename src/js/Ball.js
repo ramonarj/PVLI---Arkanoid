@@ -73,11 +73,8 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
         if(obj.hasOwnProperty('_lives'))
         {
             if(obj.getLives() > 1) //Si tiene más de una vida (plateados)
-            {
                 this._sound[2].play();
-                obj.animations.play('shine', 15, false);
-            }
-            else //Si es plateado con una vida (o normal)
+            else //Si es plateado con una vida / de color
                 this._sound[1].play();
 
             obj.takeDamage(playscene); 
@@ -86,7 +83,7 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
         else
         {
             this._sound[2].play();
-            obj.animations.play('shine', 15, false);
+            obj.playAnimation();
         }
     }
 }

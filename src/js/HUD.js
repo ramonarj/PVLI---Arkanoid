@@ -2,9 +2,15 @@
 
 var SoundSource = require ('./SoundSource.js').SoundSource;
 
+
 //Para los sprites de las vidas
 var MAX_SPRITES = 6;
 var NUM_ROWS = 2;
+
+
+var GATES_POSY = 20;
+var TEXT_SIZE = 20;
+var DEFAULT_HIGHSCORE = 50000;
 
 var DIFFERENT_BACKGROUNDS = 4;
 
@@ -15,7 +21,7 @@ function HUD(game, position, sprite, sound, livesNo, level)
   this._initialPos = position;
 
    //1.Fondo(s)
-   this._background = new Phaser.Image(this.game, 123, 20, 'fondos');
+   this._background = new Phaser.Image(this.game, 123, GATES_POSY, 'fondos');
    var backgroundImageNo = (DIFFERENT_BACKGROUNDS + level - 1) % DIFFERENT_BACKGROUNDS;
    this._background.frame = backgroundImageNo;
    this.game.world.addChild(this._background);
@@ -26,14 +32,14 @@ function HUD(game, position, sprite, sound, livesNo, level)
   
   //2.Textos
   //2.1.Letras
-  this._scoreText = this.game.add.bitmapText(position._x + 15, position._y - 165, 'redFont','1UP', 20);
-  this._highScoreText = this.game.add.bitmapText(position._x + 15, position._y - 250, 'redFont','HIGHSCORE', 20);
-  this._roundText = this.game.add.bitmapText(position._x + 15, 500, 'redFont','ROUND', 20);
+  this._scoreText = this.game.add.bitmapText(position._x + 15, position._y - 165, 'redFont','1UP', TEXT_SIZE);
+  this._highScoreText = this.game.add.bitmapText(position._x + 15, position._y - 250, 'redFont','HIGHSCORE', TEXT_SIZE);
+  this._roundText = this.game.add.bitmapText(position._x + 15, 500, 'redFont','ROUND', TEXT_SIZE);
 
   //2.2.Números   
-  this._scoreNoText = this.game.add.bitmapText(this._scoreText.x + 15, this._scoreText.y + 25, 'whiteFont',0, 20); 
-  this._highScoreNoText = this.game.add.bitmapText(this._scoreText.x + 10, this._highScoreText.y + 35, 'whiteFont', 5000, 20); 
-  this._roundNoText = this.game.add.bitmapText(this._roundText.x + 10, this._roundText.y + 30, 'whiteFont',0, 20); 
+  this._scoreNoText = this.game.add.bitmapText(this._scoreText.x + 15, this._scoreText.y + 25, 'whiteFont',0, TEXT_SIZE); 
+  this._highScoreNoText = this.game.add.bitmapText(this._scoreText.x + 10, this._highScoreText.y + 35, 'whiteFont', DEFAULT_HIGHSCORE, TEXT_SIZE); 
+  this._roundNoText = this.game.add.bitmapText(this._roundText.x + 10, this._roundText.y + 30, 'whiteFont',0, TEXT_SIZE); 
 
   //3.Vidas
   this._initialLives = 3;
@@ -87,4 +93,10 @@ HUD.prototype.renderRound = function(round)
   this._roundNoText.text = round;
 }
 
-module.exports = HUD;
+module.exports = 
+{
+  HUD,
+  GATES_POSY,
+  DEFAULT_HIGHSCORE,
+  TEXT_SIZE
+};

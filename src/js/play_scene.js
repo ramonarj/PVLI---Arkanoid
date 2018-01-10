@@ -3,7 +3,7 @@
 //JERARQUÍA DE OBJETOS
 var Par = require ('./SoundSource.js').Par;
 var SoundSource = require ('./SoundSource.js').SoundSource;
-var HUD = require ('./HUD.js');
+var HUD = require ('./HUD.js').HUD;
 var Destroyable = require ('./Destroyable.js');
 var Movable = require ('./Movable.js');
 var Enemy = require ('./Enemy.js');
@@ -40,7 +40,7 @@ var WHITE_BRICK_POINTS = 50;
 var EXTRA_BALLS = 2;
 var PLAYER_POSY = 526;
 var HUD_POSY = 320;
-var GATES_POSY = 20;
+var GATES_POSY = require ('./HUD.js').GATES_POSY;
 var GATE1_POSX = 236;
 var GATE2_POSX = 477;
 
@@ -49,7 +49,7 @@ var GATE2_POSX = 477;
 var level = 1;
 var lives = 3;
 var score = 0;
-var highscore = 5000;
+var highscore = require ('./HUD.js').DEFAULT_HIGHSCORE;
 
 var PlayScene =
  {
@@ -114,9 +114,9 @@ var PlayScene =
     //1.Paredes y techo (grupo walls)
     this.walls = this.game.add.physicsGroup();
     var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
-    var pared1 = new Phaser.Sprite(this.game, LEFTLIMIT, 35, 'pared');
+    var pared1 = new Phaser.Sprite(this.game, LEFTLIMIT, GATES_POSY, 'pared');
     pared1.x-=pared1.width;
-    var pared2 = new Phaser.Sprite(this.game, RIGHTLIMIT, 35, 'pared');
+    var pared2 = new Phaser.Sprite(this.game, RIGHTLIMIT, GATES_POSY, 'pared');
         
     this.walls.add(techo);
     this.walls.add(pared1);
@@ -177,6 +177,7 @@ var PlayScene =
 
         if(brickType != 0)
         {
+          //Ladrillos dorados
           if(brickType == GOLDEN_BRICK)
           {
             brick = new SoundSource(this.game, pos, 'ladrillosEsp', 'sound');
@@ -186,6 +187,7 @@ var PlayScene =
 
           else
           {    
+            //Ladrillos plateados
             if(brickType == SILVER_BRICK)
             {
               brick = new Destroyable(this.game, pos, 'ladrillosEsp', 'sound', 3, WHITE_BRICK_POINTS * level);
@@ -194,15 +196,14 @@ var PlayScene =
             }
               
 
+            //Ladrillos de colores
             else
             {
               brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
-          
-              this.breakableBricks++;
               brick.frame = brickType;
             } 
-           
-        }   
+            this.breakableBricks++;
+          }   
          //Lo añadimos al grupo
           this.bricks.add(brick);
         }
@@ -315,7 +316,7 @@ var PlayScene =
     if(this.breakableBricks == 0)
     {
      level++;
-     this.game.state.restart();
+     this.game.state.start('carga');
     }
   },
 
@@ -482,7 +483,7 @@ var PlayScene =
      if(this.doorOpen)
      {
        level++;
-       this.game.state.restart();
+       this.game.state.start('carga');
      }
    },
 

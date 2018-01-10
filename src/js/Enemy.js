@@ -39,7 +39,7 @@ function Enemy(game, position, sprite, sound, lives,  walls, bricks, enemies, ga
     this._iniY = position._y;
     this.anchor.setTo(0.5, 0.5);
 
-    //Animaciones de lo enemigos
+    //Animaciones de los enemigos
     var enemyType = (DIFFERENT_ENEMIES + level - 1) % DIFFERENT_ENEMIES;
     if(enemyType == 0)
         this.animations.add('move', [0, 1, 2, 3, 4, 5, 6, 7]);
