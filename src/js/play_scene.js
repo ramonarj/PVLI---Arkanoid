@@ -3,7 +3,7 @@
 //JERARQUÍA DE OBJETOS
 var Par = require ('./SoundSource.js').Par;
 var SoundSource = require ('./SoundSource.js').SoundSource;
-var HUD = require ('./HUD.js');
+var HUD = require ('./HUD.js').HUD;
 var Destroyable = require ('./Destroyable.js');
 var Movable = require ('./Movable.js');
 var Enemy = require ('./Enemy.js');
@@ -38,13 +38,18 @@ var GOLDEN_BRICK = 9;
 var WHITE_BRICK_POINTS = 50;
 
 var EXTRA_BALLS = 2;
+var PLAYER_POSY = 526;
+var HUD_POSY = 320;
+var GATES_POSY = require ('./HUD.js').GATES_POSY;
+var GATE1_POSX = 236;
+var GATE2_POSX = 477;
 
 
 //Variables globales necesarias (nivel, vidas y puntuación actual y máxima)
 var level = 1;
 var lives = 3;
 var score = 0;
-var highscore = 5000;
+var highscore = require ('./HUD.js').DEFAULT_HIGHSCORE;
 
 var PlayScene =
  {
@@ -85,7 +90,6 @@ var PlayScene =
    //Función Create
   create: function () 
   {
-
     // AUDIO
     this.ball_dBrick = this.game.add.audio('ball&dBrick');
     this.ball_uBrick = this.game.add.audio('ball&uBrick');
@@ -109,9 +113,9 @@ var PlayScene =
     //1.Paredes y techo (grupo walls)
     this.walls = this.game.add.physicsGroup();
     var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
-    var pared1 = new Phaser.Sprite(this.game, LEFTLIMIT, 35, 'pared');
+    var pared1 = new Phaser.Sprite(this.game, LEFTLIMIT, GATES_POSY, 'pared');
     pared1.x-=pared1.width;
-    var pared2 = new Phaser.Sprite(this.game, 633, 35, 'pared');
+    var pared2 = new Phaser.Sprite(this.game, RIGHTLIMIT, GATES_POSY, 'pared');
         
     this.walls.add(techo);
     this.walls.add(pared1);
@@ -120,7 +124,7 @@ var PlayScene =
     this.walls.setAll('visible', false);
 
     //2.HUD
-    var hudPos = new Par(RIGHTLIMIT + 15, 320);
+    var hudPos = new Par(RIGHTLIMIT + 15, HUD_POSY);
     this.hud = new HUD(this.game, hudPos, 'vidas','e', lives, level);
     this.hud.renderRound(level);
     this.hud.renderScore(score, highscore); //Renders iniciales
@@ -131,9 +135,10 @@ var PlayScene =
     this.ballsGroup = this.game.add.physicsGroup();
     this.ballsGroup.classType = Ball;
 
-    var playerPos = new Par(350, 525);
-    var ballPos = new Par(playerPos._x, playerPos._y - 12);
+    var playerPos = new Par(this.world.width / 2, PLAYER_POSY);
+    var ballPos = new Par(playerPos._x, playerPos._y);
     this.ball = new Ball(this.game, ballPos, 'ball', ballSounds, 1, this);
+    this.ball.y -= this.ball.height;
 
     this.ballsGroup.add(this.ball);
 
@@ -171,22 +176,33 @@ var PlayScene =
 
         if(brickType != 0)
         {
-        if(brickType == GOLDEN_BRICK)
-            brick = new SoundSource(this.game, pos, 'ladrillos', 'sound');
+          //Ladrillos dorados
+          if(brickType == GOLDEN_BRICK)
+          {
+            brick = new SoundSource(this.game, pos, 'ladrillosEsp', 'sound');
+            brick.frame = 6;
+            brick.animations.add('shine', [6, 7, 8, 9, 10, 11, 6]);
+          } 
 
-        else
-        {    
-         if(brickType == SILVER_BRICK)
-           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * level);
+          else
+          {    
+            //Ladrillos plateados
+            if(brickType == SILVER_BRICK)
+            {
+              brick = new Destroyable(this.game, pos, 'ladrillosEsp', 'sound', 3, WHITE_BRICK_POINTS * level);
+              brick.frame = 0;
+              brick.animations.add('shine', [0, 1, 2, 3, 4, 5, 0]);
+            }
+              
 
-        else
-           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
-
-           this.breakableBricks++;
-        }   
-         //Color del ladrillo
-         brick.frame = brickType;
-            
+            //Ladrillos de colores
+            else
+            {
+              brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
+              brick.frame = brickType;
+            } 
+            this.breakableBricks++;
+          }   
          //Lo añadimos al grupo
           this.bricks.add(brick);
         }
@@ -231,8 +247,8 @@ var PlayScene =
     this.activePowerUp = null;
     
     //9.Compuertas
-    var gate1 = new Phaser.Sprite(this.game, 236, 20, 'compuertas');
-    var gate2 = new Phaser.Sprite(this.game, 477, 20, 'compuertas');
+    var gate1 = new Phaser.Sprite(this.game, GATE1_POSX, GATES_POSY, 'compuertas');
+    var gate2 = new Phaser.Sprite(this.game, GATE2_POSX, GATES_POSY, 'compuertas');
     this.world.add(gate1);
     this.world.add(gate2);
     gate1.animations.add('open');
@@ -240,7 +256,7 @@ var PlayScene =
 
 
     // 10.Puerta al siguiente nivel
-    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, 526, 'compuertas');
+    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, PLAYER_POSY, 'compuertas');
     this.levelDoor.anchor.setTo(0.5,0.5);
     this.levelDoor.angle += 90;
     this.world.add(this.levelDoor);
@@ -299,7 +315,8 @@ var PlayScene =
     if(this.breakableBricks == 0)
     {
      level++;
-     this.game.state.restart();
+     this.game.state.states['carga'].level = level;
+     this.game.state.start('carga', true, false);
     }
   },
 
@@ -327,7 +344,7 @@ var PlayScene =
        
       //Solo perdiste una vida
       else
-         this.game.state.start('carga');
+         this.game.state.start('carga', true, false);
     }  
   },
   // COLISIONES
@@ -466,7 +483,7 @@ var PlayScene =
      if(this.doorOpen)
      {
        level++;
-       this.game.state.restart();
+       this.game.state.start('carga');
      }
    },
 
@@ -484,6 +501,19 @@ var PlayScene =
      this.hud.renderScore(score, highscore);
    },
 
+   getLevel:function()
+   {
+     return level;
+   },
+
+   getScore:function(i)
+   {
+    if(i==0)
+       return score;
+    else
+      return highscore;
+   },
+
    // Usado para hacer debug
   render: function() 
    {
@@ -495,4 +525,3 @@ var PlayScene =
 };
 
 module.exports = PlayScene;
-
