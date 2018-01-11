@@ -1,5 +1,8 @@
 'use strict'
 
+var MARGEN = require ('./HUD.js').MARGEN;
+var TEXT_SIZE = require ('./HUD.js').TEXT_SIZE;
+
 var Menu = 
 {
     fondoMenu:null,
@@ -37,6 +40,10 @@ var Menu =
         this.game.world.addChild(this.fondoMenu);
         this.selector = new Phaser.Image(this.game, 275, 320 , 'cursor');
         this.game.world.addChild(this.selector);
+
+        var highscore = require ('./play_scene.js').getScore(1);
+        var highScoreText = this.game.add.bitmapText(this.game.world.width / 2, MARGEN, 'redFont','HIGH SCORE', TEXT_SIZE);
+        var highScoreNoText = this.game.add.bitmapText(this.game.world.width / 2, MARGEN + (highScoreText.height + MARGEN), 'whiteFont', '  ' + highscore , TEXT_SIZE);
     },
 
     moveDown:function()

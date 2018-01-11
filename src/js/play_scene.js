@@ -90,7 +90,6 @@ var PlayScene =
    //Función Create
   create: function () 
   {
-
     // AUDIO
     this.ball_dBrick = this.game.add.audio('ball&dBrick');
     this.ball_uBrick = this.game.add.audio('ball&uBrick');
@@ -316,7 +315,8 @@ var PlayScene =
     if(this.breakableBricks == 0)
     {
      level++;
-     this.game.state.start('carga');
+     this.game.state.states['carga'].level = level;
+     this.game.state.start('carga', true, false);
     }
   },
 
@@ -344,7 +344,7 @@ var PlayScene =
        
       //Solo perdiste una vida
       else
-         this.game.state.start('carga');
+         this.game.state.start('carga', true, false);
     }  
   },
   // COLISIONES
@@ -501,6 +501,19 @@ var PlayScene =
      this.hud.renderScore(score, highscore);
    },
 
+   getLevel:function()
+   {
+     return level;
+   },
+
+   getScore:function(i)
+   {
+    if(i==0)
+       return score;
+    else
+      return highscore;
+   },
+
    // Usado para hacer debug
   render: function() 
    {
@@ -511,11 +524,4 @@ var PlayScene =
     }
 };
 
-module.exports = 
-{
-  PlayScene,
-  level,
-  score,
-  highscore
-};
-
+module.exports = PlayScene;

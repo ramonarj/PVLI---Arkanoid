@@ -1,6 +1,6 @@
 'use strict';
 
-var PlayScene = require('./play_scene.js').PlayScene;
+var PlayScene = require('./play_scene.js');
 var Menu = require ('./Menu.js');
 var Carga = require ('./Carga.js');
 
