@@ -3,7 +3,7 @@
 var Movable = require ('./Movable.js');
 var PLAYER_VEL = 0.45;
 
-function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit, ballsGroup)
+function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit, ballsGroup, scene)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     
@@ -21,6 +21,7 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
 
     this._balls = ballsGroup;
     this._currentBall;
+    this._scene = scene;
 
     // Variables de control
     this._shotEnabled = false;
@@ -80,7 +81,7 @@ Player.prototype.disableEffects = function ()
       this._isWide = false;
       this.getNarrow();
     }
-      else if(this._shotEnabled)
+    else if(this._shotEnabled)
       this._shotEnabled = false;
 }
 
@@ -97,9 +98,8 @@ Player.prototype.getWider = function ()
 {   
     if(!this._isWide)
     {
-        this._isWide = true;
-      var widerPaddle = this.width *= 1.5;
-      this.body.setSize(widerPaddle, this.height);
+      this._isWide = true;
+      this.width *= 1.5;
 
       this._sound[1].play();
     }
@@ -108,14 +108,13 @@ Player.prototype.getWider = function ()
 // Estrecha la pala del jugador
 Player.prototype.getNarrow = function ()
 {   
-    var narrowPaddle = this.width /= 1.5;
-    this.body.setSize(narrowPaddle, this.height);
+    this.width /= 1.5;
 }
 
 Player.prototype.addLife = function()
 {
-    this._lives++;
-this._sound[2].play();
+    this._scene.addLife();
+    this._sound[2].play();
 }
 
 

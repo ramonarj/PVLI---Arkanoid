@@ -136,8 +136,7 @@ var PlayScene =
     this.ballsGroup.classType = Ball;
 
     var playerPos = new Par(this.world.width / 2, PLAYER_POSY);
-    var ballPos = new Par(playerPos._x, playerPos._y);
-    this.ball = new Ball(this.game, ballPos, 'ball', ballSounds, 1, this);
+    this.ball = new Ball(this.game, playerPos, 'ball', ballSounds, 1, this);
     this.ball.y -= this.ball.height;
 
     this.ballsGroup.add(this.ball);
@@ -149,7 +148,7 @@ var PlayScene =
 
     for(var i = 0; i < EXTRA_BALLS; i++) //Pelotas extra
     {
-       var extraBall = new Ball(this.game, ballPos, 'ball', ballSounds, 1, this);
+       var extraBall = new Ball(this.game, playerPos, 'ball', ballSounds, 1, this);
         this.ballsGroup.add(extraBall);
         extraBall.kill();
     }
@@ -232,7 +231,7 @@ var PlayScene =
     var playerSounds = [this.playerShot, this.getWide, this.extraLife];
     var playerVel = new Par(0,0);
     this.player = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.cursors, 
-                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup);
+                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
 
     this.game.world.addChild(this.player);
     this.game.physics.enable([this.player, this.ballsGroup], Phaser.Physics.ARCADE);
@@ -471,11 +470,8 @@ var PlayScene =
        this.activePowerUp = powerUp;
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
-    var lives = player._lives;
        powerUp.enable();
        powerUp.takeDamage(this);
-     if(player._lives > lives)
-        this.hud.addLife();
    },
 
    advanceLevel: function(player, door)
@@ -501,6 +497,13 @@ var PlayScene =
      this.hud.renderScore(score, highscore);
    },
 
+   addLife:function()
+   {
+     lives++;
+     this.hud.addLife();
+     
+   },
+
    getLevel:function()
    {
      return level;
@@ -521,6 +524,7 @@ var PlayScene =
         this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), RIGHTLIMIT + 15, 230);
         this.game.debug.text('balls length: ' +this.ballsGroup.length, RIGHTLIMIT + 15, 250);
         this.game.debug.text('b bricks: ' +this.breakableBricks, RIGHTLIMIT + 15, 270);
+        this.game.debug.text('lives: ' +lives, RIGHTLIMIT + 15, 290);
     }
 };
 

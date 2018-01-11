@@ -5,10 +5,10 @@ var Destroyable = require ('./Destroyable.js');
 
 var BASE_VELOCITY = 350;
 var BASE_ANGLE =  Math.PI / 3; //Está en radianes (60º)
-var MAX_VELOCITY = 600;
+var MAX_VELOCITY = 650;
 
 var MAX_ANGLE = 4 * Math.PI / 9; //80º
-var MIN_ANGLE = Math.PI / 9; //20º
+var MIN_ANGLE = 5 * Math.PI / 36; //25º
 
 
 var Movable = require ('./Movable.js');
@@ -50,8 +50,8 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
     //a)Jugador 
     if(Object.getPrototypeOf(obj).hasOwnProperty('readInput'))
     {
-        this.bounceInPlayer(obj);
-        this._sound[0].play();
+         this.bounceInPlayer(obj);
+         this._sound[0].play();
     }
 
     //b)Ladrillos o paredes
@@ -90,8 +90,14 @@ Ball.prototype.bounce = function(obj, playscene) //Rebota en un objeto "obj2"
 
 Ball.prototype.bounceInPlayer = function(player)
 {
-    var delta = Math.abs(player.x - (this.x + this.width/2));
-    this._angle = MAX_ANGLE - (delta * Math.PI / 180); //Actualizamos el ángulo
+    //Delta es la distancia (abs) que hay del centro del jugador al de la pelota
+    var delta = Math.abs(player.x - (this.x + this.width/2)); 
+    if (delta > player.width / 2)
+       delta = player.width / 2;
+    var razon = delta / (player.width / 2); //Esto siempre está entre 0 y 1
+    this._angle = MAX_ANGLE - razon * (MAX_ANGLE - MIN_ANGLE); //Actualizamos el ángulo (siempre está entre el máximo y el mínimo)
+
+    console.log(this._angle * 180 /Math.PI);
 
     //Actualizamos la velocidad en función del punto en que rebote del jugador
     this.body.velocity.x = this._vel * Math.cos(this._angle);
@@ -101,18 +107,32 @@ Ball.prototype.bounceInPlayer = function(player)
     if((this.x > player.x && this.body.velocity.x < 0) || (this.x < player.x && this.body.velocity.x > 0))
         this.body.velocity.x = -this.body.velocity.x;
 
+
+    if(this.y > player.y + player.height / 2)
+        this.y = player.y - this.height / 2;
+
      //Actualizamos la velocidad de nuestra jerarquía
      this._velocity._x = this.body.velocity.x;
      this._velocity._y = this.body.velocity.y;
+     
 
-     // Si se puede enganchar a la pala, ésta se quedará pegada
+     // Si se puede enganchar a la pala, ésta se quedará pegada (teniendo cuidado de que no esté demasiado al borde ni atravesándolo)
      if(this._attachEnabled)
+     {
+        if(this.x < player.x - player.width / 2)
+             this.x = player.x - player.width / 2;
+        else if(this.x > player.x + player.width / 2)
+             this.x = player.x + player.width / 2 - this.width / 2;  
+
+        if(this.y > player.y)
+             this.y = player.y - this.height;     
+
         this.attach(); 
+     }  
 }
 
 
 // FUNCIONES AUXILIARES 
-
 Ball.prototype.getPosX = function()
 {
      return this.body.x;
