@@ -97,7 +97,6 @@ Ball.prototype.bounceInPlayer = function(player)
     var razon = delta / (player.width / 2); //Esto siempre está entre 0 y 1
     this._angle = MAX_ANGLE - razon * (MAX_ANGLE - MIN_ANGLE); //Actualizamos el ángulo (siempre está entre el máximo y el mínimo)
 
-    console.log(this._angle * 180 /Math.PI);
 
     //Actualizamos la velocidad en función del punto en que rebote del jugador
     this.body.velocity.x = this._vel * Math.cos(this._angle);

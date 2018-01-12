@@ -51,6 +51,7 @@ var level = 1;
 var lives = 3;
 var score = 0;
 var highscore = require ('./HUD.js').DEFAULT_HIGHSCORE;
+var brickArray = null;
 
 var PlayScene =
  {
@@ -156,6 +157,7 @@ var PlayScene =
     
 
     //4.Ladrillos (grupo bricks)
+    var actualBrick = 0;
     this.bricks = this.game.add.physicsGroup();
     this.bricks.classType = Destroyable;
     this.breakableBricks = 0;
@@ -173,7 +175,6 @@ var PlayScene =
 
         var brick;
         var pos = new Par(LEFTLIMIT + (j*BRICK_WIDTH), FIRST_BRICK_Y + (i*BRICK_HEIGHT));
-        console.log(pos);
 
         if(brickType != 0)
         {
@@ -202,10 +203,16 @@ var PlayScene =
               brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
               brick.frame = brickType;
             } 
-            this.breakableBricks++;
+
+            //Si lo tenemos que matar, lo matamos. Si no, aumentamos el número de ladrillos rompibles
+            if(brickArray != null && brickArray[actualBrick] == false) 
+              brick.kill();
+            else
+              this.breakableBricks++;
           }   
          //Lo añadimos al grupo
           this.bricks.add(brick);
+          actualBrick++;
         }
 
         j++;
@@ -257,12 +264,11 @@ var PlayScene =
 
 
     // 10.Puerta al siguiente nivel
-    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, PLAYER_POSY, 'compuertas');
+    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, PLAYER_POSY + 1, 'door');
     this.levelDoor.anchor.setTo(0.5,0.5);
-    this.levelDoor.angle += 90;
     this.world.add(this.levelDoor);
-    this.levelDoor.animations.add('open',[0,1,2,3,4]);
-    this.levelDoor.animations.frame = 7;
+    this.levelDoor.animations.add('open',[0,1,2]);
+    this.levelDoor.visible = false;
     this.game.physics.enable([this.player, this.levelDoor], Phaser.Physics.ARCADE);
     this.doorOpen = false;
 
@@ -336,12 +342,24 @@ var PlayScene =
         level = 1;
         lives = 3;
         score = 0;
+        brickArray = null;
         this.game.state.start('menu');
       }
        
       //Solo perdiste una vida
       else
-         this.game.state.start('carga', true, false);
+      {
+        brickArray = [];
+        //Guardamos qué ladrillo quedan vivos
+        for(var i=0; i< this.bricks.length;i++)
+        {
+          if(this.bricks.children[i].alive)
+              brickArray[i] = true;
+          else
+              brickArray[i] = false;
+        }
+        this.game.state.start('carga', true, false);
+      }      
     }  
   },
   // COLISIONES
@@ -442,6 +460,7 @@ var PlayScene =
         }
        
         // 3) Lo añadimos al grupo de Power-Ups, activamos las colisiones con el jugador, etc.
+        powerUp = new PinkPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), false, false, this);
          this.powerUps.add(powerUp);
     
          powerUp.body.immovable = true;
@@ -481,7 +500,9 @@ var PlayScene =
    openDoor: function()
    {
      this.doorOpen = true;
-     this.levelDoor.animations.play('open',2,false);
+     this.levelDoor.visible = true;
+
+     this.levelDoor.animations.play('open',10,true);
 
    },
 
@@ -514,6 +535,7 @@ var PlayScene =
 
    nextLevel:function()
    {
+     brickArray = null;
      //Pasamos de nivel
      if(level < NUM_LEVELS)
      {
