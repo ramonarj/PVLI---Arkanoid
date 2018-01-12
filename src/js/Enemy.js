@@ -136,6 +136,7 @@ Enemy.prototype.moveStraight = function()
     if(this.y - this.height / 2 > this._lowerBrickY && this._spinAxis._y == 0)
     {
         this._circles = true;
+        //El sentido de giro depende de su posición
         if(this.x > this.game.world.centerX)
             this._rotationDirection = -1;
         else

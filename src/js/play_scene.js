@@ -21,7 +21,7 @@ var PinkPowerUp = require ('./PowerUp.js').PinkPowerUp;
 
 
 //CONSTANTES
-var MAX_ENEMIES = 3;
+var NUM_LEVELS = 5;
 
 var NUM_POWERUPS = 7;
 var POWERUP_CHANCE = 1/1;
@@ -30,6 +30,7 @@ var NUM_ROWS = 12;
 var NUM_COLS = 11;
 var LEFTLIMIT = 147;
 var RIGHTLIMIT = 633;
+var FIRST_BRICK_Y = 84;
 
 var BRICK_WIDTH = 44;
 var BRICK_HEIGHT = 22;
@@ -171,7 +172,8 @@ var PlayScene =
       {
 
         var brick;
-        var pos = new Par(LEFTLIMIT + (j*BRICK_WIDTH), (BRICK_HEIGHT*5)-4 + (i*BRICK_HEIGHT));
+        var pos = new Par(LEFTLIMIT + (j*BRICK_WIDTH), FIRST_BRICK_Y + (i*BRICK_HEIGHT));
+        console.log(pos);
 
         if(brickType != 0)
         {
@@ -311,12 +313,8 @@ var PlayScene =
   checkWin: function ()
   {
     //Ganaste
-    if(this.breakableBricks == 0)
-    {
-     level++;
-     this.game.state.states['carga'].level = level;
-     this.game.state.start('carga', true, false);
-    }
+    if(this.breakableBricks < 1)
+      this.nextLevel();
   },
 
   //Derrota
@@ -477,10 +475,7 @@ var PlayScene =
    advanceLevel: function(player, door)
    {
      if(this.doorOpen)
-     {
-       level++;
-       this.game.state.start('carga');
-     }
+       this.nextLevel();
    },
 
    openDoor: function()
@@ -515,6 +510,25 @@ var PlayScene =
        return score;
     else
       return highscore;
+   },
+
+   nextLevel:function()
+   {
+     //Pasamos de nivel
+     if(level < NUM_LEVELS)
+     {
+       level++;
+       this.game.state.states['carga'].level = level;
+       this.game.state.start('carga', true, false);
+     }
+     //Nos hemos pasado el juego
+     else
+     {
+       level = 1;
+       lives = 3;
+       score = 0;
+       this.game.state.start('menu');
+     }
    },
 
    // Usado para hacer debug
