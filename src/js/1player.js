@@ -139,6 +139,7 @@ var PlayScene =
 
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
     this.ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
+
     this.ball.attach(); //La pegamos al jugador
 
 
@@ -221,6 +222,8 @@ var PlayScene =
     this.game.world.addChild(this.player);
     this.game.physics.enable([this.player, this.ballsGroup], Phaser.Physics.ARCADE);
     this.player.body.immovable = true;
+
+    this.player.canAttach = true;
 
     //8.PowerUps
     this.powerUps = this.game.add.physicsGroup();
@@ -349,6 +352,11 @@ var PlayScene =
       {
          ball.bounce(obj, this);
       }
+      else
+      {
+        if(obj.constructor == Player)
+        obj.canAttach = true;
+      }
   },
 
   // C) Detecta las colisones con el jugador
@@ -359,13 +367,13 @@ var PlayScene =
           this.takePowerUp(player, obj); // Ya que ahora no haría falta el _powerUpNum, y cuando colisiona con 'powerUps' llama directamente a 'takePowerUp()'
       //Enemigos    
       if (obj.constructor === Enemy)*/
-          obj.takeDamage(this);
+          obj.takeDamage(this, player);
   },
 
   
   // POWER-UPS
    // A) Dropea un Power-Up según una probabilidad
-   dropPowerUp: function(brick)
+   dropPowerUp: function(brick, player)
    {
        if(this.activePowerUp != null && this.activePowerUp.constructor == LightBluePowerUp && this.ballsGroup.countLiving() <= 1)
        this.activePowerUp.disable();
@@ -448,14 +456,14 @@ var PlayScene =
     {
         // a) Desactivamos el efecto activo anterior, si es que lo hubiera (1ª comprobación) y si no es el mismo efecto que ya está activo (2ª comprobación)
         if(this.activePowerUp != null && powerUp.constructor != this.activePowerUp.constructor)
-          this.activePowerUp.disable();
+          this.activePowerUp.disable(player);
 
        // b) Una vez desactivado el anterior, ponemos éste como nuevo efecto activo
        this.activePowerUp = powerUp;
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
     var lives = player._lives;
-       powerUp.enable();
+       powerUp.enable(player);
        powerUp.takeDamage(this);
      if(player._lives > lives)
         this.hud.addLife();

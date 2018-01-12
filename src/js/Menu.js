@@ -43,10 +43,18 @@ var Menu =
             this.selector.y-=50;
             this.eleccion--;
         }
-        else if(this.enterButton.isDown && this.eleccion == 0)
+        else if(this.enterButton.isDown)
         {
+            if(this.eleccion == 0)
+            {
             this.music.stop();
-            this.game.state.start('play');
+            this.game.state.start('1player');
+            }
+            else if(this.eleccion == 2) //Ahora mismo salta un hueco más
+            {
+            this.music.stop();
+            this.game.state.start('2player');
+            }
         }    
     }
 };

@@ -2,10 +2,12 @@
 
 var Par = require ('./SoundSource.js').Par;
 var HUD = require ('./HUD.js');
-var lives = require('./play_scene.js').lives;
-var level = require('./play_scene.js').level;
+var lives = require('./1player.js').lives;
+var level = require('./1player.js').level;
 
 var DELAY_TIME = 100;
+
+this._2player = false;
 
 var Carga = 
 {
@@ -26,9 +28,14 @@ var Carga =
 
     update:function()
     {
-        this.temporizador+=1;
+        this.temporizador += 1;
         if(this.temporizador > DELAY_TIME)
-             this.game.state.start('play');
+        {
+            if(!this._2player)
+             this.game.state.start('1player');
+             else
+             this.game.state.start('2player');
+        }
     },
 };
 

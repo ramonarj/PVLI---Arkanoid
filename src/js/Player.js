@@ -26,6 +26,7 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
     // Variables de control
     this._shotEnabled = false;
     this._isWide = false;
+    this.canAttach = false;
 }
 
 Player.prototype = Object.create(Movable.prototype);
@@ -51,12 +52,15 @@ Player.prototype.readInput = function()
            this._playerWeapon.onFire.add(function() {this._sound[0].play()}, this);
         }
         else if(this._currentBall != null && this._currentBall.isAttached())
+        {
            this._currentBall.throw();
+           this.canAttach = false;
+        } 
     }
 
     //La pelota es hija por programación
     delta -= this.x;
-    if(this._currentBall != null && this._currentBall.isAttached())
+    if(this._currentBall != null && this._currentBall.isAttached() && this.canAttach)
         this._currentBall.x -= delta;
 }
 

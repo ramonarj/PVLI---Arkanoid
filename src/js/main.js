@@ -1,6 +1,7 @@
 'use strict';
 
-var PlayScene = require('./play_scene.js');
+var onePlayer = require('./1player.js');
+var twoPlayer = require('./2player.js');
 var Menu = require ('./Menu.js');
 var Carga = require ('./Carga.js');
 
@@ -99,7 +100,8 @@ window.onload = function ()
 
   game.state.add('boot', BootScene);
   game.state.add('preloader', PreloaderScene);
-  game.state.add('play', PlayScene);
+  game.state.add('1player', onePlayer);
+  game.state.add('2player', twoPlayer);
   game.state.add('menu', Menu);
   game.state.add('carga', Carga);
 
