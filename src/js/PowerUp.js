@@ -23,7 +23,7 @@ function PowerUp(game, position, sprite, sound, lives, velocity, effect, drop, p
    var frame = powerUpNo*6;
     this.animations.add('rotate', [frame, frame+1, frame+2, frame+3, frame+4, frame+5]);
     // Comienza la animación: a 6 fps, y 'true' para repetirla en bucle
-    this.animations.play('rotate', 6, true);
+    this.animations.play('rotate', 10, true);
 }
 
 PowerUp.prototype = Object.create(Movable.prototype);

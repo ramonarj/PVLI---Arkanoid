@@ -1,62 +1,83 @@
 'use strict'
 
+var MARGEN = require ('./HUD.js').MARGEN;
+var TEXT_SIZE = require ('./HUD.js').TEXT_SIZE;
+
 var Menu = 
 {
     fondoMenu:null,
-    cursors:null,
     selector:null,
-    enterButton:null,
     eleccion:null,
     music:null,
 
+    upKey:null,
+    downKey:null,
+    enterKey:null,
+
     create: function()
     {
+        //Teclas
+        this.upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
+        this.upKey.onDown.add(this.moveUp, this);
+
+        this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
+        this.downKey.onDown.add(this.moveDown, this);
+
+        this.enterKey = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
+        this.enterKey.onDown.add(this.processEnterKey, this);
+
+        //Música
         this.music = this.game.add.audio('remix');
         this.music.loop = true;
-        this.music.play();
+        //this.music.play();
         this.music.volume = 1;
 
+       
+
+        //Fondo y selector
         this.eleccion=0;
         this.fondoMenu = new Phaser.Image(this.game, 0, 0, 'menu');
         this.game.world.addChild(this.fondoMenu);
         this.selector = new Phaser.Image(this.game, 275, 320 , 'cursor');
         this.game.world.addChild(this.selector);
 
-        this.enterButton = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
-        this.cursors = this.game.input.keyboard.createCursorKeys();
+        var highscore = require ('./play_scene.js').getScore(1);
+        var highScoreText = this.game.add.bitmapText(this.game.world.width / 2, MARGEN, 'redFont','HIGH SCORE', TEXT_SIZE);
+        var highScoreNoText = this.game.add.bitmapText(this.game.world.width / 2, MARGEN + (highScoreText.height + MARGEN), 'whiteFont', '  ' + highscore , TEXT_SIZE);
     },
-
-    update:function()
+  
+  moveDown:function()
     {
-        this.takeInput();
-    },
-
-    takeInput:function()
-    {
-        if(this.cursors.down.isDown && this.eleccion < 2)
+        if(this.eleccion < 2)
         {
             this.selector.y+=50;
             this.eleccion++;
         }
-        else if(this.cursors.up.isDown && this.eleccion > 0)
+    },
+
+    moveUp:function()
+    {
+        if(this.eleccion > 0)
         {
             this.selector.y-=50;
             this.eleccion--;
         }
-        else if(this.enterButton.isDown)
+    },
+
+    processEnterKey:function()
+    {
+        if(this.eleccion == 0)
         {
-            if(this.eleccion == 0)
-            {
             this.music.stop();
             this.game.state.start('1player');
-            }
-            else if(this.eleccion == 2) //Ahora mismo salta un hueco más
-            {
+        }
+      
+        else if(this.eleccion == 1) //Ahora mismo salta un hueco más
+         {
             this.music.stop();
             this.game.state.start('2player');
-            }
-        }    
-    }
+         }
+    },
 };
 
 module.exports = Menu;

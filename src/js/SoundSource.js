@@ -16,6 +16,12 @@ SoundSource.prototype.playSound = function ()
     //Suena el sonido
 }
 
+//Funciones de destruible
+SoundSource.prototype.playAnimation = function () 
+{
+    this.animations.play('shine', 15, false);
+}
+
 //Estructura auxiliares : PAR
 function Par(x, y)
 {

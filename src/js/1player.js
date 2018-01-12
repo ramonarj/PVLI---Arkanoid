@@ -3,7 +3,7 @@
 //JERARQUÍA DE OBJETOS
 var Par = require ('./SoundSource.js').Par;
 var SoundSource = require ('./SoundSource.js').SoundSource;
-var HUD = require ('./HUD.js');
+var HUD = require ('./HUD.js').HUD;
 var Destroyable = require ('./Destroyable.js');
 var Movable = require ('./Movable.js');
 var Enemy = require ('./Enemy.js');
@@ -22,6 +22,8 @@ var PinkPowerUp = require ('./PowerUp.js').PinkPowerUp;
 
 //CONSTANTES
 var MAX_ENEMIES = 3;
+var NUM_LEVELS = 5;
+
 
 var NUM_POWERUPS = 7;
 var POWERUP_CHANCE = 1/1;
@@ -30,6 +32,8 @@ var NUM_ROWS = 12;
 var NUM_COLS = 11;
 var LEFTLIMIT = 147;
 var RIGHTLIMIT = 633;
+var FIRST_BRICK_Y = 84;
+
 
 var BRICK_WIDTH = 44;
 var BRICK_HEIGHT = 22;
@@ -38,13 +42,21 @@ var GOLDEN_BRICK = 9;
 var WHITE_BRICK_POINTS = 50;
 
 var EXTRA_BALLS = 2;
+var PLAYER_POSY = 526;
+var HUD_POSY = 320;
+var GATES_POSY = require ('./HUD.js').GATES_POSY;
+var GATE1_POSX = 236;
+var GATE2_POSX = 477;
+
 
 
 //Variables globales necesarias (nivel, vidas y puntuación actual y máxima)
 var level = 1;
 var lives = 3;
 var score = 0;
-var highscore = 5000;
+var highscore = require ('./HUD.js').DEFAULT_HIGHSCORE;
+var brickArray = null;
+
 
 var PlayScene =
  {
@@ -109,9 +121,11 @@ var PlayScene =
     //1.Paredes y techo (grupo walls)
     this.walls = this.game.add.physicsGroup();
     var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
-    var pared1 = new Phaser.Sprite(this.game, LEFTLIMIT, 35, 'pared');
+
+    var pared1 = new Phaser.Sprite(this.game, LEFTLIMIT, GATES_POSY, 'pared');
     pared1.x-=pared1.width;
-    var pared2 = new Phaser.Sprite(this.game, 633, 35, 'pared');
+    var pared2 = new Phaser.Sprite(this.game, RIGHTLIMIT, GATES_POSY, 'pared');
+
         
     this.walls.add(techo);
     this.walls.add(pared1);
@@ -120,7 +134,8 @@ var PlayScene =
     this.walls.setAll('visible', false);
 
     //2.HUD
-    var hudPos = new Par(RIGHTLIMIT + 15, 320);
+
+    var hudPos = new Par(RIGHTLIMIT + 15, HUD_POSY);
     this.hud = new HUD(this.game, hudPos, 'vidas','e', lives, level);
     this.hud.renderRound(level);
     this.hud.renderScore(score, highscore); //Renders iniciales
@@ -131,27 +146,29 @@ var PlayScene =
     this.ballsGroup = this.game.add.physicsGroup();
     this.ballsGroup.classType = Ball;
 
-    var playerPos = new Par(350, 525);
-    var ballPos = new Par(playerPos._x, playerPos._y - 12);
-    this.ball = new Ball(this.game, ballPos, 'ball', ballSounds, 1, this);
+
+    var playerPos = new Par(this.world.width / 2, PLAYER_POSY);
+    this.ball = new Ball(this.game, playerPos, 'ball', ballSounds, 1, this);
+    this.ball.y -= this.ball.height;
 
     this.ballsGroup.add(this.ball);
 
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
     this.ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
-
     this.ball.attach(); //La pegamos al jugador
 
 
     for(var i = 0; i < EXTRA_BALLS; i++) //Pelotas extra
     {
-       var extraBall = new Ball(this.game, ballPos, 'ball', ballSounds, 1, this);
+       var extraBall = new Ball(this.game, playerPos, 'ball', ballSounds, 1, this);
         this.ballsGroup.add(extraBall);
         extraBall.kill();
     }
     
 
     //4.Ladrillos (grupo bricks)
+
+    var actualBrick = 0;
     this.bricks = this.game.add.physicsGroup();
     this.bricks.classType = Destroyable;
     this.breakableBricks = 0;
@@ -168,28 +185,45 @@ var PlayScene =
       {
 
         var brick;
-        var pos = new Par(LEFTLIMIT + (j*BRICK_WIDTH), (BRICK_HEIGHT*5)-4 + (i*BRICK_HEIGHT));
+        var pos = new Par(LEFTLIMIT + (j*BRICK_WIDTH), FIRST_BRICK_Y + (i*BRICK_HEIGHT));
 
         if(brickType != 0)
         {
-        if(brickType == GOLDEN_BRICK)
-            brick = new SoundSource(this.game, pos, 'ladrillos', 'sound');
+          //Ladrillos dorados
+          if(brickType == GOLDEN_BRICK)
+          {
+            brick = new SoundSource(this.game, pos, 'ladrillosEsp', 'sound');
+            brick.frame = 6;
+            brick.animations.add('shine', [6, 7, 8, 9, 10, 11, 6]);
+          } 
 
-        else
-        {    
-         if(brickType == SILVER_BRICK)
-           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * level);
+          else
+          {    
+            //Ladrillos plateados
+            if(brickType == SILVER_BRICK)
+            {
+              brick = new Destroyable(this.game, pos, 'ladrillosEsp', 'sound', 3, WHITE_BRICK_POINTS * level);
+              brick.frame = 0;
+              brick.animations.add('shine', [0, 1, 2, 3, 4, 5, 0]);
+            }
+              
 
-        else
-           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
+            //Ladrillos de colores
+            else
+            {
+              brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
+              brick.frame = brickType;
+            } 
 
-           this.breakableBricks++;
-        }   
-         //Color del ladrillo
-         brick.frame = brickType;
-            
+            //Si lo tenemos que matar, lo matamos. Si no, aumentamos el número de ladrillos rompibles
+            if(brickArray != null && brickArray[actualBrick] == false) 
+              brick.kill();
+            else
+              this.breakableBricks++;
+          }   
          //Lo añadimos al grupo
           this.bricks.add(brick);
+          actualBrick++;
         }
 
         j++;
@@ -217,13 +251,16 @@ var PlayScene =
     var playerSounds = [this.playerShot, this.getWide, this.extraLife];
     var playerVel = new Par(0,0);
     this.player = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.cursors, 
-                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup);
+                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
+
 
     this.game.world.addChild(this.player);
     this.game.physics.enable([this.player, this.ballsGroup], Phaser.Physics.ARCADE);
     this.player.body.immovable = true;
 
     this.player.canAttach = true;
+
+
 
     //8.PowerUps
     this.powerUps = this.game.add.physicsGroup();
@@ -234,8 +271,9 @@ var PlayScene =
     this.activePowerUp = null;
     
     //9.Compuertas
-    var gate1 = new Phaser.Sprite(this.game, 236, 20, 'compuertas');
-    var gate2 = new Phaser.Sprite(this.game, 477, 20, 'compuertas');
+
+    var gate1 = new Phaser.Sprite(this.game, GATE1_POSX, GATES_POSY, 'compuertas');
+    var gate2 = new Phaser.Sprite(this.game, GATE2_POSX, GATES_POSY, 'compuertas');
     this.world.add(gate1);
     this.world.add(gate2);
     gate1.animations.add('open');
@@ -243,12 +281,12 @@ var PlayScene =
 
 
     // 10.Puerta al siguiente nivel
-    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, 526, 'compuertas');
+
+    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, PLAYER_POSY + 1, 'door');
     this.levelDoor.anchor.setTo(0.5,0.5);
-    this.levelDoor.angle += 90;
     this.world.add(this.levelDoor);
-    this.levelDoor.animations.add('open',[0,1,2,3,4]);
-    this.levelDoor.animations.frame = 7;
+    this.levelDoor.animations.add('open',[0,1,2]);
+    this.levelDoor.visible = false;
     this.game.physics.enable([this.player, this.levelDoor], Phaser.Physics.ARCADE);
     this.doorOpen = false;
 
@@ -299,11 +337,9 @@ var PlayScene =
   checkWin: function ()
   {
     //Ganaste
-    if(this.breakableBricks == 0)
-    {
-     level++;
-     this.game.state.restart();
-    }
+
+    if(this.breakableBricks < 1)
+      this.nextLevel();
   },
 
   //Derrota
@@ -325,12 +361,24 @@ var PlayScene =
         level = 1;
         lives = 3;
         score = 0;
+        brickArray = null;
         this.game.state.start('menu');
       }
        
       //Solo perdiste una vida
       else
-         this.game.state.start('carga');
+      {
+        brickArray = [];
+        //Guardamos qué ladrillo quedan vivos
+        for(var i=0; i< this.bricks.length;i++)
+        {
+          if(this.bricks.children[i].alive)
+              brickArray[i] = true;
+          else
+              brickArray[i] = false;
+        }
+        this.game.state.start('carga', true, false);
+      }      
     }  
   },
   // COLISIONES
@@ -352,11 +400,13 @@ var PlayScene =
       {
          ball.bounce(obj, this);
       }
+
       else
       {
         if(obj.constructor == Player)
         obj.canAttach = true;
       }
+
   },
 
   // C) Detecta las colisones con el jugador
@@ -458,30 +508,28 @@ var PlayScene =
         if(this.activePowerUp != null && powerUp.constructor != this.activePowerUp.constructor)
           this.activePowerUp.disable(player);
 
+
        // b) Una vez desactivado el anterior, ponemos éste como nuevo efecto activo
        this.activePowerUp = powerUp;
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
-    var lives = player._lives;
+
        powerUp.enable(player);
        powerUp.takeDamage(this);
-     if(player._lives > lives)
-        this.hud.addLife();
    },
 
    advanceLevel: function(player, door)
    {
      if(this.doorOpen)
-     {
-       level++;
-       this.game.state.restart();
-     }
+       this.nextLevel();
    },
 
    openDoor: function()
    {
      this.doorOpen = true;
-     this.levelDoor.animations.play('open',2,false);
+     this.levelDoor.visible = true;
+
+     this.levelDoor.animations.play('open',10,true);
 
    },
 
@@ -490,6 +538,47 @@ var PlayScene =
    {
      score+=i;
      this.hud.renderScore(score, highscore);
+   },
+
+
+   addLife:function()
+   {
+     lives++;
+     this.hud.addLife();
+     
+   },
+
+   getLevel:function()
+   {
+     return level;
+   },
+
+   getScore:function(i)
+   {
+    if(i==0)
+       return score;
+    else
+      return highscore;
+   },
+
+   nextLevel:function()
+   {
+     brickArray = null;
+     //Pasamos de nivel
+     if(level < NUM_LEVELS)
+     {
+       level++;
+       this.game.state.states['carga'].level = level;
+       this.game.state.start('carga', true, false);
+     }
+     //Nos hemos pasado el juego
+     else
+     {
+       level = 1;
+       lives = 3;
+       score = 0;
+       this.game.state.start('menu');
+     }
    },
 
    // Usado para hacer debug

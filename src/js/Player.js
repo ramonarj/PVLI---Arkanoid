@@ -1,10 +1,9 @@
 'use strict'
 
 var Movable = require ('./Movable.js');
+var PLAYER_VEL = 0.45;
 
-/////////////////////////////////////////
-//2.2.1.2.CLASE JUGADOR 
-function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit, ballsGroup)
+function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit, ballsGroup, scene)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     
@@ -22,6 +21,7 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
 
     this._balls = ballsGroup;
     this._currentBall;
+    this._scene = scene;
 
     // Variables de control
     this._shotEnabled = false;
@@ -39,10 +39,10 @@ Player.prototype.readInput = function()
     var delta = this.x;
     //Comprobación de cursores de Phaser
     if (this._cursors.left.isDown && this.x >  this._leftLimit + this.offsetX)
-        this.x -= 6.5;
+        this.x -= PLAYER_VEL * (this.game.time.now - this.game.time.prevTime);
     
     else if (this._cursors.right.isDown && this.x < this._rightLimit - this.offsetX)
-        this.x += 6.5;
+        this.x += PLAYER_VEL * (this.game.time.now - this.game.time.prevTime);
 
     if(this._fireButton.isDown)
     {
@@ -85,8 +85,11 @@ Player.prototype.disableEffects = function ()
       this._isWide = false;
       this.getNarrow();
     }
-      else if(this._shotEnabled)
-      this._shotEnabled = false;
+    else if(this._shotEnabled)
+    {
+        this._shotEnabled = false;
+        this.frame = 0;
+    } 
 }
 
 // FUNCIONES AUXILIARES
@@ -95,6 +98,7 @@ Player.prototype.disableEffects = function ()
 Player.prototype.enableShot = function ()
 {   
    this._shotEnabled = true;
+   this.frame = 1;
 }
 
 // Ensancha la pala del jugador (solo si no lo estuviera ya)
@@ -102,9 +106,8 @@ Player.prototype.getWider = function ()
 {   
     if(!this._isWide)
     {
-        this._isWide = true;
-      var widerPaddle = this.width *= 1.5;
-      this.body.setSize(widerPaddle, this.height);
+      this._isWide = true;
+      this.width *= 1.5;
 
       this._sound[1].play();
     }
@@ -113,14 +116,13 @@ Player.prototype.getWider = function ()
 // Estrecha la pala del jugador
 Player.prototype.getNarrow = function ()
 {   
-    var narrowPaddle = this.width /= 1.5;
-    this.body.setSize(narrowPaddle, this.height);
+    this.width /= 1.5;
 }
 
 Player.prototype.addLife = function()
 {
-    this._lives++;
-this._sound[2].play();
+    this._scene.addLife();
+    this._sound[2].play();
 }
 
 

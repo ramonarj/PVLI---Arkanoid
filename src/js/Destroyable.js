@@ -44,6 +44,9 @@ Destroyable.prototype.takeDamage = function (playscene, player) //NOTA: solo da 
           playscene.checkWin();
         }
     }
+    //Ladrillos plateados
+    else if(this.constructor === Destroyable && this._maxLives > 1)
+         this.animations.play('shine', 15, false);
 }
 
 Destroyable.prototype.getLives = function()

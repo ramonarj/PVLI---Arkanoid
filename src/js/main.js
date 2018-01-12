@@ -2,6 +2,7 @@
 
 var onePlayer = require('./1player.js');
 var twoPlayer = require('./2player.js');
+
 var Menu = require ('./Menu.js');
 var Carga = require ('./Carga.js');
 
@@ -31,7 +32,6 @@ var PreloaderScene =
 
     //Cargamos los assets del juego (sprites y spritesheets)
     //Sprites
-    this.game.load.image('player', 'images/Player.png');
     this.game.load.image('ball', 'images/Pelota.png');
     this.game.load.image('pared', 'images/pared.png');
     this.game.load.image('techo', 'images/techo.png');
@@ -45,9 +45,12 @@ var PreloaderScene =
    // Spritesheets: 'key', 'ruta', 'ancho de cada frame (en px)', 'alto de cada frame (en px)', 'nº de frames' (opcional)
     this.game.load.spritesheet('PowerUps', 'images/PowerUps.png', 40, 18, 42); //42 frames
     this.game.load.spritesheet('ladrillos', 'images/Ladrillos.png', 44, 22); //Ladrillos
+    this.game.load.spritesheet('ladrillosEsp', 'images/LadrillosEspeciales.png', 44, 22); //Ladrillos
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
     this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Compuertas
     this.game.load.spritesheet('fondos', 'images/Fondos.png', 530, 580); //Fondos
+    this.game.load.spritesheet('player', 'images/Player.png', 80, 20); //Jugador
+    this.game.load.spritesheet('door', 'images/Puerta.png', 23, 69); //Puerta
 
     // Sonidos
     this.game.load.audio('ball&dBrick', 'assets/sounds/collision - ball&dBrick.ogg');
