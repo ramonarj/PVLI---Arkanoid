@@ -1,6 +1,8 @@
 'use strict';
 
 var onePlayer = require('./1player.js');
+var twoPlayer = require('./2player.js');
+
 var Menu = require ('./Menu.js');
 var Carga = require ('./Carga.js');
 
@@ -67,6 +69,19 @@ var PreloaderScene =
     this.game.load.audio('remix', 'assets/music/remix.ogg');
 
 
+    // Sonidos
+    this.game.load.audio('ball&dBrick', 'assets/sounds/collision - ball&dBrick.ogg');
+    this.game.load.audio('ball&uBrick', 'assets/sounds/collision - ball&uBrick.mp3');
+    this.game.load.audio('ball&player', 'assets/sounds/collision - ball&player.mp3');
+
+    this.game.load.audio('enemyDeath', 'assets/sounds/enemy - death.wav');
+
+    this.game.load.audio('playerDeath', 'assets/sounds/player - death.wav');
+    this.game.load.audio('playerShot', 'assets/sounds/player - shot.wav');
+
+    this.game.load.audio('extraLife', 'assets/sounds/power up - extra life.wav');
+    this.game.load.audio('getWide', 'assets/sounds/power up - get wide.wav');
+
     // Datos del nivel
     this.game.load.text('levels', 'assets/levels/levels.json');
 
@@ -89,6 +104,7 @@ window.onload = function ()
   game.state.add('boot', BootScene);
   game.state.add('preloader', PreloaderScene);
   game.state.add('1player', onePlayer);
+  game.state.add('2player', twoPlayer);
   game.state.add('menu', Menu);
   game.state.add('carga', Carga);
 
