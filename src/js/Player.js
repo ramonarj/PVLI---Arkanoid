@@ -12,6 +12,7 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
 
     this.anchor.setTo(0.5, 0); //Ancla del jugador
 
+    this._vel = velocity._x;
     this._cursors = cursors;
     this._fireButton = game.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
     this._playerWeapon = playerWeapon;
@@ -39,10 +40,10 @@ Player.prototype.readInput = function()
     var delta = this.x;
     //Comprobación de cursores de Phaser
     if (this._cursors.left.isDown && this.x >  this._leftLimit + this.offsetX)
-        this.x -= PLAYER_VEL * (this.game.time.now - this.game.time.prevTime);
+        this.x -= this._vel * PLAYER_VEL * (this.game.time.now - this.game.time.prevTime);
     
     else if (this._cursors.right.isDown && this.x < this._rightLimit - this.offsetX)
-        this.x += PLAYER_VEL * (this.game.time.now - this.game.time.prevTime);
+        this.x += this._vel * PLAYER_VEL * (this.game.time.now - this.game.time.prevTime);
 
     if(this._fireButton.isDown)
     {

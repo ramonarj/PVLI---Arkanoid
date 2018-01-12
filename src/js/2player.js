@@ -250,13 +250,21 @@ var PlayScene =
     this.playersGroup = this.game.add.physicsGroup();
     this.playersGroup.classType = Player;
 
-    var playerVel = new Par(0,0);
+    //Jugador 1
+    var playerVel = new Par(0.75,0);
      this.player1 = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.cursors, 
                                                this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
 
-     playerPos = new Par(350, 475);
-    this. player2 = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.wasd, 
+    this.player1.width *= 1.25;  
+
+    //Jugador 2
+     playerPos._y -= this.player1.height * 7;
+     playerVel._x = 1.25;
+
+    
+    this.player2 = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.wasd, 
                                                this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
+    this.player2.width /= 1.5;                                           
                                       
 
    this.playersGroup.add(this.player2);
@@ -582,15 +590,6 @@ var PlayScene =
        this.game.state.start('menu');
      }
    },
-
-   // Usado para hacer debug
-  render: function() 
-   {
-        // Player debug info
-        this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), RIGHTLIMIT + 15, 230);
-        this.game.debug.text('balls length: ' +this.ballsGroup.length, RIGHTLIMIT + 15, 250);
-        this.game.debug.text('b bricks: ' +this.breakableBricks, RIGHTLIMIT + 15, 270);
-    }
 };
 
 module.exports = PlayScene;

@@ -50,7 +50,7 @@ var GATE2_POSX = 477;
 
 
 
-//Variables globales necesarias (nivel, vidas y puntuación actual y máxima)
+//Variables globales necesarias (nivel, vidas y puntuación actual y máxima)... arrggghhhh
 var level = 1;
 var lives = 3;
 var score = 0;
@@ -249,7 +249,7 @@ var PlayScene =
 
     //7.Jugador
     var playerSounds = [this.playerShot, this.getWide, this.extraLife];
-    var playerVel = new Par(0,0);
+    var playerVel = new Par(1,0);
     this.player = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.cursors, 
                                                this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
 
@@ -377,6 +377,7 @@ var PlayScene =
           else
               brickArray[i] = false;
         }
+        this.game.state.states['carga']._2player = false;
         this.game.state.states['carga']._scene = this;
         this.game.state.start('carga', true, false);
       }      
@@ -569,6 +570,7 @@ var PlayScene =
      if(level < NUM_LEVELS)
      {
        level++;
+       this.game.state.states['carga']._2player = false;
        this.game.state.states['carga']._scene = this;
        this.game.state.start('carga', true, false);
      }
@@ -581,15 +583,6 @@ var PlayScene =
        this.game.state.start('menu');
      }
    },
-
-   // Usado para hacer debug
-  render: function() 
-   {
-        // Player debug info
-        this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), RIGHTLIMIT + 15, 230);
-        this.game.debug.text('balls length: ' +this.ballsGroup.length, RIGHTLIMIT + 15, 250);
-        this.game.debug.text('b bricks: ' +this.breakableBricks, RIGHTLIMIT + 15, 270);
-    }
 };
 
 module.exports = PlayScene;
