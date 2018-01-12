@@ -41,7 +41,7 @@ var Menu =
         this.selector = new Phaser.Image(this.game, 275, 320 , 'cursor');
         this.game.world.addChild(this.selector);
 
-        var highscore = require ('./play_scene.js').getScore(1);
+        var highscore = require ('./1player.js').getScore(1);
         var highScoreText = this.game.add.bitmapText(this.game.world.width / 2, MARGEN, 'redFont','HIGH SCORE', TEXT_SIZE);
         var highScoreNoText = this.game.add.bitmapText(this.game.world.width / 2, MARGEN + (highScoreText.height + MARGEN), 'whiteFont', '  ' + highscore , TEXT_SIZE);
     },

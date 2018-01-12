@@ -377,6 +377,7 @@ var PlayScene =
           else
               brickArray[i] = false;
         }
+        this.game.state.states['carga']._scene = this;
         this.game.state.start('carga', true, false);
       }      
     }  
@@ -568,7 +569,7 @@ var PlayScene =
      if(level < NUM_LEVELS)
      {
        level++;
-       this.game.state.states['carga'].level = level;
+       this.game.state.states['carga']._scene = this;
        this.game.state.start('carga', true, false);
      }
      //Nos hemos pasado el juego

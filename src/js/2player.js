@@ -3,7 +3,7 @@
 //JERARQUÍA DE OBJETOS
 var Par = require ('./SoundSource.js').Par;
 var SoundSource = require ('./SoundSource.js').SoundSource;
-var HUD = require ('./HUD.js');
+var HUD = require ('./HUD.js').HUD;
 var Destroyable = require ('./Destroyable.js');
 var Movable = require ('./Movable.js');
 var Enemy = require ('./Enemy.js');
@@ -20,6 +20,7 @@ var PinkPowerUp = require ('./PowerUp.js').PinkPowerUp;
 
 //CONSTANTES
 var MAX_ENEMIES = 3;
+var NUM_LEVELS = 5;
 
 var NUM_POWERUPS = 5;
 var POWERUP_CHANCE = 1/1;
@@ -28,6 +29,8 @@ var NUM_ROWS = 12;
 var NUM_COLS = 11;
 var LEFTLIMIT = 147;
 var RIGHTLIMIT = 633;
+var FIRST_BRICK_Y = 84;
+var PLAYER_POSY = 526;
 
 var BRICK_WIDTH = 44;
 var BRICK_HEIGHT = 22;
@@ -42,7 +45,8 @@ var EXTRA_BALLS = 2;
 var level = 1;
 var lives = 3;
 var score = 0;
-var highscore = 5000;
+var highscore = require ('./HUD.js').DEFAULT_HIGHSCORE;
+var brickArray = null;
 
 var PlayScene =
  {
@@ -153,6 +157,8 @@ var PlayScene =
     
 
     //4.Ladrillos (grupo bricks)
+
+    var actualBrick = 0;
     this.bricks = this.game.add.physicsGroup();
     this.bricks.classType = Destroyable;
     this.breakableBricks = 0;
@@ -169,28 +175,45 @@ var PlayScene =
       {
 
         var brick;
-        var pos = new Par(LEFTLIMIT + (j*BRICK_WIDTH), (BRICK_HEIGHT*5)-4 + (i*BRICK_HEIGHT));
+        var pos = new Par(LEFTLIMIT + (j*BRICK_WIDTH), FIRST_BRICK_Y + (i*BRICK_HEIGHT));
 
         if(brickType != 0)
         {
-        if(brickType == GOLDEN_BRICK)
-            brick = new SoundSource(this.game, pos, 'ladrillos', 'sound');
+          //Ladrillos dorados
+          if(brickType == GOLDEN_BRICK)
+          {
+            brick = new SoundSource(this.game, pos, 'ladrillosEsp', 'sound');
+            brick.frame = 6;
+            brick.animations.add('shine', [6, 7, 8, 9, 10, 11, 6]);
+          } 
 
-        else
-        {    
-         if(brickType == SILVER_BRICK)
-           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 3, WHITE_BRICK_POINTS * level);
+          else
+          {    
+            //Ladrillos plateados
+            if(brickType == SILVER_BRICK)
+            {
+              brick = new Destroyable(this.game, pos, 'ladrillosEsp', 'sound', 3, WHITE_BRICK_POINTS * level);
+              brick.frame = 0;
+              brick.animations.add('shine', [0, 1, 2, 3, 4, 5, 0]);
+            }
+              
 
-        else
-           brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
+            //Ladrillos de colores
+            else
+            {
+              brick = new Destroyable(this.game, pos, 'ladrillos', 'sound', 1, WHITE_BRICK_POINTS + brickType * 10);
+              brick.frame = brickType;
+            } 
 
-           this.breakableBricks++;
-        }   
-         //Color del ladrillo
-         brick.frame = brickType;
-            
+            //Si lo tenemos que matar, lo matamos. Si no, aumentamos el número de ladrillos rompibles
+            if(brickArray != null && brickArray[actualBrick] == false) 
+              brick.kill();
+            else
+              this.breakableBricks++;
+          }   
          //Lo añadimos al grupo
           this.bricks.add(brick);
+          actualBrick++;
         }
 
         j++;
@@ -229,11 +252,11 @@ var PlayScene =
 
     var playerVel = new Par(0,0);
      this.player1 = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.cursors, 
-                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup);
+                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
 
      playerPos = new Par(350, 475);
     this. player2 = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.wasd, 
-                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup);
+                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
                                       
 
    this.playersGroup.add(this.player2);
@@ -263,13 +286,12 @@ var PlayScene =
 
 
     // 10.Puerta al siguiente nivel
-    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, 526, 'compuertas');
+    this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, PLAYER_POSY + 1, 'door');
     this.levelDoor.anchor.setTo(0.5,0.5);
-    this.levelDoor.angle += 90;
     this.world.add(this.levelDoor);
-    this.levelDoor.animations.add('open',[0,1,2,3,4]);
-    this.levelDoor.animations.frame = 7;
-    this.game.physics.enable([this.playersGroup, this.levelDoor], Phaser.Physics.ARCADE);
+    this.levelDoor.animations.add('open',[0,1,2]);
+    this.levelDoor.visible = false;
+    this.game.physics.enable([this.player1, this.levelDoor], Phaser.Physics.ARCADE);
     this.doorOpen = false;
 
 
@@ -319,11 +341,9 @@ var PlayScene =
   checkWin: function ()
   {
     //Ganaste
-    if(this.breakableBricks == 0)
-    {
-     level++;
-     this.game.state.restart();
-    }
+
+    if(this.breakableBricks < 1)
+      this.nextLevel();
   },
 
   //Derrota
@@ -345,13 +365,26 @@ var PlayScene =
         level = 1;
         lives = 3;
         score = 0;
+        brickArray = null;
         this.game.state.start('menu');
       }
        
       //Solo perdiste una vida
       else
-      this.game.state.states['carga']._2player = true;
-         this.game.state.start('carga');
+      {
+        brickArray = [];
+        //Guardamos qué ladrillo quedan vivos
+        for(var i=0; i< this.bricks.length;i++)
+        {
+          if(this.bricks.children[i].alive)
+              brickArray[i] = true;
+          else
+              brickArray[i] = false;
+        }
+        this.game.state.states['carga']._2player = true;
+        this.game.state.states['carga']._scene = this;
+        this.game.state.start('carga', true, false);
+      }      
     }  
   },
   // COLISIONES
@@ -489,16 +522,15 @@ var PlayScene =
    advanceLevel: function(player, door)
    {
      if(this.doorOpen)
-     {
-       level++;
-       this.game.state.restart();
-     }
+       this.nextLevel();
    },
 
    openDoor: function()
    {
      this.doorOpen = true;
-     this.levelDoor.animations.play('open',2,false);
+     this.levelDoor.visible = true;
+
+     this.levelDoor.animations.play('open',10,true);
 
    },
 
@@ -509,12 +541,54 @@ var PlayScene =
      this.hud.renderScore(score, highscore);
    },
 
+
+   addLife:function()
+   {
+     lives++;
+     this.hud.addLife();
+     
+   },
+
+   getLevel:function()
+   {
+     return level;
+   },
+
+   getScore:function(i)
+   {
+    if(i==0)
+       return score;
+    else
+      return highscore;
+   },
+
+   nextLevel:function()
+   {
+     brickArray = null;
+     //Pasamos de nivel
+     if(level < NUM_LEVELS)
+     {
+       level++;
+       this.game.state.states['carga']._scene = this;
+       this.game.state.states['carga']._2player = true;
+       this.game.state.start('carga', true, false);
+     }
+     //Nos hemos pasado el juego
+     else
+     {
+       level = 1;
+       lives = 3;
+       score = 0;
+       this.game.state.start('menu');
+     }
+   },
+
    // Usado para hacer debug
   render: function() 
    {
         // Player debug info
-        this.game.debug.text('player 1: '+ this.player1.canAttach, RIGHTLIMIT + 15, 230);
-        this.game.debug.text('player 2: ' +this.player2.canAttach, RIGHTLIMIT + 15, 250);
+        this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), RIGHTLIMIT + 15, 230);
+        this.game.debug.text('balls length: ' +this.ballsGroup.length, RIGHTLIMIT + 15, 250);
         this.game.debug.text('b bricks: ' +this.breakableBricks, RIGHTLIMIT + 15, 270);
     }
 };
