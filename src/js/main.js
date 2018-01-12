@@ -30,7 +30,6 @@ var PreloaderScene =
 
     //Cargamos los assets del juego (sprites y spritesheets)
     //Sprites
-    this.game.load.image('player', 'images/Player.png');
     this.game.load.image('ball', 'images/Pelota.png');
     this.game.load.image('pared', 'images/pared.png');
     this.game.load.image('techo', 'images/techo.png');
@@ -48,6 +47,7 @@ var PreloaderScene =
     this.game.load.spritesheet('enemigos', 'images/Enemigos.png', 31, 37); //Enemigos
     this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Compuertas
     this.game.load.spritesheet('fondos', 'images/Fondos.png', 530, 580); //Fondos
+    this.game.load.spritesheet('player', 'images/Player.png', 80, 20); //Jugador
 
     // Sonidos
     this.game.load.audio('ball&dBrick', 'assets/sounds/collision - ball&dBrick.ogg');

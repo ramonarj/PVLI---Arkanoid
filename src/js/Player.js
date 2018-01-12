@@ -82,7 +82,10 @@ Player.prototype.disableEffects = function ()
       this.getNarrow();
     }
     else if(this._shotEnabled)
-      this._shotEnabled = false;
+    {
+        this._shotEnabled = false;
+        this.frame = 0;
+    } 
 }
 
 // FUNCIONES AUXILIARES
@@ -91,6 +94,7 @@ Player.prototype.disableEffects = function ()
 Player.prototype.enableShot = function ()
 {   
    this._shotEnabled = true;
+   this.frame = 1;
 }
 
 // Ensancha la pala del jugador (solo si no lo estuviera ya)
