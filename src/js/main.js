@@ -48,6 +48,7 @@ var PreloaderScene =
     this.game.load.spritesheet('compuertas', 'images/Compuertas.png', 68, 20); //Compuertas
     this.game.load.spritesheet('fondos', 'images/Fondos.png', 530, 580); //Fondos
     this.game.load.spritesheet('player', 'images/Player.png', 80, 20); //Jugador
+    this.game.load.spritesheet('door', 'images/Puerta.png', 23, 69); //Puerta
 
     // Sonidos
     this.game.load.audio('ball&dBrick', 'assets/sounds/collision - ball&dBrick.ogg');
