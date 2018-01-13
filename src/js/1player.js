@@ -21,7 +21,9 @@ var PinkPowerUp = require ('./PowerUp.js').PinkPowerUp;
 
 
 //CONSTANTES
+var MAX_ENEMIES = 3;
 var NUM_LEVELS = 5;
+
 
 var NUM_POWERUPS = 7;
 var POWERUP_CHANCE = 1/1;
@@ -31,6 +33,7 @@ var NUM_COLS = 11;
 var LEFTLIMIT = 147;
 var RIGHTLIMIT = 633;
 var FIRST_BRICK_Y = 84;
+
 
 var BRICK_WIDTH = 44;
 var BRICK_HEIGHT = 22;
@@ -46,12 +49,14 @@ var GATE1_POSX = 236;
 var GATE2_POSX = 477;
 
 
-//Variables globales necesarias (nivel, vidas y puntuación actual y máxima)
+
+//Variables globales necesarias (nivel, vidas y puntuación actual y máxima)... arrggghhhh
 var level = 1;
 var lives = 3;
 var score = 0;
 var highscore = require ('./HUD.js').DEFAULT_HIGHSCORE;
 var brickArray = null;
+
 
 var PlayScene =
  {
@@ -92,6 +97,7 @@ var PlayScene =
    //Función Create
   create: function () 
   {
+
     // AUDIO
     this.ball_dBrick = this.game.add.audio('ball&dBrick');
     this.ball_uBrick = this.game.add.audio('ball&uBrick');
@@ -115,9 +121,11 @@ var PlayScene =
     //1.Paredes y techo (grupo walls)
     this.walls = this.game.add.physicsGroup();
     var techo = new Phaser.Sprite(this.game, 80, 0, 'techo'); //Creamos
+
     var pared1 = new Phaser.Sprite(this.game, LEFTLIMIT, GATES_POSY, 'pared');
     pared1.x-=pared1.width;
     var pared2 = new Phaser.Sprite(this.game, RIGHTLIMIT, GATES_POSY, 'pared');
+
         
     this.walls.add(techo);
     this.walls.add(pared1);
@@ -126,6 +134,7 @@ var PlayScene =
     this.walls.setAll('visible', false);
 
     //2.HUD
+
     var hudPos = new Par(RIGHTLIMIT + 15, HUD_POSY);
     this.hud = new HUD(this.game, hudPos, 'vidas','e', lives, level);
     this.hud.renderRound(level);
@@ -136,6 +145,7 @@ var PlayScene =
     var ballSounds = [this.ball_player, this.ball_dBrick, this.ball_uBrick];
     this.ballsGroup = this.game.add.physicsGroup();
     this.ballsGroup.classType = Ball;
+
 
     var playerPos = new Par(this.world.width / 2, PLAYER_POSY);
     this.ball = new Ball(this.game, playerPos, 'ball', ballSounds, 1, this);
@@ -157,6 +167,7 @@ var PlayScene =
     
 
     //4.Ladrillos (grupo bricks)
+
     var actualBrick = 0;
     this.bricks = this.game.add.physicsGroup();
     this.bricks.classType = Destroyable;
@@ -238,13 +249,18 @@ var PlayScene =
 
     //7.Jugador
     var playerSounds = [this.playerShot, this.getWide, this.extraLife];
-    var playerVel = new Par(0,0);
+    var playerVel = new Par(1,0);
     this.player = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.cursors, 
                                                this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
+
 
     this.game.world.addChild(this.player);
     this.game.physics.enable([this.player, this.ballsGroup], Phaser.Physics.ARCADE);
     this.player.body.immovable = true;
+
+    this.player.canAttach = true;
+
+
 
     //8.PowerUps
     this.powerUps = this.game.add.physicsGroup();
@@ -255,6 +271,7 @@ var PlayScene =
     this.activePowerUp = null;
     
     //9.Compuertas
+
     var gate1 = new Phaser.Sprite(this.game, GATE1_POSX, GATES_POSY, 'compuertas');
     var gate2 = new Phaser.Sprite(this.game, GATE2_POSX, GATES_POSY, 'compuertas');
     this.world.add(gate1);
@@ -264,6 +281,7 @@ var PlayScene =
 
 
     // 10.Puerta al siguiente nivel
+
     this.levelDoor = new Phaser.Sprite(this.game, RIGHTLIMIT + 10, PLAYER_POSY + 1, 'door');
     this.levelDoor.anchor.setTo(0.5,0.5);
     this.world.add(this.levelDoor);
@@ -319,6 +337,7 @@ var PlayScene =
   checkWin: function ()
   {
     //Ganaste
+
     if(this.breakableBricks < 1)
       this.nextLevel();
   },
@@ -358,6 +377,8 @@ var PlayScene =
           else
               brickArray[i] = false;
         }
+        this.game.state.states['carga']._2player = false;
+        this.game.state.states['carga']._scene = this;
         this.game.state.start('carga', true, false);
       }      
     }  
@@ -381,6 +402,13 @@ var PlayScene =
       {
          ball.bounce(obj, this);
       }
+
+      else
+      {
+        if(obj.constructor == Player)
+        obj.canAttach = true;
+      }
+
   },
 
   // C) Detecta las colisones con el jugador
@@ -391,13 +419,13 @@ var PlayScene =
           this.takePowerUp(player, obj); // Ya que ahora no haría falta el _powerUpNum, y cuando colisiona con 'powerUps' llama directamente a 'takePowerUp()'
       //Enemigos    
       if (obj.constructor === Enemy)*/
-          obj.takeDamage(this);
+          obj.takeDamage(this, player);
   },
 
   
   // POWER-UPS
    // A) Dropea un Power-Up según una probabilidad
-   dropPowerUp: function(brick)
+   dropPowerUp: function(brick, player)
    {
        if(this.activePowerUp != null && this.activePowerUp.constructor == LightBluePowerUp && this.ballsGroup.countLiving() <= 1)
        this.activePowerUp.disable();
@@ -460,7 +488,6 @@ var PlayScene =
         }
        
         // 3) Lo añadimos al grupo de Power-Ups, activamos las colisiones con el jugador, etc.
-        powerUp = new PinkPowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), false, false, this);
          this.powerUps.add(powerUp);
     
          powerUp.body.immovable = true;
@@ -481,13 +508,15 @@ var PlayScene =
     {
         // a) Desactivamos el efecto activo anterior, si es que lo hubiera (1ª comprobación) y si no es el mismo efecto que ya está activo (2ª comprobación)
         if(this.activePowerUp != null && powerUp.constructor != this.activePowerUp.constructor)
-          this.activePowerUp.disable();
+          this.activePowerUp.disable(player);
+
 
        // b) Una vez desactivado el anterior, ponemos éste como nuevo efecto activo
        this.activePowerUp = powerUp;
     }
     // 2) Activamos el Power-Up recogido como tal, y destruímos el objeto
-       powerUp.enable();
+
+       powerUp.enable(player);
        powerUp.takeDamage(this);
    },
 
@@ -512,6 +541,7 @@ var PlayScene =
      score+=i;
      this.hud.renderScore(score, highscore);
    },
+
 
    addLife:function()
    {
@@ -540,7 +570,8 @@ var PlayScene =
      if(level < NUM_LEVELS)
      {
        level++;
-       this.game.state.states['carga'].level = level;
+       this.game.state.states['carga']._2player = false;
+       this.game.state.states['carga']._scene = this;
        this.game.state.start('carga', true, false);
      }
      //Nos hemos pasado el juego
@@ -552,16 +583,7 @@ var PlayScene =
        this.game.state.start('menu');
      }
    },
-
-   // Usado para hacer debug
-  render: function() 
-   {
-        // Player debug info
-        this.game.debug.text('living balls: '+ this.ballsGroup.countLiving(), RIGHTLIMIT + 15, 230);
-        this.game.debug.text('balls length: ' +this.ballsGroup.length, RIGHTLIMIT + 15, 250);
-        this.game.debug.text('b bricks: ' +this.breakableBricks, RIGHTLIMIT + 15, 270);
-        this.game.debug.text('lives: ' +lives, RIGHTLIMIT + 15, 290);
-    }
 };
 
 module.exports = PlayScene;
+

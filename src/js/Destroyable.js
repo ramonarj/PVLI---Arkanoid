@@ -20,7 +20,7 @@ Destroyable.prototype.constructor = Destroyable;
 
 //Funciones de destruible
 //Quita una vida al destruible
-Destroyable.prototype.takeDamage = function (playscene) //NOTA: solo da puntos cuando playscene != null
+Destroyable.prototype.takeDamage = function (playscene, player) //NOTA: solo da puntos cuando playscene != null
 {
     this._lives--;
     if(this._lives <= 0)
@@ -32,7 +32,7 @@ Destroyable.prototype.takeDamage = function (playscene) //NOTA: solo da puntos c
           //Si es de color, puede dropear Power-Ups
           if (this._maxLives == 1)
           {
-            playscene.dropPowerUp(this);
+            playscene.dropPowerUp(this, player);
           }
         }
         this.kill();

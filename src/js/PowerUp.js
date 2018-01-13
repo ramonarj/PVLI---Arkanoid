@@ -71,14 +71,14 @@ function RedPowerUp(game, position, sprite, sound, lives, velocity, effect, drop
 RedPowerUp.prototype = Object.create(PowerUp.prototype);
 RedPowerUp.prototype.constructor = RedPowerUp;
 
-RedPowerUp.prototype.enable = function()
+RedPowerUp.prototype.enable = function(player)
 {
-    this._player.enableShot();
+    player.enableShot();
 }
 
-RedPowerUp.prototype.disable = function()
+RedPowerUp.prototype.disable = function(player)
 {
-    this._player.disableEffects();
+   player.disableEffects();
 }
 
 // 2) Power-Up gris -> ganar una vida
@@ -92,9 +92,9 @@ function GreyPowerUp(game, position, sprite, sound, lives, velocity, effect, dro
 GreyPowerUp.prototype = Object.create(PowerUp.prototype);
 GreyPowerUp.prototype.constructor = GreyPowerUp;
 
-GreyPowerUp.prototype.enable = function()
+GreyPowerUp.prototype.enable = function(player)
 {
-    this._player.addLife();
+    player.addLife();
 }
 
 // 3) Power-Up azul -> ensanchar la pala
@@ -102,20 +102,20 @@ function BluePowerUp(game, position, sprite, sound, lives, velocity, effect, dro
 {
     PowerUp.apply(this, [game, position, sprite, sound, lives, velocity, effect, drop, 2]);
 
-    this._player = player;
+    player = player;
 }
 
 BluePowerUp.prototype = Object.create(PowerUp.prototype);
 BluePowerUp.prototype.constructor = BluePowerUp;
 
-BluePowerUp.prototype.enable = function()
+BluePowerUp.prototype.enable = function(player)
 {
-    this._player.getWider();
+    player.getWider();
 }
 
-BluePowerUp.prototype.disable = function()
+BluePowerUp.prototype.disable = function(player)
 {
-    this._player.disableEffects();
+    player.disableEffects();
 }
 
 // 4) Power-Up verde -> atrapar la pelota
