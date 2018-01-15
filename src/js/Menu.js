@@ -2,10 +2,11 @@
 
 var MARGEN = require ('./HUD.js').MARGEN;
 var TEXT_SIZE = require ('./HUD.js').TEXT_SIZE;
-var CREDITS_SIZE = TEXT_SIZE * 0.75;
+var CREDITS_SIZE = TEXT_SIZE;
 var NUM_CHOICES = 3;
 var CHOICES_SEPARATION = 50;
-var CREDITS_TEXT = "Raul Guardia Fernandez"
+var CREDITS_NAMES = "Raul Guardia Fernandez\n\n\n\n\n\n\n\n\nRamon Arjona Quiniones\n\n\n\n\n\n\n\n\nBoth"
+var CREDITS_TEXT = "\n\n  - Player logic\n  - PowerUps logic\n  - 2 Player Mode\n  - File reading  \n  - Game sounds \n\n\n\n\n  - Ball logic\n  - Enemies logic\n  - HUD & Menu  \n  - Level dynamics\n  - Menu music \n\n\n\n\n  - Animations\n  - Level building\n  - Collisions\n  - Heritage architecture\n  - And many more spaghetti code!"
 
 var Menu = 
 {
@@ -44,9 +45,12 @@ var Menu =
         var highscore = require ('./1player.js').getScore(1);
         this.highScoreText = this.game.add.bitmapText(this.game.world.width / 2, MARGEN, 'redFont','HIGH SCORE', TEXT_SIZE);
         this.highScoreNoText = this.game.add.bitmapText(this.game.world.width / 2, MARGEN + (this.highScoreText.height + MARGEN), 'whiteFont', '  ' + highscore , TEXT_SIZE);
-        this.backText = this.game.add.bitmapText(MARGEN, this.game.world.height - MARGEN*2, 'whiteFont','Press Esc to go back to menu', CREDITS_SIZE);
+        this.backText = this.game.add.bitmapText(MARGEN, this.game.world.height - MARGEN*3, 'whiteFont','Press Esc to go back to menu', CREDITS_SIZE);
         this.creditsText = this.game.add.bitmapText(MARGEN * 2, MARGEN * 2, 'whiteFont',CREDITS_TEXT, CREDITS_SIZE);
-        this.backText.visible = this.creditsText.visible = false;
+        this.creditsNames = this.game.add.bitmapText(MARGEN * 2, MARGEN * 2, 'redFont',CREDITS_NAMES, CREDITS_SIZE);
+        this.controlsText = this.game.add.bitmapText(MARGEN * 2, this.game.world.height - MARGEN*7, 'whiteFont','          Move - - \n\nThrow - -            Select - -', TEXT_SIZE);
+        this.controlsTextRed = this.game.add.bitmapText(this.controlsText.x, this.controlsText.y, 'redFont','                   ARROW KEYS\n\n          SPACE                  ENTER', TEXT_SIZE);
+        this.backText.visible = this.creditsText.visible = this.creditsNames.visible = false;
     },
   
   moveDown:function()
@@ -90,8 +94,8 @@ var Menu =
          {
              this.credits = true;
              this.fondoMenu.visible =  this.highScoreText.visible = this.highScoreNoText.visible = false;
-             this.selector.visible = false;
-             this.backText.visible = this.creditsText.visible = true;
+             this.selector.visible = this.controlsText.visible = this.controlsTextRed.visible = false;
+             this.backText.visible = this.creditsText.visible = this.creditsNames.visible = true;
                
          }
         }  
@@ -102,8 +106,8 @@ var Menu =
         if(this.credits)
         {
             this.fondoMenu.visible =  this.highScoreText.visible = this.highScoreNoText.visible = true;
-            this.selector.visible = true;
-            this.backText.visible = this.creditsText.visible = false;
+            this.selector.visible = this.controlsText.visible = this.controlsTextRed.visible = true;
+            this.backText.visible = this.creditsText.visible = this.creditsNames.visible = false;
             this.credits = false;
         }  
     },

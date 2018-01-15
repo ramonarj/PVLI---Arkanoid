@@ -26,7 +26,7 @@ var NUM_LEVELS = 5;
 
 
 var NUM_POWERUPS = 7;
-var POWERUP_CHANCE = 1/1;
+var POWERUP_CHANCE = 1/3;
 
 var NUM_ROWS = 12;
 var NUM_COLS = 11;
