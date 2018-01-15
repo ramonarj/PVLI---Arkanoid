@@ -37,7 +37,7 @@ function HUD(game, position, sprite, sound, livesNo, level)
   //2.Textos
   //2.1.Letras
   this._scoreText = this.game.add.bitmapText(position._x + NUMBERS_OFFSET, position._y - 165, 'redFont','1UP', TEXT_SIZE);
-  this._highScoreText = this.game.add.bitmapText(position._x + NUMBERS_OFFSET, position._y - 250, 'redFont','HIGHSCORE', TEXT_SIZE);
+  this._highScoreText = this.game.add.bitmapText(position._x + NUMBERS_OFFSET, position._y - 250, 'redFont','HIGH\n SCORE', TEXT_SIZE);
   this._roundText = this.game.add.bitmapText(position._x + NUMBERS_OFFSET, ROUND_POSY, 'redFont','ROUND', TEXT_SIZE);
 
   //2.2.Números   
