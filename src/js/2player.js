@@ -20,7 +20,7 @@ var PinkPowerUp = require ('./PowerUp.js').PinkPowerUp;
 
 //CONSTANTES
 var MAX_ENEMIES = 3;
-var NUM_LEVELS = 5;
+var NUM_LEVELS = 11;
 
 var NUM_POWERUPS = 5;
 var POWERUP_CHANCE = 1/3;
@@ -230,7 +230,7 @@ var PlayScene =
       up: this.game.input.keyboard.addKey(Phaser.Keyboard.W),
       down: this.game.input.keyboard.addKey(Phaser.Keyboard.S),
       left: this.game.input.keyboard.addKey(Phaser.Keyboard.A),
-      right: this.game.input.keyboard.addKey(Phaser.Keyboard.D),
+      right: this.game.input.keyboard.addKey(Phaser.Keyboard.D)
     };
 
     //6.Balas
@@ -320,11 +320,20 @@ var PlayScene =
     this.enemigos.add(enem2);
     this.enemigos.setAll('body.immovable', true);
 
+
+    this.hack = {
+      nextLevel: this.game.input.keyboard.addKey(Phaser.Keyboard.ENTER)
+    };
+
   },
 
   //FUNCIÓN UPDATE
   update: function()
   {
+
+    if(this.hack.nextLevel.isDown)
+    this.nextLevel();
+
     //Colisiones del jugador
     this.game.physics.arcade.overlap(this.playersGroup, this.powerUps, this.takePowerUp, null, this);
     this.game.physics.arcade.overlap(this.playersGroup, this.enemigos, this.playerCollisions, null, this);
