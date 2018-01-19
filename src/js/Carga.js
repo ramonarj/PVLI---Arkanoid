@@ -6,6 +6,7 @@ var HUD = require ('./HUD.js');
 
 var TEXT_SIZE = require ('./HUD.js').TEXT_SIZE;
 var MARGEN = require ('./HUD.js').MARGEN;
+var DEF_HIGHSCORE = require ('./HUD.js').DEFAULT_HIGHSCORE;
 
 
 var DELAY_TIME = 1500; //1 segundo y medio
@@ -21,9 +22,22 @@ var Carga =
 
     create: function()
     {
-        var level = this._scene.getLevel();
-        var score = this._scene.getScore(0);
-        var highscore = this._scene.getScore(1);
+        var level, score, highscore;
+        //Venimos del menú
+        if(this._scene == null)
+        {
+            level = 1;
+            score = 0;
+            highscore = require ('./HUD.js').DEFAULT_HIGHSCORE;
+
+        }
+        //Venimos de un nivel
+        else
+        {
+            level = this._scene.getLevel();
+            score = this._scene.getScore(0);
+            highscore = this._scene.getScore(1);
+        }
 
         this.temporizador = 0;
         this.background = new Phaser.Sprite(this.game, 0, 0, 'black'); //Creamos

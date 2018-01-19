@@ -3,7 +3,7 @@
 var Movable = require ('./Movable.js');
 var PLAYER_VEL = 0.45;
 
-function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit, ballsGroup, scene)
+function Player(game, position, sprite, sound, lives, velocity, cursors, playerWeapon, leftLimit, rightLimit, ballsGroup, scene, player2)
 {
     Movable.apply(this, [game, position, sprite, sound, lives, velocity]);
     
@@ -27,7 +27,7 @@ function Player(game, position, sprite, sound, lives, velocity, cursors, playerW
     // Variables de control
     this._shotEnabled = false;
     this._isWide = false;
-    this.canAttach = false;
+    this._player2 = player2;
 }
 
 Player.prototype = Object.create(Movable.prototype);
@@ -36,7 +36,8 @@ Player.prototype.constructor = Player;
 //Funciones de jugador
 Player.prototype.readInput = function() 
 {
-    this._currentBall = this._balls.getFirstAlive();
+    if(!this._player2)
+        this._currentBall = this._balls.getFirstAlive();
     var delta = this.x;
     //Comprobación de cursores de Phaser
     if (this._cursors.left.isDown && this.x >  this._leftLimit + this.offsetX)
@@ -53,15 +54,12 @@ Player.prototype.readInput = function()
            this._playerWeapon.onFire.add(function() {this._sound[0].play()}, this);
         }
         else if(this._currentBall != null && this._currentBall.isAttached())
-        {
            this._currentBall.throw();
-           this.canAttach = false;
-        } 
     }
 
     //La pelota es hija por programación
     delta -= this.x;
-    if(this._currentBall != null && this._currentBall.isAttached() && this.canAttach)
+    if(this._currentBall != null && this._currentBall.isAttached())
         this._currentBall.x -= delta;
 }
 

@@ -1,5 +1,5 @@
 html {
-  font-size: 10px;
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -9,7 +9,9 @@ body {
   font-family: Courier, 'Courier New', monospace;
   font-size: 1.6rem;
   background: #fff;
-  color: #000;
+  background-image: "url('images/Negro.png')";
+  color: #fff;
+  
 }
 
 a {
@@ -22,7 +24,7 @@ main {
 }
 
 #game {
-  border: 1px solid #333;
+  border: 20px solid #333;
 }
 
 footer {

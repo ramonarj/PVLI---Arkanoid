@@ -116,18 +116,8 @@ Ball.prototype.bounceInPlayer = function(player)
      
 
      // Si se puede enganchar a la pala, ésta se quedará pegada (teniendo cuidado de que no esté demasiado al borde ni atravesándolo)
-     if(this._attachEnabled)
-     {
-        if(this.x < player.x - player.width / 2)
-             this.x = player.x - player.width / 2;
-        else if(this.x > player.x + player.width / 2)
-             this.x = player.x + player.width / 2 - this.width / 2;  
-
-        if(this.y > player.y)
-             this.y = player.y - this.height;     
-
-        this.attach(); 
-     }  
+     if(this._attachEnabled && !this._attached)
+        this.attach(player); 
 }
 
 
@@ -171,8 +161,6 @@ Ball.prototype.getAngle = function()
      return this._angle;
 }
 
-
-
 Ball.prototype.enableAttach = function()
 {
      this._attachEnabled = true;
@@ -190,11 +178,20 @@ Ball.prototype.throw = function()
     this.body.velocity.y = this._velocity._y;
 }
 
-Ball.prototype.attach = function()
+Ball.prototype.attach = function(player)
 {
     this._attached = true;
     this.body.velocity.x = 0;
     this.body.velocity.y = 0;
+
+    if(this.x < player.x - player.width / 2)
+        this.x = player.x - player.width / 2;
+         
+    else if(this.x > player.x + player.width / 2)
+        this.x = player.x + player.width / 2 - this.width / 2;  
+         
+    if(this.y > player.y - this.height)
+        this.y = player.y - this.height; 
 }
 
 Ball.prototype.slowDown = function()

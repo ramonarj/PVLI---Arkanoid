@@ -22,7 +22,7 @@ var PinkPowerUp = require ('./PowerUp.js').PinkPowerUp;
 
 //CONSTANTES
 var MAX_ENEMIES = 3;
-var NUM_LEVELS = 10;
+var NUM_LEVELS = 11;
 
 
 var NUM_POWERUPS = 7;
@@ -155,7 +155,7 @@ var PlayScene =
 
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
     this.ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
-    this.ball.attach(); //La pegamos al jugador
+    
 
 
     for(var i = 0; i < EXTRA_BALLS; i++) //Pelotas extra
@@ -235,6 +235,8 @@ var PlayScene =
 
     //5.Cursores
     this.cursors = this.game.input.keyboard.createCursorKeys();
+    this.scapeKey = this.game.input.keyboard.addKey(Phaser.KeyCode.ESC);
+    this.scapeKey.onDown.add(this.exitGame, this);
 
     //6.Balas
     this.playerWeapon = new Movable(this.game, playerPos, 'bullet', 'sound',3, playerVel);
@@ -251,14 +253,14 @@ var PlayScene =
     var playerSounds = [this.playerShot, this.getWide, this.extraLife];
     var playerVel = new Par(1,0);
     this.player = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.cursors, 
-                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
+                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this, false);
 
 
     this.game.world.addChild(this.player);
     this.game.physics.enable([this.player, this.ballsGroup], Phaser.Physics.ARCADE);
     this.player.body.immovable = true;
+    this.ball.attach(this.player); //La pegamos al jugador
 
-    this.player.canAttach = true;
 
 
 
@@ -408,16 +410,7 @@ var PlayScene =
   {
       //La pelota rebota en ese algo (siempre que no esté parada)
       if(!ball.isAttached())
-      {
          ball.bounce(obj, this);
-      }
-
-      else
-      {
-        if(obj.constructor == Player)
-        obj.canAttach = true;
-      }
-
   },
 
   // C) Detecta las colisones con el jugador
@@ -503,7 +496,6 @@ var PlayScene =
          powerUp.body.velocity.setTo(0, 2); //Físicas de la pelota
 
          this.fallingPowerUp = powerUp;
-        
       },
  
    // C) Recoge un Power-Up y determina su función
@@ -541,7 +533,6 @@ var PlayScene =
      this.levelDoor.visible = true;
 
      this.levelDoor.animations.play('open',10,true);
-
    },
 
    //Otros métodos
@@ -592,6 +583,14 @@ var PlayScene =
        this.game.state.start('menu');
      }
    },
+
+   exitGame:function()
+   {
+    level = 1;
+    lives = 3;
+    score = 0;
+    this.game.state.start('menu');
+   }
 };
 
 module.exports = PlayScene;

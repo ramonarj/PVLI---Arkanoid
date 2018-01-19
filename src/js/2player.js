@@ -136,7 +136,7 @@ var PlayScene =
     this.ballsGroup = this.game.add.physicsGroup();
     this.ballsGroup.classType = Ball;
 
-    var playerPos = new Par(350, 525);
+    var playerPos = new Par(this.world.width / 2, PLAYER_POSY);
     var ballPos = new Par(playerPos._x, playerPos._y - 12);
     this.ball = new Ball(this.game, ballPos, 'ball', ballSounds, 1, this);
 
@@ -145,7 +145,7 @@ var PlayScene =
     this.ball.body.velocity.setTo(this.ball._velocity._x, this.ball._velocity._y); //Físicas de la pelota
     this.ball.body.bounce.setTo(1, 1); //ESTO SIRVE PARA HACER QUE ACELERE
 
-    this.ball.attach(); //La pegamos al jugador
+    
 
 
     for(var i = 0; i < EXTRA_BALLS; i++) //Pelotas extra
@@ -225,6 +225,8 @@ var PlayScene =
 
     //5.Cursores
     this.cursors = this.game.input.keyboard.createCursorKeys();
+    this.scapeKey = this.game.input.keyboard.addKey(Phaser.KeyCode.ESC);
+    this.scapeKey.onDown.add(this.exitGame, this);
 
     this.wasd = {
       up: this.game.input.keyboard.addKey(Phaser.Keyboard.W),
@@ -253,28 +255,27 @@ var PlayScene =
     //Jugador 1
     var playerVel = new Par(0.75,0);
      this.player1 = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.cursors, 
-                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
+                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this, false);
 
     this.player1.width *= 1.25;  
-
+    
     //Jugador 2
      playerPos._y -= this.player1.height * 7;
      playerVel._x = 1.25;
 
     
     this.player2 = new Player(this.game, playerPos, 'player', playerSounds, 1, playerVel, this.wasd, 
-                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this);
-    this.player2.width /= 1.5;                                           
+                                               this.playerWeapon, LEFTLIMIT, RIGHTLIMIT, this.ballsGroup, this, true);
+    this.player2.width /= 1.5; 
+    this.ball.attach(this.player1); //La pegamos al jugador                                          
                                       
 
    this.playersGroup.add(this.player2);
    this.playersGroup.add(this.player1);
 
     this.game.physics.enable([this.playersGroup, this.ballsGroup], Phaser.Physics.ARCADE);
-    this.player1.body.immovable = true;
-    this.player2.body.immovable = true;  
+    this.player1.body.immovable = this.player2.body.immovable = true;
 
-    this.player1.canAttach = true;
 
     //8.PowerUps
     this.powerUps = this.game.add.physicsGroup();
@@ -420,15 +421,7 @@ var PlayScene =
   {
       //La pelota rebota en ese algo (siempre que no esté parada)
       if(!ball.isAttached())
-      {
          ball.bounce(obj, this);
-      }
-      else
-      {
-        if(obj.constructor == Player)
-        obj.canAttach = true;
-      }
-      
   },
 
   // C) Detecta las colisones con el jugador
@@ -502,6 +495,7 @@ var PlayScene =
         }
        
         // 3) Lo añadimos al grupo de Power-Ups, activamos las colisiones con el jugador, etc.
+        powerUp = new LightBluePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
          this.powerUps.add(powerUp);
     
          powerUp.body.immovable = true;
@@ -599,6 +593,14 @@ var PlayScene =
        this.game.state.start('menu');
      }
    },
+
+   exitGame:function()
+   {
+    level = 1;
+    lives = 3;
+    score = 0;
+    this.game.state.start('menu');
+   }
 };
 
 module.exports = PlayScene;

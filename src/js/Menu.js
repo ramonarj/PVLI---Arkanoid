@@ -7,12 +7,15 @@ var NUM_CHOICES = 3;
 var CHOICES_SEPARATION = 50;
 var CREDITS_NAMES = "Raul Guardia Fernandez\n\n\n\n\n\n\n\n\nRamon Arjona Quiniones\n\n\n\n\n\n\n\n\nBoth"
 var CREDITS_TEXT = "\n\n  - Player logic\n  - PowerUps logic\n  - 2 Player Mode\n  - File reading  \n  - Game sounds \n\n\n\n\n  - Ball logic\n  - Enemies logic\n  - HUD & Menu  \n  - Level dynamics\n  - Menu music \n\n\n\n\n  - Animations\n  - Level building\n  - Collisions\n  - Heritage architecture\n  - And many more spaghetti code!"
-
+var CONTROLS_TEXT = "          Move - - \n\nThrow - -            Select - -"
+var CONTROLS1 = "                   ARROW KEYS [P1]\n\n          SPACE                  ENTER"
+var CONTROLS2 = "                   A / D [P2]\n\n          SPACE                  ENTER"
 var Menu = 
 {
 
     create: function()
     {
+        this.contador = 0;
         //Teclas
         this.upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
         this.upKey.onDown.add(this.moveUp, this);
@@ -48,9 +51,20 @@ var Menu =
         this.backText = this.game.add.bitmapText(MARGEN, this.game.world.height - MARGEN*3, 'whiteFont','Press Esc to go back to menu', CREDITS_SIZE);
         this.creditsText = this.game.add.bitmapText(MARGEN * 2, MARGEN * 2, 'whiteFont',CREDITS_TEXT, CREDITS_SIZE);
         this.creditsNames = this.game.add.bitmapText(MARGEN * 2, MARGEN * 2, 'redFont',CREDITS_NAMES, CREDITS_SIZE);
-        this.controlsText = this.game.add.bitmapText(MARGEN * 2, this.game.world.height - MARGEN*7, 'whiteFont','          Move - - \n\nThrow - -            Select - -', TEXT_SIZE);
-        this.controlsTextRed = this.game.add.bitmapText(this.controlsText.x, this.controlsText.y, 'redFont','                   ARROW KEYS\n\n          SPACE                  ENTER', TEXT_SIZE);
+        this.controlsText = this.game.add.bitmapText(MARGEN * 2, this.game.world.height - MARGEN*7, 'whiteFont',CONTROLS_TEXT, TEXT_SIZE);
+        this.controlsTextRed = this.game.add.bitmapText(this.controlsText.x, this.controlsText.y, 'redFont',CONTROLS1, TEXT_SIZE);
         this.backText.visible = this.creditsText.visible = this.creditsNames.visible = false;
+    },
+
+    update:function()
+    {
+        this.contador+= (this.game.time.now - this.game.time.prevTime);
+        if(this.contador > 1500)
+        {
+            if(this.controlsTextRed.text == CONTROLS1) this.controlsTextRed.text = CONTROLS2;
+            else this.controlsTextRed.text = CONTROLS1;
+            this.contador = 0;
+        }
     },
   
   moveDown:function()
@@ -75,18 +89,20 @@ var Menu =
     {
         if(!this.credits)
         {
-            //Modo 1 jugador
+                //Modo 1 jugador
         if(this.eleccion == 1)
         {
             this.music.stop();
-            this.game.state.start('1player');
+            this.game.state.states['carga']._2player = false;
+            this.game.state.start('carga', true, false);
         }
       
         //Modo 2 jugadores
         else if(this.eleccion == 2) 
          {
             this.music.stop();
-            this.game.state.start('2player');
+            this.game.state.states['carga']._2player = true;
+            this.game.state.start('carga', true, false);
          }
 
          //Créditos
@@ -98,6 +114,7 @@ var Menu =
              this.backText.visible = this.creditsText.visible = this.creditsNames.visible = true;
                
          }
+        
         }  
     },
 
