@@ -495,7 +495,6 @@ var PlayScene =
         }
        
         // 3) Lo añadimos al grupo de Power-Ups, activamos las colisiones con el jugador, etc.
-        powerUp = new LightBluePowerUp(this.game, brickPosition ,'PowerUps', 'noSound', 1, new Par(0,2), true, false, this.ballsGroup);
          this.powerUps.add(powerUp);
     
          powerUp.body.immovable = true;
