@@ -53,10 +53,8 @@ If the ball surpasses the player's defenses, we lose a life.
 - Move left and right (A/D, arrow keys)  
 - Shoot (spacebar)[red power-up required]  
    
-## 4. POSSIBLE ADDITIONS  
-1. Two-player mode (Pong style) : https://www.youtube.com/watch?v=83uo9QWUW_M&t=307s  
-2. New power-ups:    
-  - Thinner player   
-  - Connected walls (toroidal)  
-  - The ball passes through bricks instead of bouncing 
-  - Etc. (sugestions allowed)
+## 4. ADDITIONS  
+ **Two-player mode**
+ Brand new cooperative mode, where both players must help each other in order to destroy all blocks.
+ - The player above, smaller and faster, is able to reach the farthest points of the level in two shakes , but with the downside of being closer to the bricks. Great reflexes required.
+ - The player below, bigger and slower, should hit the ball without much needed due to the big body, but you may take your time to move through the level. Better be sure where to stay, or you may regret it later.
