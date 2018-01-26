@@ -55,6 +55,6 @@ If the ball surpasses the player's defenses, we lose a life.
    
 ## 4. ADDITIONS  
  ## **Two-player mode**
- Brand new cooperative mode, where both players must help each other in order to destroy all blocks.
+ Brand new cooperative mode, where both players must help each other in order to destroy all the bricks.
  - The player above, smaller and faster, is able to reach the farthest points of the level in two shakes , but with the downside of being closer to the bricks. Great reflexes required.
  - The player below, bigger and slower, should hit the ball without much needed due to the big body, but you may take your time to move through the level. Better be sure where to stay, or you may regret it later.
