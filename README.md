@@ -14,7 +14,7 @@ Authors:
 If the ball surpasses the player's defenses, we lose a life.
 
 ## 2. Amounts:
-**Player**  
+**Player:**  move horizontally trying to hit the ball.
   
 **Levels:** 36 (we will do as many as we can).  
   
@@ -54,7 +54,7 @@ If the ball surpasses the player's defenses, we lose a life.
 - Shoot (spacebar)[red power-up required]  
    
 ## 4. ADDITIONS  
- **Two-player mode**
+ ## **Two-player mode**
  Brand new cooperative mode, where both players must help each other in order to destroy all blocks.
  - The player above, smaller and faster, is able to reach the farthest points of the level in two shakes , but with the downside of being closer to the bricks. Great reflexes required.
  - The player below, bigger and slower, should hit the ball without much needed due to the big body, but you may take your time to move through the level. Better be sure where to stay, or you may regret it later.
